@@ -24,7 +24,8 @@ directly from that source rather than requiring manual intake.
 | Tool | Status | How it works |
 |------|--------|-------------|
 | productivity:memory-management | ✅ Active | Used for stakeholder follow-up tracking |
-| Mac Calendar | 🔧 Optional | Available via osascript if needed during /schedule |
+| Apple Mail (Procore/Inbox) | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Procore/Inbox only — no other mailboxes touched. |
+| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. |
 | TASKS.md | ✅ Active | Local task board in your workspace folder |
 
 ## How to Enable Future Integrations

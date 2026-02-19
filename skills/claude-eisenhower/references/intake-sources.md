@@ -4,14 +4,44 @@ How to handle tasks arriving from different sources. The goal is consistent capt
 
 ## Source Types and Extraction Rules
 
-### Email
+### Email — Apple Mail (Procore/Inbox)
+**Integration**: Active via Apple Mail using osascript. Scanned with `/scan-email`. Read-only — never affects read status or moves messages.
+**Mailbox**: Procore/Inbox only. No other mailboxes are read.
+
 Extract:
 - Sender name and role (from signature or context)
 - Subject line as default task title
 - Any explicit deadlines ("by EOD Friday", "before the board meeting")
-- Action requested (reply, review, approve, attend, etc.)
+- Action requested (reply, review, approve, attend, complete, certify)
 
-Future integration: ~~email (e.g., Gmail, Outlook)
+**Procore Action Categories** — three patterns that require Cantu's action:
+
+**1. Admin / Compliance**
+Sender signals: HR, Legal, Procurement, Compliance, People Ops
+Subject/body signals: "required", "action required", "complete by", "certification", "training", "approval needed", "compliance", "deadline", "must complete by", "due by", "overdue", "mandatory", "policy violation"
+Default quadrant: Q2
+Escalate to Q1 if: deadline is within 3 available business days (see Calendar availability logic below), OR body contains compliance consequence language ("your manager has been notified", "compliance breach", "mandatory")
+
+**2. VP / Director Escalations**
+Sender signals: title contains VP, Director, SVP, EVP, or C-suite role
+Subject/body signals: "align", "initiative", "priority", "decision needed", "your input", "strategic", "blocking", "ASAP", "before [date]", "need your response"
+Default quadrant: Q1 if action needed this week; Q2 if future planning
+Escalate to Q1 if: any urgency signal present
+
+**3. Company Surveys / Feedback Requests**
+Sender signals: internal comms team, executive assistant, HR
+Subject/body signals: "survey", "feedback", "your input", "pulse", "all-hands", "planning", "please respond"
+Default quadrant: Q3
+Escalate to Q2 if: tied to a named leadership meeting or planning cycle with a close deadline
+
+**Calendar Availability Logic** (used for Admin/Compliance due date escalation):
+1. Read the due date from the email
+2. Count business days between today and the due date (exclude weekends)
+3. For each business day in that window, check Mac Calendar:
+   - Full-day PTO or Out of Office → subtract from available days
+   - Day has less than 2 hours of unblocked time → flag as busy, subtract from available days
+4. If available days ≤ 3 → escalate to Q1
+5. If available days > 3 → keep as Q2, note target completion date as due date minus 3 available days
 
 ### Slack / Chat
 Extract:
@@ -41,12 +71,14 @@ Extract:
 Future integration: ~~project tracker
 
 ### Mac Calendar
+**Integration**: Active via osascript (macOS Calendar app). Read-only — used for availability checks during `/schedule` and `/scan-email`. Never creates, modifies, or deletes calendar events.
+
 Extract:
 - Meeting title and attendees (who to follow up with)
 - Prep work implied by the meeting
 - Post-meeting action items
-
-Future integration: Mac Calendar (macOS Calendar app via AppleScript)
+- Free/busy status per day (used for Q2→Q1 escalation logic in email scanning)
+- Full-day PTO or Out of Office events (subtract from available day count)
 
 ### Internal Thought / Self-Generated
 Flag as: Source: self

@@ -79,4 +79,12 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 
 ## Calendar integration (if mentioned)
 
-If the user asks to block time or mentions Mac Calendar, use osascript to check calendar availability before locking in a Q2 date. Offer: "Want me to check your calendar before committing to that day?"
+If the user asks to block time or mentions Mac Calendar, use the fast EventKit-based calendar query to check availability before locking in a Q2 date:
+
+```applescript
+do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift 'Cantu' {DAYS_AHEAD} summary 2>&1"
+```
+
+This returns business day availability instantly, even on large calendars (7000+ events). Do NOT use AppleScript's `whose` clause for calendar queries — it times out on the Cantu calendar.
+
+Offer: "Want me to check your calendar before committing to that day?"
