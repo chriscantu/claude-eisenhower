@@ -30,7 +30,7 @@ INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 
 ### Skill (1)
 
-- **`task-flow`** — Core domain knowledge: Eisenhower matrix rules, intake source handling, scheduling logic, delegation framework, and stakeholder memory patterns. Includes three reference files:
+- **`claude-eisenhower`** — Core domain knowledge: Eisenhower matrix rules, intake source handling, scheduling logic, delegation framework, and stakeholder memory patterns. Includes three reference files:
   - `references/eisenhower.md` — detailed quadrant rules with edge cases
   - `references/intake-sources.md` — source-specific extraction rules
   - `references/delegation-guide.md` — when and how to delegate

@@ -8,7 +8,7 @@ You are running the EXECUTE phase of the Engineering Task Flow.
 
 ## Step 1: Load the task board
 
-Read /sessions/wonderful-relaxed-gates/mnt/outputs/TASKS.md.
+Read TASKS.md from the root of the user's mounted workspace folder.
 
 If the file does not exist, inform the user: "No task board found. Nothing to execute yet."
 

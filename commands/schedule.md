@@ -8,7 +8,7 @@ You are running the SCHEDULE phase of the Engineering Task Flow.
 
 ## Step 1: Load the task board
 
-Read /sessions/wonderful-relaxed-gates/mnt/outputs/TASKS.md.
+Read TASKS.md from the root of the user's mounted workspace folder.
 
 If the file does not exist or has no prioritized tasks, inform the user: "No prioritized tasks found. Run /prioritize first."
 

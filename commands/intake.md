@@ -37,7 +37,7 @@ Status:      Unprocessed
 
 ## Then:
 
-1. Check if a TASKS.md file exists in the workspace folder (/sessions/wonderful-relaxed-gates/mnt/outputs/TASKS.md). If it does not exist, create it with this structure:
+1. Check if a TASKS.md file exists in the workspace folder. Look for it at the root of the mounted workspace (the folder the user has selected in Cowork). If it does not exist, create it with this structure:
 
 ```markdown
 # Task Board
