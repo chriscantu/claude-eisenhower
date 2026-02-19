@@ -1,0 +1,14 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "prompt",
+          "prompt": "At the start of this session, check if TASKS.md exists at /sessions/wonderful-relaxed-gates/mnt/outputs/TASKS.md. If it exists, read it and provide a brief task context summary: how many tasks are in each quadrant (Q1/Q2/Q3/Q4) and how many are unprocessed. Format as: '📋 Task Board: [N] Q1 critical, [N] Q2 scheduled, [N] Q3 delegated, [N] unprocessed.' If the file does not exist, say nothing — the user hasn't started using the task board yet.",
+          "timeout": 15
+        }
+      ]
+    }
+  ]
+}
