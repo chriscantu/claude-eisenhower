@@ -11,6 +11,7 @@ When adding a new file, find the right directory here before creating anything.
 | File | Purpose |
 |------|---------|
 | `README.md` | Plugin overview, workflow summary, setup instructions, usage examples |
+| `ROADMAP.md` | Now / Next / Later product roadmap — shipped features, planned work, strategic bets |
 | `STRUCTURE.md` | This file — canonical directory structure and file placement rules |
 | `CONNECTORS.md` | Registry of all active and planned integrations |
 | `PRINCIPLES.md` | Engineering principles: DRY, SOLID, TDD, PII safety, structure rules |
