@@ -49,15 +49,15 @@ Replaced AppleScript calendar queries with a Swift script (`scripts/cal_query.sw
 
 ### New
 - `scripts/cal_query.swift` — Reusable EventKit-based calendar query script
-- `scripts/README.md` — Usage documentation for the script
-- `docs/calendar-performance-fix.md` — This document
+- `integrations/docs/scripts-reference.md` — Usage documentation for the script
+- `integrations/docs/calendar-performance-fix.md` — This document
 
 ### Updated
 - `commands/scan-email.md` — Step 6 now calls `cal_query.swift` instead of AppleScript
 - `commands/schedule.md` — Calendar integration section now references `cal_query.swift`
 
 ### Not Updated (read-only)
-- `mac-calendar-planner` plugin — Marketplace install, read-only. A customization layer is provided separately (see `docs/mac-calendar-planner-override.md`).
+- `mac-calendar-planner` plugin — Marketplace install, read-only. A customization layer is provided separately (see `integrations/docs/mac-calendar-planner-override.md`).
 
 ## Script Usage
 

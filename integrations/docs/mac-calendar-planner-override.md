@@ -53,4 +53,4 @@ For non-Cantu calendars (which are small), the original AppleScript templates in
 
 ## Why This Override Exists
 
-See `docs/calendar-performance-fix.md` for the full diagnosis. In short: AppleScript walks every event object to evaluate date filters (O(n) on total calendar size). EventKit uses database indexing and returns instantly regardless of calendar size.
+See `integrations/docs/calendar-performance-fix.md` for the full diagnosis. In short: AppleScript walks every event object to evaluate date filters (O(n) on total calendar size). EventKit uses database indexing and returns instantly regardless of calendar size.
