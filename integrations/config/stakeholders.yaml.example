@@ -1,0 +1,110 @@
+# Stakeholder Graph — Example Template
+#
+# This file is the COMMITTED template. Copy it to stakeholders.yaml and fill
+# in your real delegates. The actual stakeholders.yaml is gitignored and
+# never committed — it stays local to your machine.
+#
+# Usage:
+#   cp stakeholders.yaml.example stakeholders.yaml
+#   Edit stakeholders.yaml with your real team.
+#
+# Fields:
+#   name          — Full name. Stored locally only. Never used in TASKS.md.
+#   alias         — Short label used in TASKS.md and memory entries (e.g., "Sarah E.")
+#   role          — Job title or working description
+#   relationship  — direct_report | peer | vendor | partner
+#   domains       — List of work areas this person can own. Used for matching.
+#   capacity_signal — high | medium | low — your subjective read, update manually
+#   contact_hint  — Optional: preferred channel (Slack, email, etc.)
+#   notes         — Optional: communication preferences, caveats, context
+#
+# Matching logic:
+#   Domain keywords are matched against task title and description.
+#   Scores: domain match (+3 each), direct_report (+2), peer (+1),
+#           capacity high (+2), medium (+1), low (-1).
+#   Highest scorer is suggested. Ties broken by relationship type.
+
+stakeholders:
+
+  # ── Direct Reports ───────────────────────────────────────────────────────────
+
+  - name: FIRST_LAST_1
+    alias: "First L."
+    role: Senior Engineer
+    relationship: direct_report
+    domains:
+      - infrastructure
+      - CI/CD
+      - incident response
+      - observability
+    capacity_signal: medium
+    contact_hint: Slack @handle
+    notes: Prefers written briefs over verbal asks. Strong async communicator.
+
+  - name: FIRST_LAST_2
+    alias: "First L."
+    role: Staff Engineer
+    relationship: direct_report
+    domains:
+      - architecture
+      - API design
+      - backend
+      - performance
+    capacity_signal: high
+    contact_hint: Slack @handle
+    notes: Good at scoping ambiguous problems. Give full context upfront.
+
+  - name: FIRST_LAST_3
+    alias: "First L."
+    role: Engineering Lead
+    relationship: direct_report
+    domains:
+      - frontend
+      - mobile
+      - design systems
+      - accessibility
+    capacity_signal: low
+    contact_hint: Slack @handle
+    notes: Currently on a large delivery — check before delegating new work.
+
+  # ── Peers ────────────────────────────────────────────────────────────────────
+
+  - name: FIRST_LAST_4
+    alias: "First L."
+    role: Director of Product
+    relationship: peer
+    domains:
+      - roadmap
+      - prioritization
+      - stakeholder alignment
+      - product requirements
+    capacity_signal: medium
+    contact_hint: Email
+    notes: Best for cross-functional alignment asks. Prefers async over meetings.
+
+  - name: FIRST_LAST_5
+    alias: "First L."
+    role: Director of Engineering (Platform)
+    relationship: peer
+    domains:
+      - platform
+      - developer experience
+      - tooling
+      - internal systems
+    capacity_signal: medium
+    contact_hint: Slack @handle
+    notes: Go-to for anything touching shared infrastructure or dev tooling.
+
+  # ── Vendors / External Partners ───────────────────────────────────────────────
+
+  - name: VENDOR_CONTACT_1
+    alias: "Vendor A"
+    role: Account Manager
+    relationship: vendor
+    domains:
+      - contracts
+      - procurement
+      - licensing
+    capacity_signal: high
+    contact_hint: Email
+    notes: Response SLA is 1 business day. Send formal written requests.

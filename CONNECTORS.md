@@ -29,6 +29,7 @@ directly from that source rather than requiring manual intake.
 | Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `integrations/config/calendar-config.md`. |
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `integrations/config/task-output-config.md` and `integrations/adapters/`. |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
+| Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `integrations/config/stakeholders.yaml.example` for schema. |
 
 ## How to Enable Future Integrations
 

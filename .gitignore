@@ -1,11 +1,20 @@
 .DS_Store
 
-# User-specific config files â€” copy from *.example and fill in your values
-# These contain account names, calendar names, and list names â€” never commit them
+# User-specific config files Ñ copy from *.example and fill in your values
+# These contain account names, calendar names, and list names Ñ never commit them
 integrations/config/calendar-config.md
 integrations/config/email-config.md
 integrations/config/task-output-config.md
 
-# Local task board and memory â€” personal data, not shared
+# Local task board and memory Ñ personal data, not shared
 TASKS.md
 memory/
+
+# Stakeholder graph Ñ contains PII (real names, roles, contact info)
+integrations/config/stakeholders.yaml
+
+# Node.js Ñ build artifacts and dependencies, never committed
+scripts/node_modules/
+tests/node_modules
+tests/package-lock.json
+dist/

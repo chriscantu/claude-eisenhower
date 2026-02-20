@@ -13,6 +13,7 @@ When adding a new file, find the right directory here before creating anything.
 | `README.md` | Plugin overview, workflow summary, setup instructions, usage examples |
 | `STRUCTURE.md` | This file — canonical directory structure and file placement rules |
 | `CONNECTORS.md` | Registry of all active and planned integrations |
+| `PRINCIPLES.md` | Engineering principles: DRY, SOLID, TDD, PII safety, structure rules |
 | `CLAUDE.md` | Runtime instructions for Claude — config table, calendar query override |
 | `.gitignore` | Excludes personal config files, TASKS.md, memory/, .DS_Store |
 | `.claude-plugin/plugin.json` | Plugin metadata (name, version, author, keywords) |
@@ -40,6 +41,8 @@ claude-eisenhower/
 │
 ├── docs/              # ⛔ DEPRECATED — do not add new files here
 │                      #   Contents migrated to integrations/docs/
+│
+├── tests/             # Regression test suites — runnable via `npm test` in scripts/
 │
 └── memory/            # ⚠ Runtime only — personal memory, gitignored, not committed
     ├── glossary.md
@@ -149,6 +152,7 @@ of decisions. One file per integration or major feature.
 integrations/specs/
   email-integration-spec.md
   reminders-integration-spec.md
+  delegation-spec.md             ← delegation validation: Gherkin spec for match algorithm
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -174,10 +178,29 @@ Executable scripts only. No documentation files.
 scripts/
   cal_query.swift          ← EventKit calendar query (used by /schedule, /scan-email)
   push_reminder.applescript ← Reminders write adapter (used by /schedule)
+  delegate-core.ts           ← shared types + pure scoring functions (imported by CLI and tests)
+  match-delegate.ts          ← CLI entry point — file I/O, argument parsing, human-readable output
+  package.json               ← Node.js deps + postinstall script (auto-creates tests/node_modules symlink)
+  tsconfig.json              ← TypeScript compiler config for scripts/
 ```
 
 Script-level documentation belongs in a docstring/header comment within the
 script file itself, or in `integrations/docs/scripts-reference.md`.
+
+---
+
+### `tests/`
+Runnable Jest regression suites. Each test file covers one integration or feature.
+
+```
+tests/
+  delegation.test.ts           ← 24-test suite for delegation matching algorithm
+  delegation-regression.md     ← plain-language test descriptions (BDD format)
+  node_modules                 ← symlink → ../scripts/node_modules (not committed)
+```
+
+**What belongs here**: Regression tests for scripts/ algorithms.
+**What does not belong here**: Spec docs (integrations/specs/), fixtures with real names (PII).
 
 ---
 
@@ -218,6 +241,7 @@ memory/                               ← personal stakeholder memory
 integrations/config/calendar-config.md
 integrations/config/email-config.md
 integrations/config/task-output-config.md
+integrations/config/stakeholders.yaml     ← PII — personal stakeholder graph
 .DS_Store
 ```
 
@@ -235,3 +259,16 @@ Everything else is committed. `.example` config templates are always committed.
 |         | Deprecated docs/ (top-level) — contents migrated to integrations/docs/ |
 |         | Added STRUCTURE.md |
 |         | Removed skills/task-flow/ (deprecated name, duplicate of skills/claude-eisenhower/) |
+| v0.4.0  | Added delegation validation feature                                              |
+|         | New: `scripts/match-delegate.ts` — weighted scoring (domain×3, relationship, capacity) |
+|         | New: `integrations/config/stakeholders.yaml.example` — PII-safe template           |
+|         | New: `integrations/specs/delegation-spec.md` — full Gherkin spec (15 scenarios)    |
+|         | New: `tests/delegation.test.ts` — 24-test Jest regression suite (24/24 passing)    |
+|         | Updated: `.gitignore` — `stakeholders.yaml` excluded from source control           |
+| v0.4.1  | Housekeeping: structure and DRY compliance pass                                    |
+|         | New: `PRINCIPLES.md` — DRY, SOLID, TDD, PII safety, structure rules               |
+|         | New: `scripts/delegate-core.ts` — shared algorithm (eliminates test duplication)   |
+|         | Removed: `MAC-COPY-INSTRUCTIONS.md` — obsolete deploy workaround                  |
+|         | Removed: 4 misplaced root-level duplicate files                                    |
+|         | Fixed: `tests/node_modules` symlink now gitignored                                |
+|         | Updated: `CLAUDE.md` — references PRINCIPLES.md at session start                  |

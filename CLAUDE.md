@@ -1,6 +1,14 @@
-# Claude Eisenhower â€” Plugin Instructions
+# Claude Eisenhower Ñ Plugin Instructions
 
-## Configuration Files (Read First)
+## Engineering Principles (Read First)
+
+Before writing any code or creating any files, read `PRINCIPLES.md`.
+It defines the DRY, SOLID, TDD, PII safety, and structure rules that govern
+all work in this repository. These apply to every session, every feature.
+
+---
+
+## Configuration Files
 
 Before running any command that touches calendar or email, read the relevant
 config file from `integrations/config/`:
@@ -38,6 +46,3 @@ This applies to ALL calendar queries across all commands and skills, including:
 
 See `integrations/docs/calendar-performance-fix.md` for the full diagnosis and
 `integrations/docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.
-
-# currentDate
-Today's date is 2026-02-19.

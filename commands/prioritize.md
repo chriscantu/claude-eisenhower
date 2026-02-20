@@ -9,15 +9,12 @@ You are running the PRIORITIZE phase of the Engineering Task Flow.
 ## Step 1: Load the task board
 
 Read TASKS.md from the root of the user's mounted workspace folder.
-
 If the file does not exist, inform the user: "No task board found. Run /intake to add tasks first."
 
 ## Step 2: Identify what to prioritize
 
 If $ARGUMENTS is provided, find the matching task in the Unprocessed section and prioritize only that task.
-
 If no argument is provided, prioritize ALL tasks in the `## Unprocessed` section.
-
 If there are no unprocessed tasks, say: "No unprocessed tasks found. Use /intake to add new tasks."
 
 ## Step 3: Apply the Eisenhower Matrix
@@ -33,9 +30,12 @@ Map to quadrant:
 - **Q3** (Urgent, Not Important) → Delegate if possible
 - **Q4** (Not Urgent, Not Important) → Defer or eliminate
 
+**Authority flag**: If a task description contains language like "requires your sign-off", "executive decision", "personnel decision", or "sensitive communication on your behalf", flag it before classifying Q3. Say: "This may require your authority — consider Q1 instead." Ask the user to confirm Q1 or keep Q3.
+
 ## Step 4: Present your recommendation
 
 For each task, show:
+
 ```
 Task: [title]
 Quadrant: Q[X] — [label]
@@ -45,6 +45,35 @@ Recommended action: [Do now / Schedule for [timeframe] / Delegate to [role] / De
 
 Then ask: "Does this assignment look right? I'll save it once you confirm — or tell me if any should be reclassified."
 
+## Step 4b: For each Q3 task — load the stakeholder graph and suggest a delegate
+
+After classifying a task as Q3, before saving:
+
+1. **Check for stakeholder graph**: Read `integrations/config/stakeholders.yaml` (relative to the plugin root at `~/repos/claude-eisenhower/`).
+
+   - If the file does not exist: say "No stakeholder graph found. Copy `integrations/config/stakeholders.yaml.example` to `stakeholders.yaml` and fill in your delegates to enable delegation suggestions." Save the task with `Delegate to: [not yet assigned — see stakeholders.yaml]` and continue.
+   - If the file exists but the `stakeholders` list is empty: say "Stakeholder graph is empty — no delegates configured." Save with the same placeholder and continue.
+
+2. **Score each delegate** using the matching algorithm:
+   - For each keyword in the delegate's `domains` list: if the keyword appears in the task title or description, add +3 to their score
+   - `relationship: direct_report` → +2
+   - `relationship: peer` → +1
+   - `relationship: vendor` or `partner` → 0
+   - `capacity_signal: high` → +2
+   - `capacity_signal: medium` → +1
+   - `capacity_signal: low` → −1
+
+3. **Surface results**:
+   - If one clear top scorer: suggest them by alias with reasoning (domain match, relationship, capacity)
+   - If two or more tied: surface both ranked, prefer `direct_report` on tiebreak, ask user to choose
+   - If highest score is 0 or negative: say "No clear domain match in your stakeholder graph." Ask: "Who should own this?"
+   - If the only match has `capacity_signal: low`: still suggest them, but add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
+
+4. **Ask for confirmation** before recording the delegate — never auto-assign:
+   "Does [alias] make sense for this, or would you like to assign someone else?"
+
+5. **Record the result** in the task entry as `Suggested delegate: [alias]` (confirmed at schedule time).
+
 ## Step 5: Save confirmed assignments
 
 After user confirms (or adjusts), update TASKS.md:
@@ -52,6 +81,7 @@ After user confirms (or adjusts), update TASKS.md:
 2. Move it to the correct quadrant section
 3. Preserve all original task fields
 4. Add the quadrant label and recommended action to the task record
+5. For Q3: add `Suggested delegate: [alias]` (or `Delegate to: [not yet assigned — see stakeholders.yaml]` if no graph)
 
 Confirm: "Prioritization complete. Run /schedule to assign dates and block time."
 
@@ -59,3 +89,4 @@ Confirm: "Prioritization complete. Run /schedule to assign dates and block time.
 
 - If a task is ambiguous (could be Q1 or Q2), default to Q2 and flag it: "I've placed this in Q2 but flag it if it's more urgent than I think."
 - If the user says "just do them all as Q1" — gently push back: "Happy to mark all as Q1, but that may defeat the purpose. Want to talk through a couple of them first?"
+- If a Q3 task description signals it requires the user's personal authority, flag it for reclassification to Q1 before proceeding (see Step 3 Authority flag).

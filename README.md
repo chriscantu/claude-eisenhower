@@ -16,6 +16,7 @@ INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 | 2. Prioritize | `/prioritize` | Classify tasks into Q1–Q4 using the Eisenhower matrix |
 | 3. Schedule | `/schedule` | Assign dates and actions by quadrant |
 | 4. Execute | `/execute` | Mark done, log progress, delegate, or create follow-ups |
+| — | `/delegate [task]` | Suggest the best delegate from your stakeholder graph using weighted matching |
 
 ---
 
@@ -45,6 +46,23 @@ INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 
 - **`SessionStart`** — Automatically reads TASKS.md at session start and shows a brief summary: how many tasks are in each quadrant. Keeps you oriented without asking.
 
+### Delegation Engine
+
+When you run `/execute delegate [task]` or ask Claude to suggest a delegate, the plugin:
+
+1. Reads your local `integrations/config/stakeholders.yaml` (gitignored — never committed)
+2. Scores each stakeholder using a weighted algorithm:
+   - **Domain match** — +3 per overlapping domain keyword
+   - **Relationship** — direct_report +2, peer +1, vendor/partner ±0
+   - **Capacity** — high +2, medium +1, low −1
+3. Returns the top candidate (and any runner-up within 2 points of the top score)
+4. Flags low-capacity delegates with a warning
+5. Detects authority language in task descriptions and adds a flag
+
+Your stakeholder graph lives in `integrations/config/stakeholders.yaml`. Copy `stakeholders.yaml.example` to get started — it uses `FIRST_LAST` placeholders so no real data is ever committed.
+
+**Run regression tests**: `cd scripts && npm test` — 24 tests covering all delegation scenarios.
+
 ---
 
 ## Setup
@@ -60,6 +78,7 @@ cd integrations/config/
 cp calendar-config.md.example   calendar-config.md
 cp email-config.md.example      email-config.md
 cp task-output-config.md.example task-output-config.md
+cp stakeholders.yaml.example      stakeholders.yaml
 ```
 
 Then edit each file:
@@ -69,6 +88,7 @@ Then edit each file:
 | `calendar-config.md` | `calendar_name` — exact name of your Mac Calendar |
 | `email-config.md` | `account_name` — your mail account; `inbox_name` — usually `INBOX` |
 | `task-output-config.md` | `list_name` — your Reminders list name (created automatically if missing) |
+| `stakeholders.yaml` | Your team — alias, role, domains, relationship, capacity_signal |
 
 These files are gitignored and never committed — they stay local to your machine.
 
