@@ -1,26 +1,81 @@
 ---
 
-## Level 3 Phase 2+3 Results Ñ 2026-02-20
+## Level 3 Final Results -- TEST-DEL-100, 201, 202 -- 2026-02-20
+
+### TEST-DEL-100: Full 9-step end-to-end chain
+
+| Step | Action | Status |
+|------|--------|--------|
+| 1 | /intake -- task added to Unprocessed | PASS |
+| 2-3 | /prioritize -- Q3 classified, Alex R. suggested (score 6, observability match) | PASS |
+| 4 | /schedule -- delegate confirmed, check-in date set, Reminder pushed, Synced written | PASS |
+| 5 | Simulate check-in date passing (backdated to 2026-02-19) | PASS |
+| 6 | /schedule Step 1b -- overdue delegation surfaced before main schedule | PASS |
+| 7 | /execute Log Progress -- follow-up task auto-created in Unprocessed (correct title/source) | PASS |
+| 8 | /execute on follow-up -- marked done, moved to Completed | PASS |
+| 9a | Original task in Completed with Done field | PASS |
+| 9b | glossary.md resolved: Resolved - 2026-02-20 | PASS |
+| 9c | alex-rivera.md resolved: Resolved - 2026-02-20 | PASS |
+| PII | No full names in Q3 section of TASKS.md | PASS |
+
+All 11 checks passed.
+
+---
+
+### TEST-DEL-201: Only .example committed, real file absent from git index
+
+| Check | Result |
+|-------|--------|
+| git ls-files shows stakeholders.yaml.example | PASS |
+| git ls-files does NOT show stakeholders.yaml | PASS |
+| Real stakeholders.yaml exists locally (gitignored silently) | PASS |
+| memory/ directory gitignored -- glossary.md not in index | PASS |
+
+---
+
+### TEST-DEL-202: TASKS.md uses alias not full name
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| No stakeholder full names in TASKS.md | PASS (after fix) | 3 instances found and fixed |
+| memory/glossary.md gitignored (full names allowed there) | PASS | |
+
+Bug found and fixed: Three full names present in TASKS.md --
+Requester: Alex Rivera (Eng Lead), Requester: Jordan Kim (Staff Eng),
+and Action: Delegated to Alex Rivera. Root cause: intake captures the
+Requester field verbatim from the source, and schedule wrote the full
+name into the Action field during the first delegation run.
+
+Fix applied: Replaced all three with aliases in TASKS.md.
+
+Systemic gap noted for future work: /intake has no instruction to alias
+Requester fields. Full names from Slack/email can leak into TASKS.md via
+the Requester field. Mitigation: add an aliasing step to /intake -- if
+the requester name matches a known stakeholder, substitute the alias.
+
+---
+
+## Level 3 Phase 2+3 Results ï¿½ 2026-02-20
 
 TEST-DEL-020 through TEST-DEL-032 validated against real TASKS.md, memory files, and Mac Reminders.
 
 | Test | Scenario | Status | Notes |
 |------|----------|--------|-------|
-| TEST-DEL-024 | /schedule run twice Ñ no duplicate Reminder or memory entry | ? PASS | Dedup guard anchored to `Synced:` field; both Q3 tasks skipped with 'already confirmed' note |
+| TEST-DEL-024 | /schedule run twice ï¿½ no duplicate Reminder or memory entry | ? PASS | Dedup guard anchored to `Synced:` field; both Q3 tasks skipped with 'already confirmed' note |
 | TEST-DEL-020 | Check-in date written to task record at schedule | ? PASS | `Check-in date:` field backfilled; Step 1b (overdue scan) now has a reliable field to query |
-| TEST-DEL-031 | Mark delegated task done ? memory resolved, no follow-up created | ? PASS | glossary.md + alex-rivera.md both updated to 'Resolved Ñ 2026-02-20'; no duplicate Reminder |
+| TEST-DEL-031 | Mark delegated task done ? memory resolved, no follow-up created | ? PASS | glossary.md + alex-rivera.md both updated to 'Resolved ï¿½ 2026-02-20'; no duplicate Reminder |
 | TEST-DEL-032 | Still in progress past check-in ? follow-up task auto-created | ? PASS | Follow-up appended to Unprocessed with correct title format and Source; memory check-in date updated |
 | TEST-DEL-030 | Overdue check-in surfaces at /schedule Step 1b | ? PASS | Structural: `Check-in date: 2026-02-19` in Q3 (not Completed) confirmed; Step 1b would fire |
 
 **Gaps found and fixed during this test run:**
-- `schedule.md` Step 3b dedup guard was ambiguous ('check memory') Ñ tightened to anchor on `Synced:` field as single source of truth
-- `execute.md` Mark Done had no instruction to resolve memory entries for delegated tasks Ñ added Step 4 delegation close-out
-- `execute.md` Log Progress had no delegation-aware follow-up path Ñ added Step 3 overdue check-in handler with correct title/source format
+- `schedule.md` Step 3b dedup guard was ambiguous ('check memory') ï¿½ tightened to anchor on `Synced:` field as single source of truth
+- `execute.md` Mark Done had no instruction to resolve memory entries for delegated tasks ï¿½ added Step 4 delegation close-out
+- `execute.md` Log Progress had no delegation-aware follow-up path ï¿½ added Step 3 overdue check-in handler with correct title/source format
 
 
 ---
 
-## Level 3 End-to-End Results Ñ 2026-02-20
+## Level 3 End-to-End Results ï¿½ 2026-02-20
 
 Full `/prioritize` ? `/schedule` ? Reminders chain run against real TASKS.md and stakeholders.yaml.
 
@@ -30,10 +85,10 @@ Full `/prioritize` ? `/schedule` ? Reminders chain run against real TASKS.md and
 | Delegation suggestion at /prioritize | CI/CD task ? Alex R. suggested (score 9, CI/CD + observability match) | ? PASS | Correct alias, domain match, capacity shown |
 | Suggested delegate written to TASKS.md | `Suggested delegate: Alex R.` field present in Q3 record | ? PASS | Field format matches spec |
 | Delegate confirmed at /schedule | Alex R. confirmed, check-in date set to Wed Feb 25 | ? PASS | Before Thursday staging deploy deadline |
-| Memory logged Ñ glossary.md | Stakeholder follow-up row added with task, check-in date, status | ? PASS | Both delegations tracked |
-| Memory logged Ñ alex-rivera.md | Profile updated with new delegation row | ? PASS | Existing profile preserved, new row appended |
-| Reminders push Ñ Q1 | PIP reminder created, priority High, due today EOD | ? PASS | Title format correct |
-| Reminders push Ñ Q3 | Check-in reminder: 'Check in: Alex R. re: ...' due Feb 25 | ? PASS | Title prefix and format match spec |
+| Memory logged ï¿½ glossary.md | Stakeholder follow-up row added with task, check-in date, status | ? PASS | Both delegations tracked |
+| Memory logged ï¿½ alex-rivera.md | Profile updated with new delegation row | ? PASS | Existing profile preserved, new row appended |
+| Reminders push ï¿½ Q1 | PIP reminder created, priority High, due today EOD | ? PASS | Title format correct |
+| Reminders push ï¿½ Q3 | Check-in reminder: 'Check in: Alex R. re: ...' due Feb 25 | ? PASS | Title prefix and format match spec |
 | PII check | TASKS.md uses alias 'Alex R.' not full name 'Alex Rivera' | ? PASS | No full names in task record |
 
 **Level 3 verdict: Full chain green.** Authority flag, delegation scoring, TASKS.md write, memory logging, and Reminders push all behaved as specified end-to-end.
