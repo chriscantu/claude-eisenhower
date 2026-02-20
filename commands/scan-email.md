@@ -1,12 +1,18 @@
 ---
-description: Scan Procore/Inbox in Apple Mail for actionable emails and add them to your task board
+description: Scan a configured Apple Mail inbox for actionable emails and add them to your task board
 argument-hint: [optional: category to scan — admin, escalations, surveys, or all]
 allowed-tools: Read, Write, Edit, mcp__Control_your_Mac__osascript
 ---
 
 You are running the SCAN EMAIL phase of the Engineering Task Flow.
 
-This command reads emails from Apple Mail (Procore/Inbox only) using the Mac osascript MCP tool. It is strictly read-only — it never marks emails as read, moves them, or modifies them in any way.
+This command reads emails from a configured Apple Mail account and inbox using the Mac osascript MCP tool. It is strictly read-only — it never marks emails as read, moves them, or modifies them in any way.
+
+**Before doing anything else**, read `integrations/config/email-config.md` to get:
+- `account_name` — the mail account to scan
+- `inbox_name` — the inbox within that account
+
+Use these values everywhere below in place of hardcoded account or mailbox names.
 
 ## Key constraints for osascript calls
 - **Never loop over more than 10 messages in a single osascript call** — larger loops time out
@@ -18,19 +24,19 @@ This command reads emails from Apple Mail (Procore/Inbox only) using the Mac osa
 
 ## Step 1: Read existing tasks for deduplication
 
-Read TASKS.md from the root of the user's mounted workspace folder. Extract any tasks with Source: Email (Procore) and store their subject + received date pairs to avoid adding duplicates.
+Read TASKS.md from the root of the user's mounted workspace folder. Extract any tasks with `Source: Email ({account_name})` and store their subject + received date pairs to avoid adding duplicates.
 
 If TASKS.md does not exist, proceed — it will be created when tasks are saved.
 
-## Step 2: Verify the Procore account and mailbox name
+## Step 2: Verify the configured account and mailbox name
 
-First confirm the account exists and get the exact mailbox name:
+Using the `account_name` from `integrations/config/email-config.md`, confirm the account exists and get the exact mailbox name:
 
 ```applescript
 tell application "Mail"
   set matchingAccounts to {}
   repeat with acct in accounts
-    if name of acct contains "Procore" then
+    if name of acct contains "{account_name}" then
       set end of matchingAccounts to name of acct
     end if
   end repeat
@@ -38,11 +44,11 @@ tell application "Mail"
 end tell
 ```
 
-Then list mailboxes to confirm the exact inbox name (it may be "INBOX" not "Inbox"):
+Then list mailboxes to confirm the exact inbox name (it may differ from `inbox_name` in the config — use whatever the account actually has):
 
 ```applescript
 tell application "Mail"
-  set targetAccount to first account whose name contains "Procore"
+  set targetAccount to first account whose name contains "{account_name}"
   set boxNames to {}
   repeat with mb in mailboxes of targetAccount
     set end of boxNames to name of mb
@@ -51,7 +57,7 @@ tell application "Mail"
 end tell
 ```
 
-If no Procore account is found, inform the user: "I couldn't find a Procore account in Apple Mail. Please check that Apple Mail is open and the Procore account is configured."
+If no matching account is found, inform the user: "I couldn't find an account matching '{account_name}' in Apple Mail. Update `integrations/config/email-config.md` with the correct account name, or check that Apple Mail is open and the account is configured."
 
 ## Step 3: Scan for subjects, senders, and dates — 10 messages at a time
 
@@ -59,8 +65,8 @@ Fetch in batches of 10. Use the exact mailbox name found in Step 2 (e.g., "INBOX
 
 ```applescript
 tell application "Mail"
-  set targetAccount to first account whose name contains "Procore"
-  set targetMailbox to mailbox "INBOX" of targetAccount
+  set targetAccount to first account whose name contains "{account_name}"
+  set targetMailbox to mailbox "{inbox_name}" of targetAccount
   set results to {}
   repeat with i from {START} to {END}
     set msg to message i of targetMailbox
@@ -91,8 +97,8 @@ For each matched email, fetch the body in a single targeted call using its messa
 
 ```applescript
 tell application "Mail"
-  set targetAccount to first account whose name contains "Procore"
-  set targetMailbox to mailbox "INBOX" of targetAccount
+  set targetAccount to first account whose name contains "{account_name}"
+  set targetMailbox to mailbox "{inbox_name}" of targetAccount
   set msg to message {INDEX} of targetMailbox
   set preview to ""
   try
@@ -116,8 +122,10 @@ For each Admin/Compliance match that has a detectable due date, run a fast calen
 Calculate the number of days from today to the due date, then run:
 
 ```applescript
-do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift 'Cantu' {DAYS_AHEAD} summary 2>&1"
+do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
 ```
+
+Where `{calendar_name}` is read from `integrations/config/calendar-config.md`.
 
 Where `{DAYS_AHEAD}` is the integer number of days from today to the due date.
 
@@ -161,7 +169,7 @@ Show all matched tasks before writing anything:
 | 3 | Q1 Pulse Survey           | Survey   | Q3       | Feb 28   | Respond when time allows |
 ```
 
-If no actionable emails were found: "No new actionable emails found in Procore/Inbox. Your task board is up to date."
+If no actionable emails were found: "No new actionable emails found in {account_name}/{inbox_name}. Your task board is up to date."
 
 If any emails could not be confidently categorized, list them separately: "These emails didn't match a clear category — review manually if needed:" followed by subject and sender.
 
@@ -181,7 +189,7 @@ Standard intake record format:
 [ INTAKE — {today's date} | Email scan ]
 Title:       {title}
 Description: {description}
-Source:      Email (Procore)
+Source:      Email ({account_name})
 Requester:   {sender name + role}
 Urgency:     {deadline language or "Not specified"}
 Due date:    {due date or "Not specified"}

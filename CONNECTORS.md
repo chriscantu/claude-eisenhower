@@ -18,15 +18,17 @@ directly from that source rather than requiring manual intake.
 | Project tracker | `~~project tracker` | Jira, Asana, Linear, GitHub Issues |
 | Calendar | `~~calendar` | Mac Calendar (via AppleScript), Google Calendar |
 | Source control | `~~source control` | GitHub, GitLab, Bitbucket |
+| Task output | `~~task_output` | Mac Reminders ✅, Asana, Jira, Linear (swappable adapter) |
 
 ## Current Integrations
 
 | Tool | Status | How it works |
 |------|--------|-------------|
 | productivity:memory-management | ✅ Active | Used for stakeholder follow-up tracking |
-| Apple Mail (Procore/Inbox) | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Procore/Inbox only — no other mailboxes touched. |
-| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. |
-| TASKS.md | ✅ Active | Local task board in your workspace folder |
+| Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `integrations/config/email-config.md`. |
+| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `integrations/config/calendar-config.md`. |
+| Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `integrations/config/task-output-config.md` and `integrations/adapters/`. |
+| TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
 
 ## How to Enable Future Integrations
 

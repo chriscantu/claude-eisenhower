@@ -1,0 +1,48 @@
+# Task Output Configuration
+
+Controls where `/schedule` pushes confirmed tasks after saving to TASKS.md.
+Edit this file to switch adapters or change target list/project settings.
+
+---
+
+## Active Adapter
+
+reminders
+
+---
+
+## Adapter Settings
+
+### reminders
+list_name: YOUR_REMINDERS_LIST_NAME
+
+### asana (future)
+workspace_id: ~~asana_workspace
+project_id:   ~~asana_project
+
+### jira (future)
+base_url:    ~~jira_url
+project_key: ~~jira_project
+
+### linear (future)
+team_id:     ~~linear_team
+project_id:  ~~linear_project
+
+---
+
+## How to Set Up
+
+1. Copy this file: `cp task-output-config.md.example task-output-config.md`
+2. Set `list_name` under `### reminders` to the name of your Reminders list.
+   It will be created automatically if it doesn't exist.
+3. The actual `task-output-config.md` is gitignored — never committed.
+
+## How to Switch Adapters
+
+1. Install the MCP connector for the new system via Cowork plugin settings
+2. Create `integrations/adapters/[system].md` following the interface in `adapters/README.md`
+3. Change `Active Adapter` above to the new adapter name (e.g., `asana`)
+4. Fill in the adapter-specific settings under the matching `### [system]` block
+5. No changes needed to `commands/schedule.md` or any skill files
+
+See `integrations/adapters/README.md` for the full adapter contract.

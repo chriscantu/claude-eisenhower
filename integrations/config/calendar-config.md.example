@@ -1,0 +1,41 @@
+# Calendar Configuration
+
+Controls which Mac Calendar is queried for availability checks during
+`/schedule` and `/scan-email`. Read-only — this plugin never creates,
+modifies, or deletes calendar events.
+
+---
+
+## Settings
+
+calendar_name: YOUR_CALENDAR_NAME
+
+---
+
+## How It's Used
+
+The `calendar_name` value is passed to `scripts/cal_query.swift` whenever
+availability is checked:
+
+```applescript
+do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '" & calendar_name & "' {DAYS} {FORMAT} 2>&1"
+```
+
+Used in:
+- `/schedule` — optional availability check before locking in a Q2 focus block date
+- `/scan-email` Step 6 — escalation logic for Admin/Compliance emails with due dates
+
+## Performance Note
+
+If your calendar has a large number of events (thousands), the Swift EventKit
+script handles this efficiently. **Do NOT use AppleScript's `whose` clause** for
+calendar queries — it is O(n) on total event count and will time out on large
+calendars. The Swift script uses indexed CalendarStore queries and is instant
+regardless of calendar size.
+
+## How to Set Up
+
+1. Copy this file: `cp calendar-config.md.example calendar-config.md`
+2. Set `calendar_name` to the exact name of your calendar as it appears
+   in the Mac Calendar app sidebar (case-sensitive).
+3. The actual `calendar-config.md` is gitignored — never committed.

@@ -1,6 +1,6 @@
-# Email Patterns — Apple Mail (Procore/Inbox)
+# Email Patterns — Apple Mail
 
-Pattern library for `/scan-email`. Used to detect and classify actionable emails from Procore/Inbox into the three action categories. All matching is case-insensitive.
+Pattern library for `/scan-email`. Used to detect and classify actionable emails from the configured account/inbox (see `integrations/config/email-config.md`) into the three action categories. All matching is case-insensitive.
 
 ---
 

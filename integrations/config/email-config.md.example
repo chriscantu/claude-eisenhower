@@ -1,0 +1,54 @@
+# Email Configuration
+
+Controls which Apple Mail account and inbox `/scan-email` reads from.
+Strictly read-only — this plugin never marks emails as read, moves them,
+or modifies them in any way.
+
+---
+
+## Settings
+
+account_name: YOUR_MAIL_ACCOUNT_NAME
+inbox_name:   INBOX
+
+---
+
+## How It's Used
+
+The `account_name` value is used to locate the mail account in Apple Mail:
+
+```applescript
+tell application "Mail"
+  set targetAccount to first account whose name contains "{account_name}"
+  set targetMailbox to mailbox "{inbox_name}" of targetAccount
+end tell
+```
+
+Used in:
+- `/scan-email` — all steps that read email subjects, senders, dates, and body previews
+
+## Settings Reference
+
+**account_name** — The name of the mail account in Apple Mail, or a unique
+substring of it. The scan uses `contains` matching, so "Acme" will match
+an account named "Acme (you@acme.com)".
+
+**inbox_name** — The exact mailbox name inside that account. Common values:
+- `INBOX` (most accounts)
+- `Inbox` (some accounts use title case)
+
+To confirm the exact inbox name: run `/scan-email` and Claude will
+auto-detect it in Step 2, or check Apple Mail → [Account] → inbox label.
+
+## Scope Restriction
+
+Only the configured account and inbox are ever read. No other mailboxes,
+accounts, sent mail, or folders are accessed.
+
+## How to Set Up
+
+1. Copy this file: `cp email-config.md.example email-config.md`
+2. Set `account_name` to a unique substring of your mail account name
+   as it appears in Apple Mail.
+3. Set `inbox_name` to the exact inbox label (usually `INBOX`).
+4. The actual `email-config.md` is gitignored — never committed.

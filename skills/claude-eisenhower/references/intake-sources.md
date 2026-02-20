@@ -4,9 +4,9 @@ How to handle tasks arriving from different sources. The goal is consistent capt
 
 ## Source Types and Extraction Rules
 
-### Email — Apple Mail (Procore/Inbox)
+### Email — Apple Mail (configured account/inbox)
 **Integration**: Active via Apple Mail using osascript. Scanned with `/scan-email`. Read-only — never affects read status or moves messages.
-**Mailbox**: Procore/Inbox only. No other mailboxes are read.
+**Mailbox**: Configured account and inbox only — see `integrations/config/email-config.md`. No other mailboxes are read.
 
 Extract:
 - Sender name and role (from signature or context)
@@ -14,7 +14,7 @@ Extract:
 - Any explicit deadlines ("by EOD Friday", "before the board meeting")
 - Action requested (reply, review, approve, attend, complete, certify)
 
-**Procore Action Categories** — three patterns that require Cantu's action:
+**Email Action Categories** — three patterns that require action from the user:
 
 **1. Admin / Compliance**
 Sender signals: HR, Legal, Procurement, Compliance, People Ops
@@ -61,17 +61,31 @@ Extract:
 
 Use the /intake command immediately after a meeting to capture while fresh.
 
-### ~~Project Tracker (Jira, Asana, Linear, etc.)
+### ~~Project Tracker (Jira, Asana, Linear, etc.) — Intake
 Extract:
 - Ticket ID and title
 - Priority as set by the requester (treat as urgency signal, not final priority)
 - Assigned due date
 - Reporter and assignee
 
-Future integration: ~~project tracker
+Future integration: ~~project tracker (intake direction — read tickets into TASKS.md)
+
+### Mac Reminders / Task Output (`~~task_output`) — Output
+**Integration**: Active via AppleScript (osascript). Write-only — triggered at end of `/schedule`. Never reads, modifies, or deletes existing reminders.
+**Target**: "Eisenhower List" in Mac Reminders (auto-created if missing)
+**Adapter pattern**: Swappable — see `integrations/adapters/` to replace with Asana, Jira, or Linear without changing command logic.
+
+Pushes:
+- Q1 tasks → due date today, priority High
+- Q2 tasks → due date = confirmed focus block date, priority Medium
+- Q3 tasks → title prefixed "Check in: [delegate] re: [task]", due date 3–5 business days out, priority Medium
+- Q4 tasks → never pushed
+
+Does not push back into TASKS.md — TASKS.md is always the source of truth. Adds a `Synced:` field to each task record to confirm push status.
 
 ### Mac Calendar
 **Integration**: Active via osascript (macOS Calendar app). Read-only — used for availability checks during `/schedule` and `/scan-email`. Never creates, modifies, or deletes calendar events.
+**Calendar name**: Configured in `integrations/config/calendar-config.md`.
 
 Extract:
 - Meeting title and attendees (who to follow up with)
