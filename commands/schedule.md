@@ -68,7 +68,50 @@ After the user confirms:
 - For Q3: add `Delegate to: [name]`
 - For Q4 cuts: move to `## Completed` with `Eliminated — Q4 cut [date]`
 
-## Step 6: Log Q3 stakeholders
+## Step 6: Push to task output adapter
+
+After TASKS.md is saved, push confirmed tasks to the active external task manager.
+
+**Read the active adapter** from `integrations/config/task-output-config.md`. If the adapter is still set to `~~task_output` (not configured), skip this step silently — the schedule is complete.
+
+**For each confirmed task (Q1, Q2, Q3 only — never Q4):**
+
+Prepare a `task_output_record`:
+- `title` — task title as-is for Q1/Q2; for Q3 prefix as: `"Check in: [delegate] re: [original title]"`
+- `description` — full task description plus Source and Requester if known
+- `due_date` — Q1: today (YYYY-MM-DD); Q2: confirmed focus block date; Q3: 3–5 business days from today (pick the midpoint, day 4, unless that's a weekend — then use day 3); Q4: never pushed
+- `priority` — Q1: `high`; Q2/Q3: `medium`
+- `quadrant` — Q1 | Q2 | Q3
+- `source` — from the task record
+- `requester` — from the task record (null if not known)
+- `list_name` — value of `list_name` from the adapter's settings block
+
+Call `scripts/push_reminder.applescript` via osascript for the reminders adapter (see `integrations/adapters/reminders.md` for full field mapping and error handling).
+
+**Collect all results** — do not surface errors mid-flow. Process all tasks first.
+
+**Show a push summary after all pushes complete:**
+
+```
+Task output: [N] pushed to Reminders (Eisenhower List)
+  ✓ Fix deploy pipeline issue               → Q1, Due: 2026-02-19
+  ✓ Draft Q1 roadmap                        → Q2, Due: 2026-02-25
+  ✓ Check in: Sarah re: Review onboarding PR → Q3, Due: 2026-02-24
+  - Update old wiki page                    → Q4, not pushed
+```
+
+**If any push failed**, append all errors after the summary:
+```
+⚠ 1 task could not be pushed:
+  • "Fix deploy pipeline issue" — list not found. Check integrations/config/task-output-config.md.
+```
+
+**Update each task record in TASKS.md** with a `Synced:` field:
+- Success: `Synced: Reminders (Eisenhower List) — [today's date]`
+- Skipped: `Synced: skipped (already exists)`
+- Failed:  `Synced: failed — [reason]`
+
+## Step 7: Log Q3 stakeholders
 
 For every Q3 task with a named delegate, log to productivity:memory-management:
 - Stakeholder name and role
@@ -79,12 +122,20 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 
 ## Calendar integration (if mentioned)
 
-If the user asks to block time or mentions Mac Calendar, use the fast EventKit-based calendar query to check availability before locking in a Q2 date:
+If the user asks to block time or mentions Mac Calendar, check availability
+before locking in a Q2 date.
+
+First read `calendar_name` from `integrations/config/calendar-config.md`,
+then run:
 
 ```applescript
-do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift 'Cantu' {DAYS_AHEAD} summary 2>&1"
+do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
 ```
 
-This returns business day availability instantly, even on large calendars (7000+ events). Do NOT use AppleScript's `whose` clause for calendar queries — it times out on the Cantu calendar.
+This returns business day availability instantly regardless of calendar size.
+Do NOT use AppleScript's `whose` clause — it times out on large calendars.
+
+Also read `integrations/config/task-output-config.md` for the active adapter
+and list name used in Step 6.
 
 Offer: "Want me to check your calendar before committing to that day?"
