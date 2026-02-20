@@ -68,10 +68,11 @@ For every Q3 task being scheduled:
    - If the record has `Delegate to: [not yet assigned — see stakeholders.yaml]`:
      Ask: "Who should own this? Check your stakeholder graph or name someone."
 
-   - If the record already has `Delegate to: [alias]` (confirmed in a prior session):
-     Check whether a memory entry already exists for this delegation.
-     - If yes: note "Delegation already confirmed — check-in entry exists" in the summary. Do not create a duplicate memory entry.
-     - If no: proceed to create the memory entry as below.
+   - If the record already has `Delegate to: [alias]` AND `Synced:` is present (confirmed in a prior session):
+     **Skip this task entirely in the schedule flow.** Note in the summary: "Delegation already confirmed — check-in entry exists." Do NOT re-ask for confirmation, do NOT create a duplicate memory entry, do NOT push another Reminder.
+
+   - If the record has `Delegate to: [alias]` but NO `Synced:` field:
+     The delegate was confirmed but the Reminders push or memory log failed previously. Proceed to create the memory entry and push to Reminders. Skip the confirmation question — delegate is already chosen.
 
 2. **After user confirms or names a delegate**:
    - If the user overrides the suggested delegate: update the task record and note: "Delegate changed from [original alias] to [new alias] at schedule"
@@ -156,7 +157,7 @@ For every Q3 task with a confirmed delegate that does NOT already have a memory 
 - What was delegated and the expected outcome
 - Check-in date
 
-**Deduplication guard**: Before creating a memory entry, check whether an entry for this alias + task title combination already exists. If yes, skip creation and note "check-in entry already exists" in the summary.
+**Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
 
 Confirm to the user: "Schedule saved. Run /execute as you complete work — or /intake to capture anything new that comes in."
 

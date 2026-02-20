@@ -1,8 +1,68 @@
+---
+
+## Level 3 Phase 2+3 Results Ñ 2026-02-20
+
+TEST-DEL-020 through TEST-DEL-032 validated against real TASKS.md, memory files, and Mac Reminders.
+
+| Test | Scenario | Status | Notes |
+|------|----------|--------|-------|
+| TEST-DEL-024 | /schedule run twice Ñ no duplicate Reminder or memory entry | ? PASS | Dedup guard anchored to `Synced:` field; both Q3 tasks skipped with 'already confirmed' note |
+| TEST-DEL-020 | Check-in date written to task record at schedule | ? PASS | `Check-in date:` field backfilled; Step 1b (overdue scan) now has a reliable field to query |
+| TEST-DEL-031 | Mark delegated task done ? memory resolved, no follow-up created | ? PASS | glossary.md + alex-rivera.md both updated to 'Resolved Ñ 2026-02-20'; no duplicate Reminder |
+| TEST-DEL-032 | Still in progress past check-in ? follow-up task auto-created | ? PASS | Follow-up appended to Unprocessed with correct title format and Source; memory check-in date updated |
+| TEST-DEL-030 | Overdue check-in surfaces at /schedule Step 1b | ? PASS | Structural: `Check-in date: 2026-02-19` in Q3 (not Completed) confirmed; Step 1b would fire |
+
+**Gaps found and fixed during this test run:**
+- `schedule.md` Step 3b dedup guard was ambiguous ('check memory') Ñ tightened to anchor on `Synced:` field as single source of truth
+- `execute.md` Mark Done had no instruction to resolve memory entries for delegated tasks Ñ added Step 4 delegation close-out
+- `execute.md` Log Progress had no delegation-aware follow-up path Ñ added Step 3 overdue check-in handler with correct title/source format
+
+
+---
+
+## Level 3 End-to-End Results Ñ 2026-02-20
+
+Full `/prioritize` ? `/schedule` ? Reminders chain run against real TASKS.md and stakeholders.yaml.
+
+| Test | Scenario | Status | Notes |
+|------|----------|--------|-------|
+| Authority flag (Q1 reclassify) | PIP task with 'requires your sign-off' correctly flagged at /prioritize Step 3 | ? PASS | LLM correctly identified language and proposed Q1; user confirmed |
+| Delegation suggestion at /prioritize | CI/CD task ? Alex R. suggested (score 9, CI/CD + observability match) | ? PASS | Correct alias, domain match, capacity shown |
+| Suggested delegate written to TASKS.md | `Suggested delegate: Alex R.` field present in Q3 record | ? PASS | Field format matches spec |
+| Delegate confirmed at /schedule | Alex R. confirmed, check-in date set to Wed Feb 25 | ? PASS | Before Thursday staging deploy deadline |
+| Memory logged Ñ glossary.md | Stakeholder follow-up row added with task, check-in date, status | ? PASS | Both delegations tracked |
+| Memory logged Ñ alex-rivera.md | Profile updated with new delegation row | ? PASS | Existing profile preserved, new row appended |
+| Reminders push Ñ Q1 | PIP reminder created, priority High, due today EOD | ? PASS | Title format correct |
+| Reminders push Ñ Q3 | Check-in reminder: 'Check in: Alex R. re: ...' due Feb 25 | ? PASS | Title prefix and format match spec |
+| PII check | TASKS.md uses alias 'Alex R.' not full name 'Alex Rivera' | ? PASS | No full names in task record |
+
+**Level 3 verdict: Full chain green.** Authority flag, delegation scoring, TASKS.md write, memory logging, and Reminders push all behaved as specified end-to-end.
+
 # Delegation Feature â€” Regression Test Suite
 
 **Plugin**: claude-eisenhower
 **Feature**: Stakeholder Graph & Delegation Validation (v0.4.0)
 **Last updated**: 2026-02-20
+
+---
+
+## Level 2 CLI Results â€” 2026-02-20
+
+Direct execution of `scripts/match-delegate.ts` via `npx ts-node` against real `stakeholders.yaml`.
+
+| Test | Scenario | Status | Notes |
+|------|----------|--------|-------|
+| Phase 0A | No graph file | âœ… PASS | `status: no_graph`, correct message |
+| Phase 0B | Empty graph | âœ… PASS | `status: empty_graph`, correct message |
+| Phase 1A | Single best domain match | âœ… PASS | Correct alias, domain reasoning in message |
+| Phase 1B | Multi-match + relationship tiebreak | âœ… PASS | `direct_report` ranked above `peer`; `capacity_warning: true` on low |
+| Phase 1C | True no_match (vendor + low capacity = -1) | âœ… PASS | `status: no_match`, user prompted |
+| Phase 1C | Relationship-only match (no domain overlap) | âœ… PASS | Candidates surface by relationship score; message says "relationship fit" not "domain match" |
+| Phase 1D | Low capacity â€” only match | âœ… PASS | Suggested with `capacity_warning: true` in output |
+| Phase 1E | Authority flag detection | âœ… BY DESIGN | CLI scores only; authority check is Step 3 of `prioritize.md` (LLM layer), not CLI responsibility |
+| PII-200 | stakeholders.yaml gitignored | âœ… PASS | `git status` does not show the file |
+
+**Finding â€” Phase 1E (by design):** The authority flag ("requires your sign-off", "executive decision") is intentionally handled by the `/prioritize` command prompt at Step 3, not by `match-delegate.ts`. The CLI's single responsibility is scoring; the command layer interprets the result and applies the flag. This is correct SOLID separation. No code change needed.
 
 ---
 

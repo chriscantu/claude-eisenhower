@@ -30,13 +30,34 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 1. Move the task from its current quadrant to `## Completed`
 2. Add `Done: [today's date]` to the task record
 3. Remove the checkbox marker `[ ]` and replace with `[x]`
-4. If a stakeholder was waiting on this, remind: "Was [requester/delegate] expecting a notification when this was done?"
-5. Offer to log a stakeholder update via the productivity:memory-management skill
+4. **If the task has `Delegate to: [alias]`** (it was a delegated Q3 task):
+   - Update `memory/glossary.md` Stakeholder Follow-ups table: set the Status for this alias + task title row to `Resolved — [today's date]`
+   - Update `memory/people/[alias-filename].md` delegation log row for this task to `Resolved — [today's date]`
+   - Do NOT create a new Reminder or follow-up task
+   - Confirm: "Delegation closed — [alias]'s entry marked resolved."
+5. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
+6. Offer to log a stakeholder update via the productivity:memory-management skill
 
 ### Log Progress
 1. Find the task in the board
 2. Append a progress note: `Progress [date]: [user's update]`
-3. Ask: "Any blockers? Should we adjust the due date?"
+3. **If the task has `Delegate to: [alias]` AND the check-in date has passed**:
+   - Treat "still in progress" as a missed check-in
+   - Append to `## Unprocessed` in TASKS.md:
+     ```
+     [ INTAKE — [today's date] ]
+     Title:       Follow up: [original task title] with [alias]
+     Description: Delegation follow-up — [alias] reported still in progress as of [today's date]. Original check-in was [check-in date].
+     Source:      Delegation follow-up
+     Requester:   [alias]
+     Urgency:     Check-in overdue
+     Due date:    Not specified
+     Status:      Unprocessed
+     ```
+   - Update `memory/glossary.md` Stakeholder Follow-ups: change the check-in date for this row to [today's date + 2 business days]
+   - Update `memory/people/[alias-filename].md` delegation log: add progress note and new check-in date
+   - Confirm: "Follow-up task created for [alias]. New check-in date: [date]."
+4. Otherwise ask: "Any blockers? Should we adjust the due date?"
 
 ### Create Follow-Up
 1. Create a new task record linked to the original:
