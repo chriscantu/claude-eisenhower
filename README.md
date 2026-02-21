@@ -1,161 +1,148 @@
 # claude-eisenhower
 
-A 4-phase task management workflow for Directors of Engineering. Captures tasks from any source, prioritizes them using the Eisenhower matrix, schedules them against your calendar, and tracks execution with stakeholder follow-up.
+**Stop losing track of what matters.** claude-eisenhower is a task management plugin for engineering leaders that captures work from anywhere, cuts through the noise using the Eisenhower matrix, and helps you delegate intelligently — without leaving your flow.
 
 ---
 
-## The Workflow
+## What it does
+
+Most task systems make you do the organizing. This one does it for you.
+
+You describe what landed in your lap — a Slack message, an email, a meeting action item — and claude-eisenhower captures it, classifies it into one of four quadrants (do now, schedule, delegate, or cut), schedules it against your real calendar, and tracks it to completion. When you're ready to delegate, a weighted scoring engine finds the right person from your team based on domain expertise, capacity, and relationship.
+
+Everything stays local. Your task board, stakeholder graph, and calendar data never leave your machine.
+
+---
+
+## The four phases
 
 ```
 INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 ```
 
-| Phase | Command | What it does |
+| Phase | Command | What happens |
 |-------|---------|-------------|
-| 1. Intake | `/intake` | Capture any task in natural language, regardless of source |
-| 2. Prioritize | `/prioritize` | Classify tasks into Q1–Q4 using the Eisenhower matrix |
-| 3. Schedule | `/schedule` | Assign dates and actions by quadrant |
-| 4. Execute | `/execute` | Mark done, log progress, delegate, or create follow-ups |
-| — | `/delegate [task]` | Suggest the best delegate from your stakeholder graph using weighted matching |
+| **Capture** | `/intake` | Describe any task in natural language — Claude extracts the title, source, requester, and urgency automatically |
+| **Classify** | `/prioritize` | Each task gets sorted into Q1–Q4 with reasoning shown before anything is saved |
+| **Schedule** | `/schedule` | Dates and actions assigned by quadrant: Q1 lands today, Q2 gets a focus block, Q3 goes to your best delegate, Q4 gets cut |
+| **Close out** | `/execute` | Mark done, log progress, delegate, or spin up a follow-up — delegation history tracked automatically |
+
+Plus `/scan-email` to pull actionable items directly from Apple Mail, and `/delegate` to find the right person for any task on demand.
 
 ---
 
-## Components
+## Delegation that actually works
 
-### Commands (5)
+When a task needs to go to someone else, claude-eisenhower scores your entire stakeholder graph and surfaces the best match — not just who's available, but who's right for the work.
 
-- **`/intake [describe task]`** — Capture a new task in free-form natural language. Extracts title, source, requester, and urgency automatically. Appends to TASKS.md.
-- **`/prioritize [optional: task or all]`** — Runs Eisenhower matrix on unprocessed tasks. Shows reasoning before saving. Reclassify Q1–Q4 if needed.
-- **`/schedule [optional: quadrant or task]`** — Assigns dates by quadrant rules. Q1 = today, Q2 = specific future date with focus block, Q3 = delegate + check-in, Q4 = defer or eliminate.
-- **`/execute [task + action]`** — Mark done, log progress, create follow-ups, or delegate. Prompts stakeholder logging when relevant.
-- **`/scan-email [optional: admin | escalations | surveys | all]`** — Reads Apple Mail (configured account/inbox) for actionable emails. Read-only — never affects read status or moves messages. Classifies into Q1–Q3 using your Eisenhower rules and Mac Calendar availability. Presents a confirmation table before writing anything to TASKS.md.
+**Scoring factors:**
+- **Domain match** — does this person's area of expertise overlap with the task? (+3 per match)
+- **Relationship** — direct reports score higher than peers; vendors score neutral
+- **Capacity** — people you've marked as overloaded get a penalty; high-capacity teammates get a boost
 
-### Skill (1)
+The top candidate is shown with reasoning. If someone else is close, they're surfaced too. Low-capacity delegates get a warning. Tasks that require your sign-off get flagged before delegation is suggested.
 
-- **`claude-eisenhower`** — Core domain knowledge: Eisenhower matrix rules, intake source handling, scheduling logic, delegation framework, and stakeholder memory patterns. Includes four reference files:
-  - `references/eisenhower.md` — detailed quadrant rules with edge cases
-  - `references/intake-sources.md` — source-specific extraction rules including Apple Mail (configured account)
-  - `references/delegation-guide.md` — when and how to delegate
-  - `references/email-patterns.md` — sender/subject/body pattern library for the three email action categories
+Your stakeholder graph lives in `integrations/config/stakeholders.yaml` — a local, gitignored file you fill in once and update as your team changes.
 
-### Agent (1)
-
-- **`task-prioritizer`** — Autonomous batch triage agent. Use it when you have many tasks to sort at once, or want a fast weekly priority sweep. Analyzes the full board and presents a ranked view for confirmation.
-
-### Hooks (1)
-
-- **`SessionStart`** — Automatically reads TASKS.md at session start and shows a brief summary: how many tasks are in each quadrant. Keeps you oriented without asking.
-
-### Delegation Engine
-
-When you run `/execute delegate [task]` or ask Claude to suggest a delegate, the plugin:
-
-1. Reads your local `integrations/config/stakeholders.yaml` (gitignored — never committed)
-2. Scores each stakeholder using a weighted algorithm:
-   - **Domain match** — +3 per overlapping domain keyword
-   - **Relationship** — direct_report +2, peer +1, vendor/partner ±0
-   - **Capacity** — high +2, medium +1, low −1
-3. Returns the top candidate (and any runner-up within 2 points of the top score)
-4. Flags low-capacity delegates with a warning
-5. Detects authority language in task descriptions and adds a flag
-
-Your stakeholder graph lives in `integrations/config/stakeholders.yaml`. Copy `stakeholders.yaml.example` to get started — it uses `FIRST_LAST` placeholders so no real data is ever committed.
-
-**Run regression tests**: `cd scripts && npm test` — 24 tests covering all delegation scenarios.
+**Alias resolution** — you can reference teammates the way you actually talk about them. If your team calls someone by their last name, initials, or a nickname, add those as lookup terms in their alias list. `/intake` will automatically normalize requester names before writing to your task board.
 
 ---
 
-## Setup
+## Getting started
 
-### 1. Configure your integrations
-
-Config files live in `integrations/config/`. Each integration has a tracked
-`.example` template and a gitignored actual file you create locally.
+### 1. Copy the config templates
 
 ```bash
 cd integrations/config/
 
-cp calendar-config.md.example   calendar-config.md
-cp email-config.md.example      email-config.md
+cp calendar-config.md.example    calendar-config.md
+cp email-config.md.example       email-config.md
 cp task-output-config.md.example task-output-config.md
-cp stakeholders.yaml.example      stakeholders.yaml
+cp stakeholders.yaml.example     stakeholders.yaml
 ```
 
-Then edit each file:
+### 2. Fill in your values
 
 | File | What to set |
 |------|-------------|
-| `calendar-config.md` | `calendar_name` — exact name of your Mac Calendar |
-| `email-config.md` | `account_name` — your mail account; `inbox_name` — usually `INBOX` |
-| `task-output-config.md` | `list_name` — your Reminders list name (created automatically if missing) |
-| `stakeholders.yaml` | Your team — alias, role, domains, relationship, capacity_signal |
+| `calendar-config.md` | The exact name of your Mac Calendar |
+| `email-config.md` | Your mail account name and inbox folder |
+| `task-output-config.md` | Your Mac Reminders list name |
+| `stakeholders.yaml` | Your team — names, roles, domains, capacity |
 
-These files are gitignored and never committed — they stay local to your machine.
+These files are gitignored and never committed. They stay on your machine.
 
-### 2. Task board
+### 3. Start capturing
 
-**Location**: `TASKS.md` in your selected workspace folder (created automatically on first `/intake`). Also gitignored.
-
-### 3. Stakeholder memory
-
-This plugin integrates with the `productivity:memory-management` plugin (install separately if not already active). Used by `/schedule` and `/execute` to track delegation and follow-up commitments.
+Your task board (`TASKS.md`) is created automatically the first time you run `/intake`. From there, the workflow guides itself.
 
 ---
 
-## Usage Examples
+## Day-to-day usage
 
 ```
-# Log a task from Slack
-/intake Product manager just DMed me asking for a feature timeline by Thursday
+# Something just came in from Slack
+/intake Product manager needs a feature timeline by Thursday
 
-# Log a meeting action item
-/intake Post-mortem report for the deploy incident — CEO wants it before next board meeting
+# Post-mortem from this morning's incident
+/intake CEO wants a deploy post-mortem before the board meeting
 
-# Triage your backlog
+# Triage everything that's piled up
 /prioritize
 
-# Schedule Q2 work for the week
+# Schedule this week's Q2 work
 /schedule Q2
 
-# Mark a task done
+# Mark something done
 /execute done Feature timeline sent to product
 
-# Delegate and log the stakeholder
-/execute delegate Incident post-mortem to Sarah (Eng Lead)
+# Hand off a task and log it
+/execute delegate Incident post-mortem to Jordan (Eng Lead)
 
-# Batch triage when overwhelmed
-[type naturally: "I have 6 things piling up, help me triage"]
-→ task-prioritizer agent activates automatically
+# Find the best person for a specific task
+/delegate Review API contract for new vendor integration
 
-# Scan configured inbox for actionable emails
+# Overwhelmed? Let the agent triage for you
+"I have 6 things piling up, help me sort them out"
+→ task-prioritizer agent runs automatically
+
+# Check your inbox for actionable emails
 /scan-email
 
-# Scan only compliance/training emails
+# Only pull compliance and training emails
 /scan-email admin
 ```
 
 ---
 
-## Active Integrations
+## Integrations
 
-- **Apple Mail** — `/scan-email` reads your configured inbox and auto-classifies actionable emails into Q1–Q3. Read-only. Configure account and inbox in `integrations/config/email-config.md`.
-- **Mac Calendar** — used by `/schedule` and `/scan-email` to check availability and calculate real working days for Q2→Q1 escalation. Configure calendar name in `integrations/config/calendar-config.md`.
-- **Mac Reminders** — `/schedule` automatically pushes confirmed Q1, Q2, and Q3 tasks to Mac Reminders after saving to TASKS.md. Q3 tasks are pushed as check-in reminders ("Check in: [delegate] re: [task]") with a due date 3–5 business days out. Write-only, non-blocking. Powered by a swappable adapter — see `integrations/adapters/` to switch to Asana, Jira, or Linear when ready. Configure list name in `integrations/config/task-output-config.md`.
+| Integration | What it does | Config file |
+|-------------|-------------|-------------|
+| **Mac Calendar** | Checks real availability before scheduling; calculates working days for escalation | `calendar-config.md` |
+| **Apple Mail** | `/scan-email` reads your inbox and classifies emails into Q1–Q3. Read-only — never marks messages read or moves them | `email-config.md` |
+| **Mac Reminders** | After `/schedule` confirms a plan, tasks are pushed to Reminders automatically. Q3 tasks appear as check-in reminders with a delegate and due date | `task-output-config.md` |
 
-## Future Integrations
-
-This plugin is designed to grow. See `CONNECTORS.md` for planned integrations:
-- **Slack / Chat** — capture tasks from DMs and channel mentions
-- **Jira / Asana / Linear** — replace the Mac Reminders adapter in `integrations/adapters/` to push tasks directly to your team's tracker
-- **Source Control** (GitHub / GitLab) — capture PR review requests and issues
-
-Use the `cowork-plugin-customizer` skill to activate connectors when they're available.
+The Reminders integration uses a swappable adapter — when you're ready to move to Jira, Asana, or Linear, the adapter handles the switch without changing how the rest of the plugin works. See `integrations/adapters/`.
 
 ---
 
-## Eisenhower Matrix Quick Reference
+## What's coming
+
+- **Slack / Chat capture** — pull tasks directly from DMs and channel mentions instead of copy-pasting
+- **Jira / Asana / Linear** — replace Mac Reminders with your team's tracker
+- **GitHub integration** — capture PR review requests and assigned issues with full context
+- **Weekly review** — one command to start the week: overdue delegations, calendar load, unprocessed tasks, and upcoming check-ins in a single view
+
+See `ROADMAP.md` for the full plan.
+
+---
+
+## Eisenhower matrix
 
 |  | Urgent | Not Urgent |
 |--|--------|-----------|
-| **Important** | Q1: Do now | Q2: Schedule |
-| **Not Important** | Q3: Delegate | Q4: Eliminate |
+| **Important** | **Q1** — Do it now | **Q2** — Schedule a focused block |
+| **Not Important** | **Q3** — Delegate it | **Q4** — Cut it |
+
+The matrix sounds simple. The hard part is applying it consistently under pressure, when everything feels urgent and important. That's what this plugin is for.
