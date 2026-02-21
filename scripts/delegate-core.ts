@@ -12,13 +12,45 @@ export type CapacitySignal = "high" | "medium" | "low";
 
 export interface Stakeholder {
   name: string;
-  alias: string;
+  alias: string | string[];  // string[] preferred: alias[0] = display, rest = lookup terms
   role: string;
   relationship: Relationship;
   domains: string[];
   capacity_signal: CapacitySignal;
   contact_hint?: string;
   notes?: string;
+}
+
+/**
+ * Returns the display alias for a stakeholder.
+ * If alias is an array, the first item is the display name.
+ * If alias is a string (legacy), it is returned as-is.
+ */
+export function getDisplayAlias(s: Stakeholder): string {
+  return Array.isArray(s.alias) ? s.alias[0] : s.alias;
+}
+
+/**
+ * Given a raw name string (from user input, email, or Slack),
+ * returns the display alias of the first matching stakeholder, or null.
+ *
+ * Matching: case-insensitive, exact token match against all alias entries.
+ * Backward compatible: string aliases are treated as single-item arrays.
+ */
+export function resolveAlias(
+  input: string,
+  stakeholders: Stakeholder[]
+): string | null {
+  const normalized = input.trim().toLowerCase();
+  for (const s of stakeholders) {
+    const entries = Array.isArray(s.alias) ? s.alias : [s.alias];
+    for (const entry of entries) {
+      if (entry.trim().toLowerCase() === normalized) {
+        return getDisplayAlias(s);
+      }
+    }
+  }
+  return null;
 }
 
 export interface StakeholderFile {
@@ -73,7 +105,7 @@ export function scoreDelegate(
   score += WEIGHTS.relationship[stakeholder.relationship] ?? 0;
   score += WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
   return {
-    alias: stakeholder.alias,
+    alias: getDisplayAlias(stakeholder),
     role: stakeholder.role,
     relationship: stakeholder.relationship,
     capacity_signal: stakeholder.capacity_signal,

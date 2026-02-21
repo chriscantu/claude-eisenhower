@@ -44,10 +44,8 @@ Full stakeholder graph with weighted scoring, tested end-to-end.
 
 These are scoped and prioritized. The "what" is clear; sequencing is flexible.
 
-### 1. PII Aliasing in `/intake` (Requester field)
-**Why**: TEST-DEL-202 found that full names from Slack/email leak into TASKS.md via the `Requester:` field. The intake command captures verbatim from source with no aliasing step.
-**What**: Add a lookup step to `/intake` — if the requester name matches a known stakeholder alias in `stakeholders.yaml`, substitute the alias before writing to TASKS.md. If no match, write verbatim (can't alias what you don't know).
-**Scope**: One addition to `commands/intake.md`. No script changes needed.
+### ~~1. PII Aliasing in `/intake` (Requester field)~~ ✅ Shipped in v0.5.0
+Expanded in scope to system-wide alias resolution. `alias` is now an array — first item is display name, additional items are lookup terms (last name, nickname, shorthand). `resolveAlias()` and `getDisplayAlias()` added to `delegate-core.ts` as single source of truth. `/intake` resolves requester names against the graph before writing to TASKS.md.
 
 ### 2. `/delegate` as a Direct Entry Point
 **Why**: Currently delegation only runs via `/prioritize` (Q3 classification) or `/execute delegate`. There's no way to ask "who should own this?" outside the full workflow. This is open question #2 from the delegation spec.
@@ -126,3 +124,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.4.1 | DRY refactor (delegate-core.ts), PRINCIPLES.md, self-healing test setup |
 | v0.4.2 | Delegation lifecycle: dedup guard, Mark Done close-out, follow-up auto-creation |
 | v0.4.3 | Full regression validation: TEST-DEL-100/201/202; PII fix in TASKS.md |
+| v0.5.0 | Alias resolution: `alias` array schema, `resolveAlias()`, `/intake` normalization, 35-test suite |

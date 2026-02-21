@@ -2,7 +2,7 @@
 /**
  * match-delegate.ts
  *
- * CLI entry point Ñ reads integrations/config/stakeholders.yaml and scores
+ * CLI entry point ï¿½ reads integrations/config/stakeholders.yaml and scores
  * each delegate against a task title + description.
  *
  * Scoring logic lives in delegate-core.ts (shared with tests).
@@ -12,14 +12,14 @@
  *   npx ts-node scripts/match-delegate.ts "<task title>" "<task description>"
  *
  * Output: JSON to stdout. Claude reads this and formats for the user.
- * Claude never auto-assigns Ñ it always asks for confirmation.
+ * Claude never auto-assigns ï¿½ it always asks for confirmation.
  */
 
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import {
-  Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, runMatch,
+  Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, runMatch, getDisplayAlias,
 } from "./delegate-core";
 
 function findGraphPath(): string {
@@ -42,7 +42,7 @@ function buildMessage(status: MatchResult["status"], candidates: ScoredCandidate
       return "No stakeholder graph found. Copy integrations/config/stakeholders.yaml.example " +
              "to stakeholders.yaml and fill in your delegates.";
     case "empty_graph":
-      return "Stakeholder graph is empty Ñ no delegates configured.";
+      return "Stakeholder graph is empty ï¿½ no delegates configured.";
     case "no_match":
       return "No clear domain match in your stakeholder graph. Who should own this?";
     case "match": {
@@ -50,12 +50,12 @@ function buildMessage(status: MatchResult["status"], candidates: ScoredCandidate
       const domainStr = top.matched_domains.length > 0
         ? `domain match: ${top.matched_domains.join(", ")}`
         : "relationship fit";
-      let msg = `Suggested delegate: ${top.alias} (${top.role}) Ñ ${domainStr}`;
+      let msg = `Suggested delegate: ${top.alias} (${top.role}) ï¿½ ${domainStr}`;
       if (candidates.length > 1) {
         msg += `. Also matched: ${candidates[1].alias} (${candidates[1].role}).`;
       }
       if (top.capacity_warning) {
-        msg += ` Note: ${top.alias} is showing low capacity Ñ confirm availability.`;
+        msg += ` Note: ${top.alias} is showing low capacity ï¿½ confirm availability.`;
       }
       return msg;
     }

@@ -2,7 +2,7 @@
  * delegation.test.ts
  *
  * Runnable Jest regression suite for the delegation validation feature (v0.4.0).
- * Imports all scoring logic from scripts/delegate-core.ts � no duplication.
+ * Imports all scoring logic from scripts/delegate-core.ts � no duplication.
  * Covers all TEST-DEL-0xx scenarios from tests/delegation-regression.md.
  *
  * Run: cd scripts && npm test
@@ -13,7 +13,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import {
   Stakeholder, Relationship, CapacitySignal,
-  scoreDelegate, rankCandidates, runMatch,
+  scoreDelegate, rankCandidates, runMatch, resolveAlias, getDisplayAlias,
 } from "../scripts/delegate-core";
 
 // ?? Fixtures ???????????????????????????????????????????????????????????????
@@ -73,7 +73,7 @@ describe("Phase 0: Stakeholder Graph Initialization", () => {
 
 // ?? Phase 1: Domain matching ???????????????????????????????????????????????
 
-describe("Phase 1: Delegation Suggestion � domain matching", () => {
+describe("Phase 1: Delegation Suggestion � domain matching", () => {
   test("TEST-DEL-010: single best domain match returns correct alias", () => {
     const result = runMatch([infraEngineer, frontendLead, vendorContact],
       "Update infrastructure alerting thresholds for memory usage");
@@ -97,7 +97,7 @@ describe("Phase 1: Delegation Suggestion � domain matching", () => {
 
 // ?? Phase 1: Relationship ranking ?????????????????????????????????????????
 
-describe("Phase 1: Delegation Suggestion � relationship ranking", () => {
+describe("Phase 1: Delegation Suggestion � relationship ranking", () => {
   test("TEST-DEL-011: direct_report ranks above peer on tied domain match", () => {
     const result = runMatch([frontendLead, frontendPeer],
       "Fix mobile nav regression on iOS", "frontend issue");
@@ -105,12 +105,12 @@ describe("Phase 1: Delegation Suggestion � relationship ranking", () => {
     expect(result.candidates[0].alias).toBe("Jordan F.");
   });
   test("TEST-DEL-011b: both candidates surfaced when scores are close", () => {
-    // frontendLead: 3+2+2=7, frontendPeer: 3+1+2=6 � within 2 pts, both surface
+    // frontendLead: 3+2+2=7, frontendPeer: 3+1+2=6 � within 2 pts, both surface
     const result = runMatch([frontendLead, frontendPeer],
       "Refactor frontend component library", "frontend redesign");
     expect(result.candidates.length).toBeGreaterThanOrEqual(2);
   });
-  test("TEST-DEL-011c: tiebreak � direct_report beats peer at equal domain score", () => {
+  test("TEST-DEL-011c: tiebreak � direct_report beats peer at equal domain score", () => {
     const peerSameDomains: Stakeholder = {
       ...frontendPeer, domains: frontendLead.domains, capacity_signal: "high",
     };
@@ -123,7 +123,7 @@ describe("Phase 1: Delegation Suggestion � relationship ranking", () => {
 });
 // ?? Phase 1: No match path ?????????????????????????????????????????????????
 
-describe("Phase 1: Delegation Suggestion � no match path", () => {
+describe("Phase 1: Delegation Suggestion � no match path", () => {
   test("TEST-DEL-012: no domain match returns no_match status", () => {
     const vendorLowCap: Stakeholder = {
       name: "VENDOR_2", alias: "Vendor B", role: "Support Rep",
@@ -141,7 +141,7 @@ describe("Phase 1: Delegation Suggestion � no match path", () => {
   });
 });
 
-describe("Phase 1: Delegation Suggestion � capacity warnings", () => {
+describe("Phase 1: Delegation Suggestion � capacity warnings", () => {
   test("TEST-DEL-013: low capacity delegate is surfaced with warning flag", () => {
     const result = runMatch([lowCapDev], "Review infrastructure setup for new microservice", "");
     expect(result.status).toBe("match");
@@ -163,7 +163,7 @@ describe("Phase 1: Delegation Suggestion � capacity warnings", () => {
 });
 
 describe("Phase 1: Authority flag detection", () => {
-  test("TEST-DEL-014: authority language detection � phrases should not crash match", () => {
+  test("TEST-DEL-014: authority language detection � phrases should not crash match", () => {
     const phrases = [
       "requires your sign-off", "executive decision", "personnel decision",
       "performance improvement plan", "sensitive communication on your behalf",
@@ -196,7 +196,7 @@ describe("Scoring algorithm accuracy", () => {
 });
 
 describe("Ranking stability", () => {
-  test("rankCandidates is stable � same input produces same output", () => {
+  test("rankCandidates is stable � same input produces same output", () => {
     const graph = [infraEngineer, frontendLead, frontendPeer, lowCapDev, vendorContact];
     const scored = graph.map((s) => scoreDelegate(s, "infrastructure CI/CD review", ""));
     expect(rankCandidates([...scored]).map((c) => c.alias))
@@ -212,7 +212,7 @@ describe("Ranking stability", () => {
   });
 });
 
-describe("PII safety � source control checks", () => {
+describe("PII safety � source control checks", () => {
   test("TEST-DEL-200: stakeholders.yaml is listed in .gitignore", () => {
     const content = fs.readFileSync(path.resolve(__dirname, "../.gitignore"), "utf8");
     expect(content).toContain("integrations/config/stakeholders.yaml");
@@ -223,7 +223,8 @@ describe("PII safety � source control checks", () => {
     const parsed = yaml.load(fs.readFileSync(examplePath, "utf8")) as { stakeholders: Stakeholder[] };
     for (const s of parsed.stakeholders) {
       expect(s.name).toMatch(/^[A-Z_0-9]+$/);
-      expect(s.alias.length).toBeLessThan(30);
+      // Use getDisplayAlias() to support both string and array alias formats
+      expect(getDisplayAlias(s).length).toBeLessThan(30);
     }
   });
   test("TEST-DEL-202: match output uses alias, not full name", () => {
@@ -231,5 +232,83 @@ describe("PII safety � source control checks", () => {
     expect(result.status).toBe("match");
     expect(result.candidates[0].alias).not.toBe(infraEngineer.name);
     expect(result.candidates[0]).not.toHaveProperty("name");
+  });
+});
+
+// ── TEST-DEL-203: Alias Resolution (v0.5.0) ──────────────────────────────────
+
+describe("Alias Resolution (TEST-DEL-203)", () => {
+  // Fixtures using array alias format (v0.5.0)
+  const vpProduct: Stakeholder = {
+    name: "JORDAN_VARGAS", alias: ["Jordan V.", "Vargas", "JV"],
+    role: "VP of Product", relationship: "peer",
+    domains: ["roadmap", "product requirements"], capacity_signal: "medium",
+  };
+  const staffEng: Stakeholder = {
+    name: "SARAH_EVANS", alias: ["Sarah E."],
+    role: "Staff Engineer", relationship: "direct_report",
+    domains: ["backend", "architecture"], capacity_signal: "high",
+  };
+  // Backward compat fixture — string alias (legacy format)
+  const legacyStakeholder: Stakeholder = {
+    name: "LEGACY_PERSON", alias: "Alex R.",
+    role: "Senior Engineer", relationship: "direct_report",
+    domains: ["infrastructure"], capacity_signal: "medium",
+  };
+
+  const graph = [vpProduct, staffEng, legacyStakeholder];
+
+  test("TEST-DEL-203-A: resolve by primary alias (first array item)", () => {
+    expect(resolveAlias("Jordan V.", graph)).toBe("Jordan V.");
+  });
+
+  test("TEST-DEL-203-B: resolve by last name shorthand", () => {
+    expect(resolveAlias("Vargas", graph)).toBe("Jordan V.");
+  });
+
+  test("TEST-DEL-203-C: resolve case-insensitive", () => {
+    expect(resolveAlias("vargas", graph)).toBe("Jordan V.");
+    expect(resolveAlias("VARGAS", graph)).toBe("Jordan V.");
+    expect(resolveAlias("jordan v.", graph)).toBe("Jordan V.");
+  });
+
+  test("TEST-DEL-203-D: resolve by initials/abbreviation", () => {
+    expect(resolveAlias("JV", graph)).toBe("Jordan V.");
+    expect(resolveAlias("jv", graph)).toBe("Jordan V.");
+  });
+
+  test("TEST-DEL-203-E: unknown name returns null", () => {
+    expect(resolveAlias("Unknown", graph)).toBeNull();
+    expect(resolveAlias("", graph)).toBeNull();
+  });
+
+  test("TEST-DEL-203-F: backward compat — string alias resolves correctly", () => {
+    expect(resolveAlias("Alex R.", graph)).toBe("Alex R.");
+    expect(resolveAlias("alex r.", graph)).toBe("Alex R.");
+  });
+
+  test("TEST-DEL-203-F2: getDisplayAlias returns string alias unchanged", () => {
+    expect(getDisplayAlias(legacyStakeholder)).toBe("Alex R.");
+  });
+
+  test("TEST-DEL-203-G: getDisplayAlias returns first item of array alias", () => {
+    expect(getDisplayAlias(vpProduct)).toBe("Jordan V.");
+    expect(getDisplayAlias(staffEng)).toBe("Sarah E.");
+  });
+
+  test("TEST-DEL-203-H: resolveAlias with empty stakeholder list returns null", () => {
+    expect(resolveAlias("Vargas", [])).toBeNull();
+  });
+
+  test("TEST-DEL-203-I: scoreDelegate uses display alias (array[0]) in output", () => {
+    const scored = scoreDelegate(vpProduct, "product roadmap review", "");
+    expect(scored.alias).toBe("Jordan V.");
+    expect(scored.alias).not.toBe("Vargas");
+  });
+
+  test("TEST-DEL-203-J: runMatch output uses display alias, not lookup term", () => {
+    const result = runMatch([vpProduct], "roadmap alignment", "product requirements");
+    expect(result.status).toBe("match");
+    expect(result.candidates[0].alias).toBe("Jordan V.");
   });
 });

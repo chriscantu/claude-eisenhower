@@ -10,7 +10,11 @@
 #
 # Fields:
 #   name          — Full name. Stored locally only. Never used in TASKS.md.
-#   alias         — Short label used in TASKS.md and memory entries (e.g., "Sarah E.")
+#   alias         — Array of lookup terms. FIRST ITEM = display name (used in TASKS.md
+#                   and all output). Additional items are alternate names, last names,
+#                   nicknames, or shorthand you use in real conversation.
+#                   Example: ["Jordan V.", "Vargas", "JV"]
+#                   Backward compat: a plain string alias still works.
 #   role          — Job title or working description
 #   relationship  — direct_report | peer | vendor | partner
 #   domains       — List of work areas this person can own. Used for matching.
@@ -23,13 +27,19 @@
 #   Scores: domain match (+3 each), direct_report (+2), peer (+1),
 #           capacity high (+2), medium (+1), low (-1).
 #   Highest scorer is suggested. Ties broken by relationship type.
+#
+# Alias resolution:
+#   When /intake sees "Requested by: Vargas", it resolves to "Jordan V." before
+#   writing to TASKS.md. All alias entries are checked case-insensitively.
 
 stakeholders:
 
   # ── Direct Reports ───────────────────────────────────────────────────────────
 
   - name: FIRST_LAST_1
-    alias: "First L."
+    alias:
+      - "First L."       # display name — appears in TASKS.md and output
+      - "Last1"          # last name shorthand — use whatever you say in meetings
     role: Senior Engineer
     relationship: direct_report
     domains:
@@ -42,7 +52,9 @@ stakeholders:
     notes: Prefers written briefs over verbal asks. Strong async communicator.
 
   - name: FIRST_LAST_2
-    alias: "First L."
+    alias:
+      - "First L."       # display name
+      - "Last2"          # last name shorthand
     role: Staff Engineer
     relationship: direct_report
     domains:
@@ -55,7 +67,9 @@ stakeholders:
     notes: Good at scoping ambiguous problems. Give full context upfront.
 
   - name: FIRST_LAST_3
-    alias: "First L."
+    alias:
+      - "First L."       # display name
+      - "Last3"          # last name shorthand
     role: Engineering Lead
     relationship: direct_report
     domains:
@@ -70,7 +84,9 @@ stakeholders:
   # ── Peers ────────────────────────────────────────────────────────────────────
 
   - name: FIRST_LAST_4
-    alias: "First L."
+    alias:
+      - "First L."       # display name
+      - "Last4"          # last name shorthand
     role: Director of Product
     relationship: peer
     domains:
@@ -83,7 +99,9 @@ stakeholders:
     notes: Best for cross-functional alignment asks. Prefers async over meetings.
 
   - name: FIRST_LAST_5
-    alias: "First L."
+    alias:
+      - "First L."       # display name
+      - "Last5"          # last name shorthand
     role: Director of Engineering (Platform)
     relationship: peer
     domains:
@@ -98,7 +116,8 @@ stakeholders:
   # ── Vendors / External Partners ───────────────────────────────────────────────
 
   - name: VENDOR_CONTACT_1
-    alias: "Vendor A"
+    alias:
+      - "Vendor A"       # display name — single item is fine for vendors
     role: Account Manager
     relationship: vendor
     domains:

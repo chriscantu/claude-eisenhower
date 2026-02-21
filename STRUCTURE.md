@@ -273,3 +273,10 @@ Everything else is committed. `.example` config templates are always committed.
 |         | Removed: 4 misplaced root-level duplicate files                                    |
 |         | Fixed: `tests/node_modules` symlink now gitignored                                |
 |         | Updated: `CLAUDE.md` — references PRINCIPLES.md at session start                  |
+| v0.5.0  | Alias resolution: system-wide stakeholder name lookup                              |
+|         | New: `integrations/specs/alias-resolution-spec.md` — full Gherkin spec            |
+|         | Updated: `scripts/delegate-core.ts` — `alias: string \| string[]`; `getDisplayAlias()`, `resolveAlias()` |
+|         | Updated: `integrations/config/stakeholders.yaml.example` — array alias format     |
+|         | Updated: `commands/intake.md` — requester alias resolution step                   |
+|         | Updated: `scripts/tsconfig.json` — `typeRoots` for ts-jest compatibility          |
+|         | Tests: 35/35 passing (11 new TEST-DEL-203 scenarios)                              |

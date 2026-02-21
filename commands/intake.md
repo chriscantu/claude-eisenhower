@@ -16,7 +16,7 @@ Extract the following fields:
 - **Title**: Short, action-oriented (verb + object). Max 10 words.
 - **Description**: What needs to happen and why. 1–3 sentences.
 - **Source**: Where this came from. Options: Email, Slack, Meeting, Conversation, Calendar, Jira, Asana, Linear, GitHub, Self, Other. Infer from context if not stated.
-- **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated.
+- **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated. See alias resolution step below — resolve to display alias before writing.
 - **Urgency signal**: What was said about timing (quote or paraphrase). If nothing stated, write "Not specified."
 - **Raw due date**: Any date mentioned. If not mentioned, write "Not specified."
 
@@ -34,6 +34,18 @@ Due date:    {raw due date}
 Status:      Unprocessed
 ---
 ```
+
+## Requester Alias Resolution
+
+Before writing the task record, resolve the requester name against the stakeholder graph:
+
+1. Load `integrations/config/stakeholders.yaml` (if it exists).
+2. For the extracted requester name, check each stakeholder's `alias` entries (all items, case-insensitive). The first item in `alias` is the display name; additional items are lookup terms (last name, nickname, shorthand).
+3. **If a match is found**: use the display alias (first item) as the `Requester:` value.
+4. **If no match is found**: write the extracted name verbatim. Do not block or error — not every requester is a known stakeholder.
+5. **If stakeholders.yaml does not exist**: write verbatim. Skip silently.
+
+Example: source says "Vargas asked for this" → alias entries include "Vargas" → write `Requester: Jordan V.`
 
 ## Then:
 
