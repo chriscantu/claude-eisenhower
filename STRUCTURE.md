@@ -200,6 +200,7 @@ Runnable Jest regression suites. Each test file covers one integration or featur
 tests/
   delegation.test.ts           ← 35-test suite for delegation matching + alias resolution
   delegate-entry.test.ts       ← 31-test suite for /delegate entry point (v0.5.1, DEL-5xx)
+  schedule-capacity.test.ts    ← 15-test suite for capacity signal review prompt (v0.5.2, CAP-6xx)
   delegation-regression.md     ← plain-language test descriptions (BDD format)
   node_modules                 ← symlink → ../scripts/node_modules (not committed)
 ```
@@ -289,3 +290,7 @@ Everything else is committed. `.example` config templates are always committed.
 |         | New: `tests/delegate-entry.test.ts` — 31-test Jest suite (DEL-5xx; 66/66 total passing) |
 |         | New: `integrations/specs/delegate-entry-point-spec.md` — full PRD                 |
 |         | Updated: `README.md`, `STRUCTURE.md`, `ROADMAP.md`                                |
+| v0.5.2  | Capacity signal review prompt in `/schedule` Step 1b                               |
+|         | Updated: `commands/schedule.md` — Part B added to Step 1b (advisory, non-blocking) |
+|         | New: `tests/schedule-capacity.test.ts` — 15-test suite (CAP-6xx; 81/81 total passing) |
+|         | Updated: `ROADMAP.md`, `STRUCTURE.md`                                              |

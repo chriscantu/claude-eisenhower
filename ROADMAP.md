@@ -54,10 +54,8 @@ Expanded in scope to system-wide alias resolution. `alias` is now an array — f
 **Spec**: `integrations/specs/delegate-entry-point-spec.md`
 **Version target**: v0.5.1
 
-### 3. Capacity Signal Review Prompt
-**Why**: `capacity_signal` in `stakeholders.yaml` is set manually and goes stale. Open question #3 from the delegation spec.
-**What**: During `/schedule`, if any delegate has had 2+ active delegations for more than 5 business days, surface a prompt: "Alex R. has 2 open delegations — consider reviewing their capacity signal before assigning more." No auto-update; user decides.
-**Scope**: Addition to `commands/schedule.md` Step 1b.
+### ~~3. Capacity Signal Review Prompt~~ ✅ Shipped in v0.5.2
+During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any delegate has 2+ open Q3 tasks with at least one older than 5 business days, surface an advisory prompt before scheduling. No auto-update; user decides whether to adjust `capacity_signal` in `stakeholders.yaml`. Pure detection logic covered by `tests/schedule-capacity.test.ts` (15 tests, TEST-CAP-6xx).
 
 ### 4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)
 **Why**: Levels 1–3 validated the delegation chain behaviorally, but Phase 2–3 tests (TEST-DEL-020–032) are documented as manual/behavioral only. No automated Jest coverage for the command layer.
@@ -127,4 +125,5 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.4.2 | Delegation lifecycle: dedup guard, Mark Done close-out, follow-up auto-creation |
 | v0.4.3 | Full regression validation: TEST-DEL-100/201/202; PII fix in TASKS.md |
 | v0.5.0 | Alias resolution: `alias` array schema, `resolveAlias()`, `/intake` normalization, 35-test suite |
-| v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, Jest test suite *(planned)* |
+| v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, 31-test suite |
+| v0.5.2 | Capacity signal review prompt: `/schedule` Step 1b Part B, 15-test suite (TEST-CAP-6xx) |

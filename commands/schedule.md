@@ -11,9 +11,11 @@ You are running the SCHEDULE phase of the Engineering Task Flow.
 Read TASKS.md from the root of the user's mounted workspace folder.
 If the file does not exist or has no prioritized tasks, inform the user: "No prioritized tasks found. Run /prioritize first."
 
-## Step 1b: Surface overdue delegations
+## Step 1b: Surface overdue delegations and stale capacity signals
 
-Before scheduling, scan TASKS.md for Q3 tasks that have a `Check-in date:` field set to today or earlier and are not yet in the `## Completed` section.
+### Part A — Overdue check-ins
+
+Scan TASKS.md for Q3 tasks that have a `Check-in date:` field set to today or earlier and are not yet in the `## Completed` section.
 
 If any exist, surface them first:
 "You have [N] delegated item(s) due for check-in today or overdue:"
@@ -21,7 +23,34 @@ If any exist, surface them first:
 
 Ask: "Do you want to mark any of these resolved, or create a follow-up? I'll handle the new items after."
 
-Process any responses (mark done → /execute flow, create follow-up → append to Unprocessed), then continue to the main schedule flow.
+Process any responses (mark done → /execute flow, create follow-up → append to Unprocessed), then continue.
+
+### Part B — Capacity signal review
+
+After handling overdue check-ins, scan all open Q3 tasks (not in `## Completed`) for delegates who may be overloaded.
+
+For each delegate alias, collect all open Q3 tasks delegated to them. Count business days elapsed since each task's `Scheduled:` date (skip Saturdays and Sundays).
+
+Flag any delegate who meets **both** conditions:
+- **2 or more** open delegations assigned to them, AND
+- At least one of those delegations has been open for **more than 5 business days**
+
+If any delegates are flagged, surface a single grouped prompt **after** the overdue check-in resolution:
+
+```
+⚠ Capacity check — the following delegate(s) have 2+ open items aged over 5 business days:
+  • [alias] — [N] open delegations (oldest: [X] business days)
+    Tasks: [task title 1], [task title 2]
+```
+
+Then ask: "Consider reviewing [alias]'s capacity signal in stakeholders.yaml before delegating more to them. Update it now, or continue scheduling?"
+
+- If the user wants to update: remind them to edit `integrations/config/stakeholders.yaml` and set `capacity_signal` to `low`, `medium`, or `high`. Do NOT edit the file — the user owns it.
+- If the user says continue: note it and proceed to the main schedule flow.
+
+**Do not block scheduling** — this is an advisory prompt, not a gate. If the user ignores it or says continue, proceed normally.
+
+**Threshold**: 5 business days, 2+ open delegations. Both conditions must be met to surface the prompt. A delegate with 1 open task (no matter how old) is not flagged. A delegate with 2 tasks open for 3 days each is not flagged.
 
 ## Step 2: Determine scope
 
