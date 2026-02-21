@@ -8,6 +8,14 @@ You are running the SCAN EMAIL phase of the Engineering Task Flow.
 
 This command reads emails from a configured Apple Mail account and inbox using the Mac osascript MCP tool. It is strictly read-only — it never marks emails as read, moves them, or modifies them in any way.
 
+## Config check
+
+Check that `integrations/config/email-config.md` exists before proceeding.
+
+If it does not exist → stop and say:
+> "I need to configure your email account before scanning. Let me run setup first."
+Then run the `/setup` command (email step only), and resume `/scan-email` when complete.
+
 **Before doing anything else**, read `integrations/config/email-config.md` to get:
 - `account_name` — the mail account to scan
 - `inbox_name` — the inbox within that account

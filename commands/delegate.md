@@ -14,6 +14,16 @@ Reminder, and logs a follow-up memory entry — no `/schedule` run needed.
 
 ---
 
+## Config check
+
+Before doing anything else, check that `integrations/config/stakeholders.yaml` exists.
+
+If it does not exist → stop and say:
+> "I need a stakeholders file before I can score delegation candidates. Would you like me to create a starter file now? You'll fill in your team's details after setup."
+
+If yes → run the `/setup` command (stakeholders step only), then resume `/delegate` when complete.
+If no → stop and tell the user: "You can run /setup at any time to create the stakeholders file. /delegate requires it to score candidates."
+
 ## Step 1: Resolve the task input
 
 If $ARGUMENTS is provided, treat it as the task title (and optionally description,

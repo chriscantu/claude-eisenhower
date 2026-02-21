@@ -6,6 +6,16 @@ allowed-tools: Read, Write, Edit
 
 You are running the SCHEDULE phase of the Engineering Task Flow.
 
+## Config check
+
+Before doing anything else, check that both config files exist:
+- `integrations/config/calendar-config.md`
+- `integrations/config/task-output-config.md`
+
+If either is missing → stop and say:
+> "I need to configure your calendar and Reminders list before scheduling. Let me run setup first."
+Then run the `/setup` command (for the missing files only), and resume `/schedule` when complete.
+
 ## Step 1: Load the task board
 
 Read TASKS.md from the root of the user's mounted workspace folder.

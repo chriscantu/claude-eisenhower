@@ -64,6 +64,13 @@ During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any del
 **Spec**: `integrations/specs/github-release-spec.md`
 **Version target**: v0.7.0
 
+### 5. First-Run Setup — v0.8.0 *(In Progress)*
+**Why**: Anyone who installs the plugin hits a blank config state — commands silently fail or error on missing files. There is no recovery path when config changes. This is the primary blocker for sharing the plugin with others.
+**What**: New `/setup` command with a conversational 5-step flow (calendar → email → Reminders → stakeholders starter → summary). Per-command config guards on `/scan-email`, `/schedule`, and `/delegate` detect missing config and invoke setup automatically before continuing.
+**Scope**: New `commands/setup.md`. Config guards added to three existing commands. No algorithm changes.
+**Spec**: `integrations/specs/setup-spec.md`
+**Version target**: v0.8.0
+
 ### ~~4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)~~ ✅ Shipped in v0.5.3
 Extracted pure functions from the command layer and covered them with a 32-test Jest suite (TEST-DEL-7xx). Replaces manual/behavioral-only coverage for TEST-DEL-020–032. Functions covered: `isAlreadySynced`, `getDelegateState`, `buildFollowUpTitle`, `buildFollowUpRecord`, `isOverdue`, `getOverdueDelegations`, `addBusinessDays`.
 
@@ -135,3 +142,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.5.3 | Phase 2–3 automated test coverage: 32-test suite (DEL-7xx), replaces TEST-DEL-020–032 manual |
 | v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`); build-spec.md and setup-spec.md |
 | v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish (planned) |
+| v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template (planned) |

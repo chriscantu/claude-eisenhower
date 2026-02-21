@@ -1,8 +1,8 @@
 # First-Run Setup & Reconfiguration — Feature Spec
 
 **Plugin**: claude-eisenhower
-**Version**: 0.3.0 (planned)
-**Status**: Draft — pending author review
+**Version**: 0.8.0 (planned)
+**Status**: Decisions resolved — ready for implementation
 **Last updated**: 2026-02-21
 **Author**: Cantu
 
@@ -195,16 +195,31 @@ No osascript validation needed — Reminders list is created automatically if it
 
 ---
 
-### Step 5 — Confirm and summarize
+### Step 5 — Stakeholders starter (optional)
+
+**Ask:**
+> "Do you want me to create a starter stakeholders file for `/delegate`? It'll have placeholder entries you can fill in with your team. (You can skip this and do it later.)"
+
+If yes → write `integrations/config/stakeholders.yaml` from the content of `integrations/config/stakeholders.yaml.example`, replacing nothing (user edits it manually after setup).
+
+Tell the user:
+> "Created integrations/config/stakeholders.yaml with placeholder entries. Edit it to add your team before using /delegate."
+
+If no → skip silently.
+
+---
+
+### Step 6 — Confirm and summarize
 
 Show a summary of what was written:
 
 ```
 ✅ Setup complete. Here's what I configured:
 
-  Calendar:   [calendar_name]
-  Email:      [account_name] / [inbox_name]
-  Reminders:  [list_name]
+  Calendar:       [calendar_name]
+  Email:          [account_name] / [inbox_name]
+  Reminders:      [list_name]
+  Stakeholders:   [created / skipped]
 
 Config files written to integrations/config/ (gitignored — not committed).
 ```
@@ -220,15 +235,16 @@ If setup was triggered by a command, resume it automatically:
 | File | Purpose |
 |------|---------|
 | `commands/setup.md` | `/setup` command definition — conversational reconfiguration |
-| Updates to `hooks/hooks.json` | Add config-check logic to SessionStart hook |
-| Updates to `commands/*.md` | Add config detection guard at top of each command |
+| `commands/scan-email.md` | Add config guard: check `email-config.md` before Step 1 |
+| `commands/schedule.md` | Add config guard: check `calendar-config.md` + `task-output-config.md` before Step 1 |
+| `commands/delegate.md` | Add config guard: check `stakeholders.yaml` before Step 1 |
 
 ---
 
-## Open Questions
+## Decisions
 
-1. **Hook vs. per-command guard** — Should config detection live in the `SessionStart` hook (runs once per session) or in each command individually? Hook is cleaner but only fires at session start, not mid-session. Per-command guard is more robust but adds boilerplate to every command.
+1. **Per-command guard** — Config detection lives at the top of each command that requires config, not in the SessionStart hook. Reason: more robust — catches missing config mid-session and is explicit about which config each command requires. Boilerplate is acceptable given the small number of affected commands.
 
-2. **`/setup reconfigure` flag vs. interactive menu** — When all config exists, should `/setup` accept an argument (e.g., `/setup calendar`) to jump directly to one section, or always show the interactive menu?
+2. **Interactive menu for `/setup`** — When all config files exist, `/setup` always shows the menu: "Update everything / Calendar only / Email only / Reminders only / Cancel". No argument syntax. Keeps it discoverable and consistent with the conversational design principle.
 
-3. **Stakeholders.yaml** — Should setup offer to create a starter `stakeholders.yaml` with placeholder entries, so `/delegate` doesn't hard-fail on first use? Or keep it out of scope for v1?
+3. **Starter `stakeholders.yaml`** — Setup offers to write a starter `stakeholders.yaml` with placeholder entries (using the `.example` template format). This prevents `/delegate` from hard-failing on first install. The user is told to edit it with real names before using `/delegate`. The file remains gitignored.
