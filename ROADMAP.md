@@ -126,3 +126,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, 31-test suite |
 | v0.5.2 | Capacity signal review prompt: `/schedule` Step 1b Part B, 15-test suite (TEST-CAP-6xx) |
 | v0.5.3 | Phase 2–3 automated test coverage: 32-test suite (DEL-7xx), replaces TEST-DEL-020–032 manual |
+| v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`); build-spec.md and setup-spec.md |

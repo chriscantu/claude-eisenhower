@@ -10,7 +10,10 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "build": "tsc --target ES2020 --module CommonJS --lib ES2020 --strict --esModuleInterop --skipLibCheck --outDir ../dist --resolveJsonModule --declaration --sourceMap delegate-core.ts match-delegate.ts date-helpers.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "node build-plugin.js",
+    "package:dev": "node build-plugin.js --skip-dirty-check",
+    "release": "npm test && npm run package"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

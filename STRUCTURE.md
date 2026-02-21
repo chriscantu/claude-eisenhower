@@ -16,9 +16,10 @@ When adding a new file, find the right directory here before creating anything.
 | `CONNECTORS.md` | Registry of all active and planned integrations |
 | `PRINCIPLES.md` | Engineering principles: DRY, SOLID, TDD, PII safety, structure rules |
 | `CLAUDE.md` | Runtime instructions for Claude — config table, calendar query override |
-| `.gitignore` | Excludes personal config files, TASKS.md, memory/, .DS_Store |
+| `.gitignore` | Excludes personal config files, TASKS.md, memory/, .DS_Store, *.plugin |
 | `.claude-plugin/plugin.json` | Plugin metadata (name, version, author, keywords) |
 | `TASKS.md` | ⚠ Runtime only — personal task board, gitignored, not committed |
+| `claude-eisenhower-{version}.plugin` | ⚠ Build artifact — produced by `npm run package`, gitignored, not committed |
 
 ---
 
@@ -157,6 +158,8 @@ integrations/specs/
   delegation-spec.md                  ← delegation validation: Gherkin spec for match algorithm
   alias-resolution-spec.md            ← alias array schema and resolveAlias() behavior
   delegate-entry-point-spec.md        ← /delegate direct entry point: PRD for v0.5.1
+  build-spec.md                       ← plugin packaging: npm run package / .plugin artifact
+  setup-spec.md                       ← first-run setup and /setup reconfiguration
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -180,13 +183,24 @@ Executable scripts only. No documentation files.
 
 ```
 scripts/
-  cal_query.swift          ← EventKit calendar query (used by /schedule, /scan-email)
+  cal_query.swift           ← EventKit calendar query (used by /schedule, /scan-email)
   push_reminder.applescript ← Reminders write adapter (used by /schedule)
-  delegate-core.ts           ← shared types + pure scoring functions (imported by CLI and tests)
-  match-delegate.ts          ← CLI entry point — file I/O, argument parsing, human-readable output
-  package.json               ← Node.js deps + postinstall script (auto-creates tests/node_modules symlink)
-  tsconfig.json              ← TypeScript compiler config for scripts/
+  delegate-core.ts          ← shared types + pure scoring functions (imported by CLI and tests)
+  match-delegate.ts         ← CLI entry point — file I/O, argument parsing, human-readable output
+  build-plugin.js           ← packaging script — produces claude-eisenhower-{version}.plugin
+  package.json              ← Node.js deps + npm scripts (test, build, package, release)
+  tsconfig.json             ← TypeScript compiler config for scripts/
 ```
+
+**Build scripts:**
+
+| npm script | What it does |
+|------------|-------------|
+| `npm test` | Run full Jest regression suite |
+| `npm run build` | Compile TypeScript → `dist/` |
+| `npm run package` | Package plugin → `claude-eisenhower-{version}.plugin` at repo root |
+| `npm run package:dev` | Same, skip dirty tree warning |
+| `npm run release` | Run tests, then package (safe for distribution) |
 
 Script-level documentation belongs in a docstring/header comment within the
 script file itself, or in `integrations/docs/scripts-reference.md`.
