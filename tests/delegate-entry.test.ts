@@ -18,6 +18,9 @@ import {
   Stakeholder,
   runMatch,
   getDisplayAlias,
+  hasAuthorityFlag,
+  buildTaskRecord,
+  Q3,
 } from "../scripts/delegate-core";
 import { addBusinessDays } from "../scripts/date-helpers";
 
@@ -80,56 +83,6 @@ function runDelegateScoring(
   description = ""
 ) {
   return runMatch(stakeholders, title, description);
-}
-
-// ── DEL-004 helper (authority flag check) ────────────────────────────────────
-
-const AUTHORITY_PATTERNS = [
-  "requires your sign-off",
-  "executive decision",
-  "personnel decision",
-  "sensitive communication on your behalf",
-];
-
-function hasAuthorityFlag(title: string, description: string): boolean {
-  const combined = `${title} ${description}`.toLowerCase();
-  return AUTHORITY_PATTERNS.some((p) => combined.includes(p));
-}
-
-// ── DEL-007 helper (TASKS.md record shape) ────────────────────────────────────
-
-interface DelegateTaskRecord {
-  title: string;
-  description: string;
-  source: string;
-  requester: string;
-  urgency: string;
-  quadrant: string;
-  delegateTo: string;
-  checkinDate: string;
-  scheduled: string;
-  action: string;
-}
-
-function buildTaskRecord(
-  title: string,
-  description: string,
-  delegateAlias: string,
-  checkinDate: string,
-  scheduledDate: string
-): DelegateTaskRecord {
-  return {
-    title,
-    description,
-    source: "Direct delegation",
-    requester: "Self",
-    urgency: "Delegated",
-    quadrant: "Q3 — Delegate if possible",
-    delegateTo: delegateAlias,
-    checkinDate,
-    scheduled: scheduledDate,
-    action: `Delegated — check in ${checkinDate}`,
-  };
 }
 
 // ── Phase 5: Entry Point — Scoring Engine Invocation ────────────────────────
@@ -287,19 +240,19 @@ describe("Phase 5: /delegate Direct Entry Point — Task Record Shape (DEL-007)"
       checkin,
       today
     );
-    expect(record.source).toBe("Direct delegation");
-    expect(record.requester).toBe("Self");
-    expect(record.urgency).toBe("Delegated");
-    expect(record.quadrant).toBe("Q3 — Delegate if possible");
+    expect(record.source).toBe(Q3.SOURCE);
+    expect(record.requester).toBe(Q3.REQUESTER);
+    expect(record.urgency).toBe(Q3.URGENCY);
+    expect(record.quadrant).toBe(Q3.QUADRANT);
     expect(record.delegateTo).toBe("Alex E.");
     expect(record.checkinDate).toBe(checkin);
     expect(record.scheduled).toBe(today);
-    expect(record.action).toContain("Delegated — check in");
+    expect(record.action).toContain(Q3.ACTION_PREFIX);
   });
 
   test("TEST-DEL-531: record action field includes check-in date", () => {
     const record = buildTaskRecord("Task", "Desc", "Alex E.", checkin, today);
-    expect(record.action).toBe(`Delegated — check in ${checkin}`);
+    expect(record.action).toBe(`${Q3.ACTION_PREFIX} ${checkin}`);
   });
 
   test("TEST-DEL-532: record delegate field uses alias, not full name", () => {

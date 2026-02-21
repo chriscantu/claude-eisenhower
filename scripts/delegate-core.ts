@@ -137,3 +137,79 @@ export function runMatch(
   const candidates = viable.filter((c) => c.score >= topScore - 2).slice(0, 3);
   return { status: "match", candidates };
 }
+
+// ── Authority flag — single source of truth ──────────────────────────────────
+
+/**
+ * Phrases that indicate a task requires personal authority and must NOT be
+ * delegated. Checked by /delegate (Step 2) and /prioritize (Step 3).
+ * Any change here propagates automatically to all consumers.
+ */
+export const AUTHORITY_PATTERNS: readonly string[] = [
+  "requires your sign-off",
+  "executive decision",
+  "personnel decision",
+  "sensitive communication on your behalf",
+];
+
+/**
+ * Returns true if the combined task title + description contains any authority
+ * pattern. Matching is case-insensitive. When true, delegation must be blocked.
+ */
+export function hasAuthorityFlag(title: string, description: string): boolean {
+  const combined = `${title} ${description}`.toLowerCase();
+  return AUTHORITY_PATTERNS.some((p) => combined.includes(p));
+}
+
+// ── Q3 delegation record — single source of truth ────────────────────────────
+
+/**
+ * Canonical string constants for Q3 task record fields written to TASKS.md.
+ * All code that constructs a delegation record must import from here.
+ */
+export const Q3 = {
+  SOURCE:   "Direct delegation",
+  REQUESTER: "Self",
+  URGENCY:  "Delegated",
+  QUADRANT: "Q3 — Delegate if possible",
+  ACTION_PREFIX: "Delegated — check in",
+} as const;
+
+/** Shape of a Q3 delegation record as written to TASKS.md. */
+export interface DelegateTaskRecord {
+  title: string;
+  description: string;
+  source: string;
+  requester: string;
+  urgency: string;
+  quadrant: string;
+  delegateTo: string;
+  checkinDate: string;
+  scheduled: string;
+  action: string;
+}
+
+/**
+ * Constructs a complete Q3 delegation record for writing to TASKS.md.
+ * Uses Q3 constants as single source of truth for all fixed field values.
+ */
+export function buildTaskRecord(
+  title: string,
+  description: string,
+  delegateAlias: string,
+  checkinDate: string,
+  scheduledDate: string
+): DelegateTaskRecord {
+  return {
+    title,
+    description,
+    source:     Q3.SOURCE,
+    requester:  Q3.REQUESTER,
+    urgency:    Q3.URGENCY,
+    quadrant:   Q3.QUADRANT,
+    delegateTo: delegateAlias,
+    checkinDate,
+    scheduled:  scheduledDate,
+    action:     `${Q3.ACTION_PREFIX} ${checkinDate}`,
+  };
+}
