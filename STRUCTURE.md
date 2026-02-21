@@ -28,6 +28,9 @@ When adding a new file, find the right directory here before creating anything.
 ```
 claude-eisenhower/
 │
+├── .github/           # GitHub-specific config
+│   └── workflows/     # GitHub Actions CI/CD workflows
+│
 ├── commands/          # Slash command definitions — one file per command
 ├── skills/            # Skill definitions — one subdirectory per skill
 ├── agents/            # Autonomous agent definitions
@@ -160,6 +163,7 @@ integrations/specs/
   delegate-entry-point-spec.md        ← /delegate direct entry point: PRD for v0.5.1
   build-spec.md                       ← plugin packaging: npm run package / .plugin artifact
   setup-spec.md                       ← first-run setup and /setup reconfiguration
+  github-release-spec.md              ← GitHub Actions release automation on v* tags
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -175,6 +179,19 @@ integrations/docs/
   mac-calendar-planner-override.md ← override instructions for external plugin
   scripts-reference.md           ← moved from scripts/README.md
 ```
+
+---
+
+### `.github/workflows/`
+GitHub Actions workflow definitions. One file per workflow.
+
+```
+.github/workflows/
+  release.yml   ← builds and publishes .plugin artifact on v* tag push
+```
+
+**What belongs here**: CI/CD workflows triggered by GitHub events.
+**What does not belong here**: Local build scripts (those go in `scripts/`), documentation.
 
 ---
 
