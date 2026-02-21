@@ -78,11 +78,12 @@ If no argument, schedule all prioritized tasks that don't yet have a date assign
 - Once a delegate is confirmed, assign a check-in date 2–3 business days out.
 - Frame the output as: "Delegated to [alias] — check in [date]."
 
-**Q4 — Not Urgent, Not Important → Cut it**
-- Default action is to remove it from the active board entirely.
-- Do NOT offer to defer it or set a review date. Q4 tasks should be eliminated.
-- Move to Completed with note: `Eliminated — Q4 cut [today's date]`.
-- If the user pushes back and insists on keeping it, allow a single "Review on: [date 4+ weeks out]" entry, but note: "Keeping Q4 tasks creates noise — revisit only if something changes."
+**Q4 — Not Urgent, Not Important → Stage it, then cut at weekly review**
+- Move the task to `## Q4 — Defer / Eliminate` (do NOT move to `## Completed` yet).
+- Add: `Deferred: [today's date] | Review on: [date 2 weeks out]`
+- At the weekly review, if the task still has no value: move to `## Completed` with `Eliminated — Q4 cut [date]`.
+- This two-step approach prevents hasty elimination and keeps Q4 visible as a deliberate decision.
+- If the user explicitly says "eliminate it now" during scheduling, you may move directly to Completed with the elimination note.
 
 ## Step 3b: For each Q3 task — confirm or assign the delegate
 
@@ -135,7 +136,7 @@ After the user confirms:
 - Add `Scheduled: [date]` to each task record
 - Add `Action: [specific action]` to each task record
 - For Q3: add `Delegate to: [alias]` and `Check-in date: [date]`
-- For Q4 cuts: move to `## Completed` with `Eliminated — Q4 cut [date]`
+- For Q4: move to `## Q4 — Defer / Eliminate` with `Deferred: [date] | Review on: [2 weeks out]` (only move to `## Completed` if user explicitly confirms elimination this session)
 
 ## Step 6: Push to task output adapter
 

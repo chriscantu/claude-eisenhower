@@ -47,7 +47,7 @@ Assign timing based on quadrant:
 - **Q1** → Assign today or the earliest available slot. Flag as critical.
 - **Q2** → Assign a specific future date. Block time for deep work.
 - **Q3** → Assign a date only if delegated; otherwise mark "async/when possible."
-- **Q4** → Mark as deferred or suggest removing from list.
+- **Q4** → Stage in the `## Q4 — Defer / Eliminate` section first. Record the cut date and reasoning. Only move to `## Completed` at the weekly review if the task is confirmed eliminated — not immediately.
 
 If Mac Calendar integration is configured, use it to check availability before assigning dates.
 

@@ -27,7 +27,10 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 ## Step 3: Handle each action
 
 ### Mark Done
-1. Move the task from its current quadrant to `## Completed`
+1. **If the task is in Q4**: Do NOT move to `## Completed` immediately. Instead:
+   - If the user explicitly confirms the task is being eliminated: move to `## Completed` and add `Done: [today's date] | Eliminated`
+   - If the task was just classified Q4 this session: leave it in `## Q4 — Defer / Eliminate` with `Deferred: [today's date]` and note `Review on: [date 2 weeks out]`. Q4 tasks stage there first; they are not the same as done.
+2. Move the task from its current quadrant to `## Completed`
 2. Add `Done: [today's date]` to the task record
 3. Remove the checkbox marker `[ ]` and replace with `[x]`
 4. **If the task has `Delegate to: [alias]`** (it was a delegated Q3 task):
