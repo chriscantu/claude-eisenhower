@@ -103,11 +103,19 @@ tell application "Mail"
   set preview to ""
   try
     set c to content of msg
-    if length of c > 500 then
-      set preview to text 1 through 500 of c
-    else
-      set preview to c
-    end if
+    set charLimit to 500
+    if length of c < charLimit then set charLimit to length of c
+    -- Strip non-printable and non-ASCII characters (including U+FFFC object replacement char
+    -- from embedded images) to prevent JSON serialization errors in the tool response pipeline
+    set safeText to ""
+    repeat with i from 1 to charLimit
+      set ch to character i of c
+      set cp to id of ch
+      if cp >= 32 and cp <= 126 then
+        set safeText to safeText & ch
+      end if
+    end repeat
+    set preview to safeText
   end try
   return preview
 end tell
