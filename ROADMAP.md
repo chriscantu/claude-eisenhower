@@ -57,19 +57,11 @@ Expanded in scope to system-wide alias resolution. `alias` is now an array — f
 ### ~~3. Capacity Signal Review Prompt~~ ✅ Shipped in v0.5.2
 During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any delegate has 2+ open Q3 tasks with at least one older than 5 business days, surface an advisory prompt before scheduling. No auto-update; user decides whether to adjust `capacity_signal` in `stakeholders.yaml`. Pure detection logic covered by `tests/schedule-capacity.test.ts` (15 tests, TEST-CAP-6xx).
 
-### 4. GitHub Release Automation — v0.7.0 *(In Progress)*
-**Why**: Producing and distributing a new plugin version requires multiple manual steps — bump version, update ROADMAP, run `npm run package` locally, upload artifact manually. There's no canonical download URL and no enforcement that a tagged version has a corresponding artifact.
-**What**: GitHub Actions workflow (`.github/workflows/release.yml`) that triggers on `v*` tag push, validates the tag matches `plugin.json`, calls `npm run package` (reusing the existing build script), and publishes a GitHub Release with the `.plugin` file attached. GitHub Releases page becomes the canonical distribution point.
-**Scope**: New `.github/workflows/release.yml`. No changes to existing build script or command files.
-**Spec**: `integrations/specs/github-release-spec.md`
-**Version target**: v0.7.0
+### ~~4. GitHub Release Automation~~ ✅ Shipped in v0.7.0
+GitHub Actions workflow (`.github/workflows/release.yml`) triggers on `v*` tag push. Validates tag matches `plugin.json`, calls `npm run package`, publishes GitHub Release with `.plugin` attached. `workflow_dispatch` added for manual triggering without re-pushing a tag.
 
-### 5. First-Run Setup — v0.8.0 *(In Progress)*
-**Why**: Anyone who installs the plugin hits a blank config state — commands silently fail or error on missing files. There is no recovery path when config changes. This is the primary blocker for sharing the plugin with others.
-**What**: New `/setup` command with a conversational 5-step flow (calendar → email → Reminders → stakeholders starter → summary). Per-command config guards on `/scan-email`, `/schedule`, and `/delegate` detect missing config and invoke setup automatically before continuing.
-**Scope**: New `commands/setup.md`. Config guards added to three existing commands. No algorithm changes.
-**Spec**: `integrations/specs/setup-spec.md`
-**Version target**: v0.8.0
+### ~~5. First-Run Setup~~ ✅ Shipped in v0.8.0
+New `/setup` command with conversational 5-step flow: calendar validation → email detection → Reminders naming → stakeholders starter (optional) → summary. Per-command config guards on `/scan-email`, `/schedule`, and `/delegate` auto-trigger setup for missing config then resume the original command.
 
 ### ~~4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)~~ ✅ Shipped in v0.5.3
 Extracted pure functions from the command layer and covered them with a 32-test Jest suite (TEST-DEL-7xx). Replaces manual/behavioral-only coverage for TEST-DEL-020–032. Functions covered: `isAlreadySynced`, `getDelegateState`, `buildFollowUpTitle`, `buildFollowUpRecord`, `isOverdue`, `getOverdueDelegations`, `addBusinessDays`.
@@ -141,5 +133,5 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.5.2 | Capacity signal review prompt: `/schedule` Step 1b Part B, 15-test suite (TEST-CAP-6xx) |
 | v0.5.3 | Phase 2–3 automated test coverage: 32-test suite (DEL-7xx), replaces TEST-DEL-020–032 manual |
 | v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`); build-spec.md and setup-spec.md |
-| v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish (planned) |
-| v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template (planned) |
+| v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish; `workflow_dispatch` for manual runs |
+| v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template |

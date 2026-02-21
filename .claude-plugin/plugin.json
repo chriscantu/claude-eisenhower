@@ -1,6 +1,6 @@
 {
   "name": "claude-eisenhower",
-  "version": "0.6.0",
+  "version": "0.8.0",
   "description": "4-phase task workflow for Directors of Engineering: Intake → Prioritize → Schedule → Execute using the Eisenhower matrix",
   "author": {
     "name": "Cantu"
