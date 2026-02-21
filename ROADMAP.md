@@ -57,10 +57,8 @@ Expanded in scope to system-wide alias resolution. `alias` is now an array — f
 ### ~~3. Capacity Signal Review Prompt~~ ✅ Shipped in v0.5.2
 During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any delegate has 2+ open Q3 tasks with at least one older than 5 business days, surface an advisory prompt before scheduling. No auto-update; user decides whether to adjust `capacity_signal` in `stakeholders.yaml`. Pure detection logic covered by `tests/schedule-capacity.test.ts` (15 tests, TEST-CAP-6xx).
 
-### 4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)
-**Why**: Levels 1–3 validated the delegation chain behaviorally, but Phase 2–3 tests (TEST-DEL-020–032) are documented as manual/behavioral only. No automated Jest coverage for the command layer.
-**What**: Extend `tests/delegation.test.ts` (or a new `tests/schedule.test.ts`) to cover: dedup guard logic, follow-up title format, overdue detection date arithmetic. These are pure functions that can be extracted and tested without the LLM layer.
-**Scope**: New test file + possible small extraction from command logic into a testable helper.
+### ~~4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)~~ ✅ Shipped in v0.5.3
+Extracted pure functions from the command layer and covered them with a 32-test Jest suite (TEST-DEL-7xx). Replaces manual/behavioral-only coverage for TEST-DEL-020–032. Functions covered: `isAlreadySynced`, `getDelegateState`, `buildFollowUpTitle`, `buildFollowUpRecord`, `isOverdue`, `getOverdueDelegations`, `addBusinessDays`.
 
 ---
 
@@ -127,3 +125,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.5.0 | Alias resolution: `alias` array schema, `resolveAlias()`, `/intake` normalization, 35-test suite |
 | v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, 31-test suite |
 | v0.5.2 | Capacity signal review prompt: `/schedule` Step 1b Part B, 15-test suite (TEST-CAP-6xx) |
+| v0.5.3 | Phase 2–3 automated test coverage: 32-test suite (DEL-7xx), replaces TEST-DEL-020–032 manual |

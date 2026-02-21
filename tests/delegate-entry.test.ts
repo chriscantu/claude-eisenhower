@@ -24,6 +24,7 @@ import {
   resolveAlias,
   WEIGHTS,
 } from "../scripts/delegate-core";
+import { addBusinessDays } from "../scripts/date-helpers";
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -140,19 +141,6 @@ function buildTaskRecord(
 
 function hasSyncedField(record: Partial<DelegateTaskRecord & { synced?: string }>): boolean {
   return typeof record.synced === "string" && record.synced.trim().length > 0;
-}
-
-// ── Business day helper (used in check-in date validation) ──────────────────
-
-function addBusinessDays(startDate: Date, days: number): Date {
-  const result = new Date(startDate);
-  let added = 0;
-  while (added < days) {
-    result.setDate(result.getDate() + 1);
-    const dow = result.getDay();
-    if (dow !== 0 && dow !== 6) added++;
-  }
-  return result;
 }
 
 // ── Phase 5: Entry Point — Scoring Engine Invocation ────────────────────────

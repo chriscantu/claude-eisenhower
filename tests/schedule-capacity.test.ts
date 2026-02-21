@@ -12,29 +12,7 @@
  * Run: cd scripts && npm test
  */
 
-// ── Pure helper: count business days elapsed between two dates ───────────────
-
-/**
- * Returns the number of business days (Mon–Fri) elapsed between start and end.
- * End defaults to today. Start is inclusive if it is a business day.
- */
-export function businessDaysElapsed(start: Date, end: Date = new Date()): number {
-  const from = new Date(start);
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(end);
-  to.setHours(0, 0, 0, 0);
-
-  if (from >= to) return 0;
-
-  let count = 0;
-  const cursor = new Date(from);
-  while (cursor < to) {
-    const dow = cursor.getDay();
-    if (dow !== 0 && dow !== 6) count++;
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return count;
-}
+import { businessDaysElapsed } from "../scripts/date-helpers";
 
 // ── Pure helper: detect stale delegates ──────────────────────────────────────
 
