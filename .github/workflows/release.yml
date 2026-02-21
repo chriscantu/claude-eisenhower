@@ -1,0 +1,70 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install build dependencies
+        run: npm ci
+        working-directory: scripts
+
+      - name: Read version from plugin.json
+        id: plugin_version
+        run: |
+          VERSION=$(node -e "const p=require('./.claude-plugin/plugin.json'); process.stdout.write(p.version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate tag matches plugin.json
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # e.g. v0.7.0
+          PLUGIN_VERSION="${{ steps.plugin_version.outputs.version }}"  # e.g. 0.7.0
+          EXPECTED_TAG="v${PLUGIN_VERSION}"
+          if [ "$TAG" != "$EXPECTED_TAG" ]; then
+            echo "::error::Tag $TAG does not match plugin.json version $PLUGIN_VERSION. Align them before releasing."
+            exit 1
+          fi
+
+      - name: Build plugin artifact
+        run: npm run package
+        working-directory: scripts
+
+      - name: Extract release notes from ROADMAP.md
+        id: release_notes
+        run: |
+          VERSION="${{ steps.plugin_version.outputs.version }}"
+          # Extract the row matching this version from the ROADMAP table
+          NOTES=$(grep "| v${VERSION} |" ROADMAP.md | sed 's/^| //' | sed 's/ |$//' | sed 's/ | /: /' || true)
+          if [ -z "$NOTES" ]; then
+            NOTES="See ROADMAP.md for details."
+          fi
+          # Write to a file to avoid quoting issues with multiline content
+          echo "$NOTES" > /tmp/release-notes.txt
+          cat /tmp/release-notes.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: /tmp/release-notes.txt
+          files: claude-eisenhower-${{ steps.plugin_version.outputs.version }}.plugin
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
