@@ -5,11 +5,11 @@ work in this repository. It is referenced from CLAUDE.md so these constraints ar
 active in every session.
 
 When adding a feature, fixing a bug, or reviewing AI-generated code, use this as
-a checklist Ñ not a suggestion list.
+a checklist ï¿½ not a suggestion list.
 
 ---
 
-## DRY Ñ Don't Repeat Yourself
+## DRY ï¿½ Don't Repeat Yourself
 
 Single source of truth for every concept. If the same logic, type, constant, or
 copy appears in more than one place, it belongs in a shared module.
@@ -30,26 +30,26 @@ constant appearing in both a script and a test.
 
 Applied pragmatically to TypeScript modules in `scripts/`:
 
-**Single Responsibility** Ñ each file owns one concern.
-- `delegate-core.ts` Ñ pure scoring logic (no I/O, no CLI concerns)
-- `match-delegate.ts` Ñ CLI entry point (file I/O, arg parsing, output formatting)
-- `cal_query.swift` Ñ calendar query only
+**Single Responsibility** ï¿½ each file owns one concern.
+- `delegate-core.ts` ï¿½ pure scoring logic (no I/O, no CLI concerns)
+- `match-delegate.ts` ï¿½ CLI entry point (file I/O, arg parsing, output formatting)
+- `cal_query.swift` ï¿½ calendar query only
 
-**Open/Closed** Ñ scoring weights and relationship ranks are in a single `WEIGHTS`
+**Open/Closed** ï¿½ scoring weights and relationship ranks are in a single `WEIGHTS`
 and `REL_RANK` constant. Adding a new relationship type or adjusting a weight means
 editing one object, not hunting through logic.
 
-**Liskov / Interface Segregation** Ñ keep interfaces narrow. `Stakeholder`,
+**Liskov / Interface Segregation** ï¿½ keep interfaces narrow. `Stakeholder`,
 `ScoredCandidate`, and `MatchResult` in `delegate-core.ts` are each responsible
 for exactly what they describe.
 
-**Dependency Inversion** Ñ pure functions (`scoreDelegate`, `rankCandidates`,
+**Dependency Inversion** ï¿½ pure functions (`scoreDelegate`, `rankCandidates`,
 `runMatch`) take data as arguments. They do not reach into the filesystem or
 call external services. File I/O is the CLI's job.
 
 ---
 
-## TDD Ñ Test-Driven Development
+## TDD ï¿½ Test-Driven Development
 
 Specs before code. Tests before shipping.
 
@@ -57,7 +57,7 @@ Specs before code. Tests before shipping.
 - Gherkin spec goes in `integrations/specs/` before implementation starts.
 - Jest regression tests go in `tests/` and must pass before any feature is merged.
 - Run tests with: `cd scripts && npm test`
-- Tests import from `scripts/delegate-core.ts` Ñ they test the algorithm directly,
+- Tests import from `scripts/delegate-core.ts` ï¿½ they test the algorithm directly,
   not via subprocess.
 
 **Rules:**
@@ -78,7 +78,7 @@ Personal data stays local. It is never committed to source control.
 - Test fixtures use the same placeholder convention.
 - Match output surfaces `alias`, never `name`.
 - If you add a new config file that could contain personal data, add it to
-  `.gitignore` immediately Ñ before writing any content to it.
+  `.gitignore` immediately ï¿½ before writing any content to it.
 
 **Gitignored personal files:**
 - `integrations/config/stakeholders.yaml`
@@ -98,7 +98,7 @@ before creating anything.
 **Never:**
 - Create files at the repo root unless they are top-level project documents
   (README, CLAUDE, STRUCTURE, CONNECTORS, PRINCIPLES, .gitignore).
-- Duplicate a file to work around a path issue Ñ fix the path.
+- Duplicate a file to work around a path issue ï¿½ fix the path.
 - Commit build artifacts (`node_modules/`, `dist/`, `package-lock.json` in some cases).
 
 ---
@@ -109,3 +109,20 @@ This plugin is designed to be operated by Claude, not run as standalone software
 Scripts output JSON; Claude formats and presents it. Scripts never auto-assign or
 auto-commit. Claude always confirms with the user before writing to TASKS.md or
 delegating a task.
+
+---
+
+## Human Sign-Off Before Commit
+
+**Claude never commits code without explicit engineer approval.**
+
+After completing any unit of work â€” a new file, a command update, a test suite â€”
+Claude stops and presents what changed. The engineer reviews and gives explicit
+sign-off before any `git commit` is run.
+
+**Rules:**
+- Show a `git diff --stat` summary and ask: "Ready to commit?" before running `git commit`.
+- Never chain staging + commit in a single step without a confirmation pause in between.
+- If the engineer says "commit" without prior review in the session, run `git diff --stat`
+  first, summarize what's included, and confirm before proceeding.
+- This applies to every commit, regardless of how small or mechanical the change appears.
