@@ -47,10 +47,12 @@ These are scoped and prioritized. The "what" is clear; sequencing is flexible.
 ### ~~1. PII Aliasing in `/intake` (Requester field)~~ ✅ Shipped in v0.5.0
 Expanded in scope to system-wide alias resolution. `alias` is now an array — first item is display name, additional items are lookup terms (last name, nickname, shorthand). `resolveAlias()` and `getDisplayAlias()` added to `delegate-core.ts` as single source of truth. `/intake` resolves requester names against the graph before writing to TASKS.md.
 
-### 2. `/delegate` as a Direct Entry Point
+### 2. `/delegate` as a Direct Entry Point — v0.5.1 *(Specced)*
 **Why**: Currently delegation only runs via `/prioritize` (Q3 classification) or `/execute delegate`. There's no way to ask "who should own this?" outside the full workflow. This is open question #2 from the delegation spec.
-**What**: New `/delegate [task title or description]` command that runs the scoring CLI, surfaces candidates with reasoning, and writes the result to TASKS.md if confirmed. Useful for ad-hoc delegation outside the Eisenhower loop.
-**Scope**: New `commands/delegate.md`. Calls existing `scripts/match-delegate.ts` — no algorithm changes.
+**What**: New `/delegate [task title or description]` command that runs the scoring CLI, surfaces candidates with reasoning, and writes a confirmed Q3 entry to TASKS.md. Includes Reminders push and memory log inline — no `/schedule` run needed for a directly delegated task.
+**Scope**: New `commands/delegate.md` + `tests/delegate-entry.test.ts`. Calls existing `scripts/match-delegate.ts` — no algorithm changes.
+**Spec**: `integrations/specs/delegate-entry-point-spec.md`
+**Version target**: v0.5.1
 
 ### 3. Capacity Signal Review Prompt
 **Why**: `capacity_signal` in `stakeholders.yaml` is set manually and goes stale. Open question #3 from the delegation spec.
@@ -106,7 +108,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 
 ## Open Questions
 
-1. Should `/delegate` be a command or a flag on `/prioritize`? (e.g., `/prioritize --delegate`)
+1. ~~Should `/delegate` be a command or a flag on `/prioritize`?~~ → Resolved: dedicated command (see `integrations/specs/delegate-entry-point-spec.md`, Decisions Log item #1)
 2. When a delegate's `capacity_signal` changes, should the plugin prompt a review of all open Q3 tasks assigned to them?
 3. Should there be a `max_delegations` field in `stakeholders.yaml` to cap how many open items one person can hold?
 4. Is the `Requester:` field in TASKS.md worth aliasing, or is it acceptable to have source-verbatim names there since TASKS.md is gitignored?
@@ -125,3 +127,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.4.2 | Delegation lifecycle: dedup guard, Mark Done close-out, follow-up auto-creation |
 | v0.4.3 | Full regression validation: TEST-DEL-100/201/202; PII fix in TASKS.md |
 | v0.5.0 | Alias resolution: `alias` array schema, `resolveAlias()`, `/intake` normalization, 35-test suite |
+| v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, Jest test suite *(planned)* |

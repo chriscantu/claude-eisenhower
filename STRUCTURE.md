@@ -64,6 +64,7 @@ commands/
   schedule.md
   execute.md
   scan-email.md
+  delegate.md
 ```
 
 **What belongs here**: Command prompt text, step-by-step behavior, allowed tools.
@@ -153,7 +154,9 @@ of decisions. One file per integration or major feature.
 integrations/specs/
   email-integration-spec.md
   reminders-integration-spec.md
-  delegation-spec.md             ← delegation validation: Gherkin spec for match algorithm
+  delegation-spec.md                  ← delegation validation: Gherkin spec for match algorithm
+  alias-resolution-spec.md            ← alias array schema and resolveAlias() behavior
+  delegate-entry-point-spec.md        ← /delegate direct entry point: PRD for v0.5.1
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -195,7 +198,8 @@ Runnable Jest regression suites. Each test file covers one integration or featur
 
 ```
 tests/
-  delegation.test.ts           ← 24-test suite for delegation matching algorithm
+  delegation.test.ts           ← 35-test suite for delegation matching + alias resolution
+  delegate-entry.test.ts       ← 31-test suite for /delegate entry point (v0.5.1, DEL-5xx)
   delegation-regression.md     ← plain-language test descriptions (BDD format)
   node_modules                 ← symlink → ../scripts/node_modules (not committed)
 ```
@@ -280,3 +284,8 @@ Everything else is committed. `.example` config templates are always committed.
 |         | Updated: `commands/intake.md` — requester alias resolution step                   |
 |         | Updated: `scripts/tsconfig.json` — `typeRoots` for ts-jest compatibility          |
 |         | Tests: 35/35 passing (11 new TEST-DEL-203 scenarios)                              |
+| v0.5.1  | `/delegate` direct entry point                                                     |
+|         | New: `commands/delegate.md` — ad-hoc delegation command (authority flag, scoring, confirm, write, push, memory) |
+|         | New: `tests/delegate-entry.test.ts` — 31-test Jest suite (DEL-5xx; 66/66 total passing) |
+|         | New: `integrations/specs/delegate-entry-point-spec.md` — full PRD                 |
+|         | Updated: `README.md`, `STRUCTURE.md`, `ROADMAP.md`                                |

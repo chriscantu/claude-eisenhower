@@ -26,8 +26,9 @@ INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 | **Classify** | `/prioritize` | Each task gets sorted into Q1–Q4 with reasoning shown before anything is saved |
 | **Schedule** | `/schedule` | Dates and actions assigned by quadrant: Q1 lands today, Q2 gets a focus block, Q3 goes to your best delegate, Q4 gets cut |
 | **Close out** | `/execute` | Mark done, log progress, delegate, or spin up a follow-up — delegation history tracked automatically |
+| **Delegate** | `/delegate` | Ad-hoc: score and confirm a delegate for any task on demand — writes a full Q3 entry, pushes a Reminder, and logs memory in one step |
 
-Plus `/scan-email` to pull actionable items directly from Apple Mail, and `/delegate` to find the right person for any task on demand.
+Plus `/scan-email` to pull actionable items directly from Apple Mail.
 
 ---
 
