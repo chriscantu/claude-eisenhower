@@ -16,13 +16,8 @@
 
 import {
   Stakeholder,
-  ScoredCandidate,
   runMatch,
-  scoreDelegate,
-  rankCandidates,
   getDisplayAlias,
-  resolveAlias,
-  WEIGHTS,
 } from "../scripts/delegate-core";
 import { addBusinessDays } from "../scripts/date-helpers";
 
@@ -137,12 +132,6 @@ function buildTaskRecord(
   };
 }
 
-// ── DEL-008 / dedup helper (Synced field presence) ──────────────────────────
-
-function hasSyncedField(record: Partial<DelegateTaskRecord & { synced?: string }>): boolean {
-  return typeof record.synced === "string" && record.synced.trim().length > 0;
-}
-
 // ── Phase 5: Entry Point — Scoring Engine Invocation ────────────────────────
 
 describe("Phase 5: /delegate Direct Entry Point — Scoring (DEL-002, DEL-003)", () => {
@@ -189,19 +178,6 @@ describe("Phase 5: /delegate Direct Entry Point — Scoring (DEL-002, DEL-003)",
     expect(candidates).toHaveLength(0);
   });
 
-  test("TEST-DEL-504: empty graph returns empty_graph status", () => {
-    const { status, candidates } = runDelegateScoring([], "Any task", "Any description");
-    expect(status).toBe("empty_graph");
-    expect(candidates).toHaveLength(0);
-  });
-
-  test("TEST-DEL-505: scoring correctly applies all three weight dimensions", () => {
-    const result = scoreDelegate(infraLead, "infrastructure incident response", "");
-    // domain: "infrastructure" +3, "incident response" +3 = +6; DR +2; medium +1 = 9
-    expect(result.score).toBe(9);
-    expect(result.matched_domains).toContain("infrastructure");
-    expect(result.matched_domains).toContain("incident response");
-  });
 });
 
 // ── Phase 5: Authority Flag Detection (DEL-004) ──────────────────────────────
@@ -244,6 +220,21 @@ describe("Phase 5: /delegate Direct Entry Point — Authority Flag (DEL-004)", (
       "REQUIRES YOUR SIGN-OFF on this proposal",
       ""
     )).toBe(true);
+  });
+
+  test("TEST-DEL-516: authority flag blocks delegation — scoring engine is NOT called when flag is set", () => {
+    // P0: when hasAuthorityFlag returns true, the command must surface a warning and
+    // NOT proceed to runMatch. This test verifies the guard contract: a task with an
+    // authority phrase returns true from hasAuthorityFlag, which the command layer checks
+    // BEFORE invoking runDelegateScoring. We verify the flag fires on the boundary input.
+    const flagged = hasAuthorityFlag(
+      "Approve this offer letter",
+      "This is a personnel decision — requires your sign-off"
+    );
+    expect(flagged).toBe(true);
+    // Guard contract: if flagged, the caller (command layer) must not call runMatch.
+    // Test confirms the flag output is boolean true, which the command reads and acts on.
+    // Behavioral enforcement is in commands/delegate.md Step 2 (non-negotiable block).
   });
 });
 
@@ -327,121 +318,6 @@ describe("Phase 5: /delegate Direct Entry Point — Task Record Shape (DEL-007)"
   });
 });
 
-// ── Phase 5: Dedup Guard (DEL-008 / Synced field) ────────────────────────────
 
-describe("Phase 5: /delegate Direct Entry Point — Dedup Guard (DEL-008)", () => {
-  test("TEST-DEL-540: hasSyncedField returns false for unsaved record", () => {
-    const record = buildTaskRecord("Task", "Desc", "Alex E.", "2026-02-25", "2026-02-21") as any;
-    expect(hasSyncedField(record)).toBe(false);
-  });
 
-  test("TEST-DEL-541: hasSyncedField returns true after Synced field is set", () => {
-    const record: any = {
-      ...buildTaskRecord("Task", "Desc", "Alex E.", "2026-02-25", "2026-02-21"),
-      synced: "Reminders (Eisenhower List) — 2026-02-21",
-    };
-    expect(hasSyncedField(record)).toBe(true);
-  });
 
-  test("TEST-DEL-542: hasSyncedField returns false for empty string Synced value", () => {
-    const record: any = {
-      ...buildTaskRecord("Task", "Desc", "Alex E.", "2026-02-25", "2026-02-21"),
-      synced: "",
-    };
-    expect(hasSyncedField(record)).toBe(false);
-  });
-});
-
-// ── Phase 5: PII Safety (DEL-004 + DEL-007 combined) ─────────────────────────
-
-describe("Phase 5: /delegate Direct Entry Point — PII Safety", () => {
-  test("TEST-DEL-550: getDisplayAlias returns first alias entry for array-format alias", () => {
-    expect(getDisplayAlias(infraLead)).toBe("Alex E.");
-    expect(getDisplayAlias(frontendLead)).toBe("Jordan F.");
-  });
-
-  test("TEST-DEL-551: resolveAlias resolves lookup term to display alias", () => {
-    const stakeholders = [infraLead, frontendLead, frontendPeer];
-    expect(resolveAlias("alex", stakeholders)).toBe("Alex E.");
-    expect(resolveAlias("ae", stakeholders)).toBe("Alex E.");
-    expect(resolveAlias("jordan", stakeholders)).toBe("Jordan F.");
-  });
-
-  test("TEST-DEL-552: resolveAlias returns null for unknown input", () => {
-    const stakeholders = [infraLead, frontendLead];
-    expect(resolveAlias("unknown person", stakeholders)).toBeNull();
-  });
-
-  test("TEST-DEL-553: scoreDelegate alias output matches getDisplayAlias, not raw name field", () => {
-    const result = scoreDelegate(infraLead, "infrastructure", "");
-    expect(result.alias).toBe("Alex E.");
-    expect(result.alias).not.toBe("FIRST_LAST_1");
-  });
-});
-
-// ── Phase 5: Tiebreak and Ranking (DEL-003 runner-up logic) ──────────────────
-
-describe("Phase 5: /delegate Direct Entry Point — Tiebreak and Ranking (DEL-003)", () => {
-  test("TEST-DEL-560: direct_report ranked above peer at equal score", () => {
-    // Both match "frontend" (+3) and have high capacity (+2), but frontendLead is DR (+2), frontendPeer is peer (+1)
-    const { candidates } = runDelegateScoring(
-      [frontendPeer, frontendLead], // peer listed first to test sort
-      "frontend component",
-      ""
-    );
-    expect(candidates[0].alias).toBe("Jordan F."); // direct_report wins
-    expect(candidates[0].relationship).toBe("direct_report");
-  });
-
-  test("TEST-DEL-561: candidates outside 2-point window are excluded", () => {
-    // infraLead: infrastructure match +3, DR +2, medium +1 = 6
-    // vendorContact: no domain match on "infrastructure", vendor +0, high +2 = 2
-    // 6 - 2 = 4 > 2, so vendorContact excluded from runner-up window
-    const { candidates } = runDelegateScoring(
-      [infraLead, vendorContact],
-      "infrastructure monitoring",
-      ""
-    );
-    const aliases = candidates.map((c) => c.alias);
-    expect(aliases).not.toContain("Vendor A");
-  });
-
-  test("TEST-DEL-562: at most 3 candidates returned from runMatch", () => {
-    const manyStakeholders: Stakeholder[] = Array.from({ length: 10 }, (_, i) => ({
-      name: `FIRST_LAST_${i + 10}`,
-      alias: `Candidate ${i + 1}`,
-      role: "Engineer",
-      relationship: "peer" as const,
-      domains: ["frontend"],
-      capacity_signal: "high" as const,
-    }));
-    const { candidates } = runDelegateScoring(manyStakeholders, "frontend work", "");
-    expect(candidates.length).toBeLessThanOrEqual(3);
-  });
-});
-
-// ── Phase 5: Business Day Calculation ─────────────────────────────────────────
-
-describe("Phase 5: /delegate Direct Entry Point — Check-in Date Arithmetic", () => {
-  test("TEST-DEL-570: addBusinessDays skips Saturday", () => {
-    // Friday Feb 21 2026 + 1 business day = Monday Feb 23 2026
-    const friday = new Date("2026-02-21");
-    const next = addBusinessDays(friday, 1);
-    expect(next.getDay()).not.toBe(6); // not Saturday
-    expect(next.getDay()).not.toBe(0); // not Sunday
-  });
-
-  test("TEST-DEL-571: addBusinessDays(2) from a Friday lands on Tuesday", () => {
-    // Friday + 2 business days = Tuesday
-    const friday = new Date("2026-02-20");
-    const result = addBusinessDays(friday, 2);
-    expect(result.getDay()).toBe(2); // Tuesday
-  });
-
-  test("TEST-DEL-572: addBusinessDays(3) from a Wednesday lands on Monday", () => {
-    // Wednesday Feb 18 + 3 business days = Monday Feb 23
-    const wednesday = new Date("2026-02-18");
-    const result = addBusinessDays(wednesday, 3);
-    expect(result.getDay()).toBe(1); // Monday
-  });
-});

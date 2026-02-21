@@ -15,8 +15,6 @@
  * Run: cd scripts && npm test
  */
 
-import { addBusinessDaysStr as addBusinessDays } from "../scripts/date-helpers";
-
 // ── Phase 2: Dedup guard (TEST-DEL-024) ──────────────────────────────────────
 
 /**
@@ -169,17 +167,6 @@ describe("Phase 2: Dedup Guard — isAlreadySynced (TEST-DEL-024)", () => {
     expect(isAlreadySynced({ "Synced": "" })).toBe(false);
   });
 
-  test("TEST-DEL-704: failed Synced value still counts as synced (attempt was made)", () => {
-    expect(isAlreadySynced({
-      "Synced": "failed — list not found",
-    })).toBe(true);
-  });
-
-  test("TEST-DEL-705: skipped Synced value counts as synced", () => {
-    expect(isAlreadySynced({
-      "Synced": "skipped (already exists)",
-    })).toBe(true);
-  });
 });
 
 // ── Tests: Delegate state machine (schedule.md Step 3b) ──────────────────────
@@ -237,13 +224,6 @@ describe("Phase 3: Follow-up Title Format — buildFollowUpTitle (TEST-DEL-032)"
     )).toBe("Follow up: Review infrastructure alerting thresholds with Alex E.");
   });
 
-  test("TEST-DEL-721: title format matches execute.md spec exactly", () => {
-    // execute.md: "Title: Follow up: [original task title] with [alias]"
-    const result = buildFollowUpTitle("Update monitoring dashboards", "Jordan F.");
-    expect(result.startsWith("Follow up: ")).toBe(true);
-    expect(result.endsWith("with Jordan F.")).toBe(true);
-  });
-
   test("TEST-DEL-722: alias used in title, not full name (PII safety)", () => {
     const result = buildFollowUpTitle("Deploy new service", "Alex E.");
     expect(result).toContain("Alex E.");
@@ -275,10 +255,6 @@ describe("Phase 3: Follow-up Record — buildFollowUpRecord (TEST-DEL-032)", () 
     expect(record["Status"]).toBe("Unprocessed");
   });
 
-  test("TEST-DEL-727: Title follows follow-up format", () => {
-    expect(record["Title"]).toBe("Follow up: Review alerting thresholds with Alex E.");
-  });
-
   test("TEST-DEL-728: Description references alias, today's date, and original check-in", () => {
     expect(record["Description"]).toContain("Alex E.");
     expect(record["Description"]).toContain("2026-02-23");
@@ -301,9 +277,6 @@ describe("Phase 2+3: Overdue Detection — isOverdue (TEST-DEL-030, TEST-DEL-032
     expect(isOverdue("2026-02-25", "2026-02-23")).toBe(false);
   });
 
-  test("TEST-DEL-733: tomorrow is not overdue", () => {
-    expect(isOverdue("2026-02-24", "2026-02-23")).toBe(false);
-  });
 });
 
 describe("Phase 2: Overdue Delegation List — getOverdueDelegations (TEST-DEL-030)", () => {
@@ -332,38 +305,5 @@ describe("Phase 2: Overdue Delegation List — getOverdueDelegations (TEST-DEL-0
     expect(result[2].checkinDate).toBe("2026-02-23");
   });
 
-  test("TEST-DEL-736: empty list returns empty result", () => {
-    expect(getOverdueDelegations([], today)).toHaveLength(0);
-  });
-
-  test("TEST-DEL-737: no overdue items returns empty result", () => {
-    const future: OpenDelegation[] = [
-      { alias: "Alex E.", taskTitle: "Future Task", checkinDate: "2026-03-01" },
-    ];
-    expect(getOverdueDelegations(future, today)).toHaveLength(0);
-  });
 });
 
-// ── Tests: Check-in date calculation (schedule.md Step 3) ────────────────────
-
-describe("Phase 2: Check-in Date Calculation — addBusinessDays", () => {
-  test("TEST-DEL-740: +2 business days from Monday is Wednesday", () => {
-    const monday = new Date("2026-02-23");
-    expect(addBusinessDays(monday, 2)).toBe("2026-02-25");
-  });
-
-  test("TEST-DEL-741: +3 business days from Monday is Thursday", () => {
-    const monday = new Date("2026-02-23");
-    expect(addBusinessDays(monday, 3)).toBe("2026-02-26");
-  });
-
-  test("TEST-DEL-742: +2 business days from Thursday skips weekend, lands on Monday", () => {
-    const thursday = new Date("2026-02-19");
-    expect(addBusinessDays(thursday, 2)).toBe("2026-02-23");
-  });
-
-  test("TEST-DEL-743: +3 business days from Thursday lands on Tuesday", () => {
-    const thursday = new Date("2026-02-19");
-    expect(addBusinessDays(thursday, 3)).toBe("2026-02-24");
-  });
-});

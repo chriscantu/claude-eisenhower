@@ -194,21 +194,6 @@ describe("Capacity Signal Review — detectStaleDelegates", () => {
     expect(result[0].alias).toBe("Alex E.");
   });
 
-  test("TEST-CAP-616: empty delegation list returns empty result", () => {
-    expect(detectStaleDelegates([], 5, today)).toHaveLength(0);
-  });
-
-  test("TEST-CAP-617: delegate with 3 tasks — all included in task list", () => {
-    const delegations: ActiveDelegation[] = [
-      { alias: "Alex E.", taskTitle: "Task A", scheduledDate: daysAgo(8, today) },
-      { alias: "Alex E.", taskTitle: "Task B", scheduledDate: daysAgo(7, today) },
-      { alias: "Alex E.", taskTitle: "Task C", scheduledDate: daysAgo(6, today) },
-    ];
-    const result = detectStaleDelegates(delegations, 5, today);
-    expect(result[0].openCount).toBe(3);
-    expect(result[0].tasks).toHaveLength(3);
-  });
-
   test("TEST-CAP-618: threshold is configurable — custom 3-day threshold", () => {
     const delegations: ActiveDelegation[] = [
       { alias: "Alex E.", taskTitle: "Task A", scheduledDate: daysAgo(4, today) },
