@@ -47,12 +47,8 @@ These are scoped and prioritized. The "what" is clear; sequencing is flexible.
 ### ~~1. PII Aliasing in `/intake` (Requester field)~~ ✅ Shipped in v0.5.0
 Expanded in scope to system-wide alias resolution. `alias` is now an array — first item is display name, additional items are lookup terms (last name, nickname, shorthand). `resolveAlias()` and `getDisplayAlias()` added to `delegate-core.ts` as single source of truth. `/intake` resolves requester names against the graph before writing to TASKS.md.
 
-### 2. `/delegate` as a Direct Entry Point — v0.5.1 *(Specced)*
-**Why**: Currently delegation only runs via `/prioritize` (Q3 classification) or `/execute delegate`. There's no way to ask "who should own this?" outside the full workflow. This is open question #2 from the delegation spec.
-**What**: New `/delegate [task title or description]` command that runs the scoring CLI, surfaces candidates with reasoning, and writes a confirmed Q3 entry to TASKS.md. Includes Reminders push and memory log inline — no `/schedule` run needed for a directly delegated task.
-**Scope**: New `commands/delegate.md` + `tests/delegate-entry.test.ts`. Calls existing `scripts/match-delegate.ts` — no algorithm changes.
-**Spec**: `integrations/specs/delegate-entry-point-spec.md`
-**Version target**: v0.5.1
+### ~~2. `/delegate` as a Direct Entry Point~~ ✅ Shipped in v0.5.1
+Ad-hoc delegation command — scores candidates, confirms, writes a full Q3 entry to TASKS.md, pushes a Reminder, and logs follow-up memory in one step. No `/schedule` run needed.
 
 ### ~~3. Capacity Signal Review Prompt~~ ✅ Shipped in v0.5.2
 During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any delegate has 2+ open Q3 tasks with at least one older than 5 business days, surface an advisory prompt before scheduling. No auto-update; user decides whether to adjust `capacity_signal` in `stakeholders.yaml`. Pure detection logic covered by `tests/schedule-capacity.test.ts` (15 tests, TEST-CAP-6xx).

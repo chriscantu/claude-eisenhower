@@ -14,10 +14,38 @@ Everything stays local. Your task board, stakeholder graph, and calendar data ne
 
 ---
 
-## The four phases
+## The workflow
 
 ```
-INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
+                        ┌─────────────────┐
+            ┌──────────▶│     INTAKE      │◀─────────────┐
+            │           │    /intake      │              │
+            │           └────────┬────────┘              │
+            │                    │                       │
+    follow-ups &           classify tasks          new work
+    check-ins              Q1 / Q2 / Q3 / Q4      from email
+            │                    │                       │
+            │           ┌────────▼────────┐        ┌─────┴──────┐
+            │           │   PRIORITIZE    │        │ SCAN EMAIL │
+            │           │  /prioritize    │        │ /scan-email│
+            │           └────────┬────────┘        └────────────┘
+            │                    │
+            │          ┌─────────┴──────────┐
+            │          │                    │
+            │   ┌──────▼──────┐    ┌────────▼───────┐
+            │   │  SCHEDULE   │    │    DELEGATE     │
+            │   │  /schedule  │    │   /delegate     │
+            │   │  Q1 & Q2    │    │      Q3         │
+            │   └──────┬──────┘    └────────┬────────┘
+            │          │                    │
+            │          └─────────┬──────────┘
+            │                    │
+            │           ┌────────▼────────┐
+            └───────────│     EXECUTE     │
+                        │    /execute     │
+                        │  done · progress│
+                        │  delegate · follow-up
+                        └─────────────────┘
 ```
 
 | Phase | Command | What happens |
@@ -27,8 +55,7 @@ INTAKE → PRIORITIZE → SCHEDULE → EXECUTE
 | **Schedule** | `/schedule` | Dates and actions assigned by quadrant: Q1 lands today, Q2 gets a focus block, Q3 goes to your best delegate, Q4 gets cut |
 | **Close out** | `/execute` | Mark done, log progress, delegate, or spin up a follow-up — delegation history tracked automatically |
 | **Delegate** | `/delegate` | Ad-hoc: score and confirm a delegate for any task on demand — writes a full Q3 entry, pushes a Reminder, and logs memory in one step |
-
-Plus `/scan-email` to pull actionable items directly from Apple Mail.
+| **Email feed** | `/scan-email` | Scans Apple Mail and surfaces actionable emails as intake candidates — read-only |
 
 ---
 
@@ -51,31 +78,27 @@ Your stakeholder graph lives in `integrations/config/stakeholders.yaml` — a lo
 
 ## Getting started
 
-### 1. Copy the config templates
+### 1. Install the plugin
 
-```bash
-cd integrations/config/
+Download the latest `.plugin` file from [GitHub Releases](https://github.com/chriscantu/claude-eisenhower/releases) and install it via Cowork plugin settings.
 
-cp calendar-config.md.example    calendar-config.md
-cp email-config.md.example       email-config.md
-cp task-output-config.md.example task-output-config.md
-cp stakeholders.yaml.example     stakeholders.yaml
+### 2. Run setup
+
+```
+/setup
 ```
 
-### 2. Fill in your values
-
-| File | What to set |
-|------|-------------|
-| `calendar-config.md` | The exact name of your Mac Calendar |
-| `email-config.md` | Your mail account name and inbox folder |
-| `task-output-config.md` | Your Mac Reminders list name |
-| `stakeholders.yaml` | Your team — names, roles, domains, capacity |
-
-These files are gitignored and never committed. They stay on your machine.
+A 2-minute conversational flow walks you through connecting your Mac Calendar, Apple Mail account, and Reminders list. No manual file editing required.
 
 ### 3. Start capturing
 
-Your task board (`TASKS.md`) is created automatically the first time you run `/intake`. From there, the workflow guides itself.
+```
+/intake Product manager needs a feature timeline by Thursday
+```
+
+Your task board (`TASKS.md`) is created automatically on first use. From there, the workflow guides itself.
+
+> **Want to configure manually?** Config templates are in `integrations/config/*.example`. Copy each one, remove the `.example` suffix, and fill in your values. Run `/setup` at any time to reconfigure conversationally.
 
 ---
 
