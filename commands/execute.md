@@ -38,8 +38,21 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
    - Update `memory/people/[alias-filename].md` delegation log row for this task to `Resolved — [today's date]`
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
-5. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
-6. Offer to log a stakeholder update via the productivity:memory-management skill
+5. **Sync to task output adapter** (Reminders or configured system):
+   - Read `integrations/config/task-output-config.md`
+   - If the active adapter is still a placeholder (`~~task_output`) → skip silently
+   - If the active adapter is `reminders`:
+     - Read `list_name` from the `### reminders` block
+     - Run: `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript {title} {list_name}`
+     - **For Q3 tasks** that were pushed as check-in reminders, the title in Reminders was prefixed: "Check in: [delegate] re: [original title]". Use that prefixed form as the lookup title.
+     - Interpret the result:
+       - `success:` → append `Synced: Reminders completed — [today's date]` to the task record in TASKS.md
+       - `success: ... (already completed)` → append `Synced: Reminders already complete — [today's date]`
+       - `skipped:` → append `Synced: skipped — not found in Reminders (may not have been pushed)`
+       - `error:` → append `Synced: failed — [error message]` and show a non-blocking warning: "⚠ Could not mark reminder complete: [error message]"
+   - This step is **non-blocking** — a failed or skipped sync does not prevent task completion in TASKS.md
+6. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
+7. Offer to log a stakeholder update via the productivity:memory-management skill
 
 ### Log Progress
 1. Find the task in the board

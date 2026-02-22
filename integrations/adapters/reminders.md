@@ -3,19 +3,23 @@
 **System**: Apple Reminders (macOS)
 **Access method**: AppleScript via osascript
 **Auth required**: None — local app, no network
-**Direction**: Write-only (Eisenhower → Reminders)
+**Direction**: Eisenhower → Reminders (push on schedule; complete on execute)
 **Status**: Active
 
 ---
 
 ## How It Works
 
-When `/schedule` confirms tasks, this adapter creates a new reminder in the
-configured list for each Q1, Q2, and Q3 task. It checks for an existing reminder
-with the same title (case-insensitive) before writing to prevent duplicates.
+This adapter supports two operations:
 
-Calls `scripts/push_reminder.applescript` to perform the actual write. The
-adapter handles field mapping, priority translation, and result interpretation.
+**Push (create)** — Called by `/schedule` when a task is confirmed. Creates a new
+reminder in the configured list for each Q1, Q2, and Q3 task. Checks for an
+existing reminder with the same title (case-insensitive) before writing to prevent
+duplicates. Calls `scripts/push_reminder.applescript`.
+
+**Complete** — Called by `/execute` when a task is marked done. Finds the reminder
+by title (case-insensitive) and sets `completed = true`. The reminder stays in
+Reminders history — it is not deleted. Calls `scripts/complete_reminder.applescript`.
 
 ---
 
@@ -66,8 +70,7 @@ Before creating a reminder:
 
 ## AppleScript Execution
 
-The adapter calls `scripts/push_reminder.applescript` via osascript, passing
-arguments for title, body, due_date, priority, and list_name.
+**Push (create)** — called by `/schedule`:
 
 ```applescript
 do shell script "osascript ~/repos/claude-eisenhower/scripts/push_reminder.applescript " & ¬
@@ -77,6 +80,17 @@ do shell script "osascript ~/repos/claude-eisenhower/scripts/push_reminder.apple
     quoted form of (priority as string) & " " & ¬
     quoted form of list_name
 ```
+
+**Complete** — called by `/execute` when marking a task done:
+
+```applescript
+do shell script "osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript " & ¬
+    quoted form of title & " " & ¬
+    quoted form of list_name
+```
+
+Note: For Q3 tasks, the title used for lookup must be the prefixed form:
+`"Check in: [delegate] re: [original title]"` — matching exactly what was pushed.
 
 ---
 
@@ -89,6 +103,16 @@ do shell script "osascript ~/repos/claude-eisenhower/scripts/push_reminder.apple
 | List not found and creation failed | `error` | `"List not found"` | `""` |
 | Reminders app not responding | `error` | `"App unavailable"` | `""` |
 | Any other osascript error | `error` | Error message from osascript stderr | `""` |
+
+## Complete Result Mapping
+
+| Outcome | AppleScript return | TASKS.md entry |
+|---------|--------------------|----------------|
+| Reminder found and marked complete | `success: [title]` | `Synced: Reminders completed — [date]` |
+| Reminder was already complete | `success: [title] (already completed)` | `Synced: Reminders already complete — [date]` |
+| Reminder not found in list | `skipped: [title] — not found in '[list]'` | `Synced: skipped — not found in Reminders` |
+| List not found | `error: List '[name]' not found` | `Synced: failed — [error message]` + ⚠ warning |
+| Any other osascript error | `error: [message]` | `Synced: failed — [error message]` + ⚠ warning |
 
 ---
 

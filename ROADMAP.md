@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
 **Format**: Now / Next / Later
-**Last updated**: 2026-02-20
+**Last updated**: 2026-02-22
 **Owner**: Cantu
 
 ---
@@ -9,6 +9,9 @@
 ## Now — Shipped and Stable
 
 These features are complete, tested, and committed. The plugin is in active use.
+
+### Bug Fix (v0.9.1)
+**`/execute` now syncs task completion to Reminders.** Previously, `/schedule` pushed tasks to the Reminders adapter but `/execute` only updated TASKS.md — leaving reminders open after a task was marked done. Fixed by adding a Step 5 sync to `commands/execute.md` that calls `scripts/complete_reminder.applescript` after close-out. The script marks the reminder `completed = true` (stays in history, not deleted), handles Q3 check-in reminder title format, is idempotent, and is fully non-blocking. TASKS.md remains source of truth.
 
 ### Core Workflow (v0.1–v0.3)
 The four-phase task management loop is fully operational.
