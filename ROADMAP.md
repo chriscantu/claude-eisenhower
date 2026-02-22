@@ -42,6 +42,18 @@ Full stakeholder graph with weighted scoring, tested end-to-end.
 
 ## Next — Planned (1–3 months)
 
+### 1. Four-State Task Model (v0.9.0) — In Progress
+Replace Q1/Q2/Q3/Q4 as the status driver with four action-oriented states: **Inbox → Active → Delegated → Done**. The Eisenhower matrix is preserved as a `Priority:` metadata field, not the ongoing state label. Designed for a Platform team leader interfacing with 60+ teams where the core decision per task is: "own it, route it, or drop it — and when?"
+
+Key rules:
+- Delegated requires a Check-by date — mandatory, no exceptions
+- No Blocked state — blockers are notes with a check-by forcing function
+- Schema is Markdown-first, designed for non-breaking YAML upgrade when filtering pain appears
+
+Spec: `integrations/specs/four-state-task-model-spec.md`
+Files changed: `commands/intake.md`, `commands/prioritize.md`, `TASKS.md` (runtime), `ROADMAP.md`
+
+
 These are scoped and prioritized. The "what" is clear; sequencing is flexible.
 
 ### ~~1. PII Aliasing in `/intake` (Requester field)~~ ✅ Shipped in v0.5.0
@@ -131,3 +143,4 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`); build-spec.md and setup-spec.md |
 | v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish; `workflow_dispatch` for manual runs |
 | v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template |
+| v0.9.0 | Four-state task model: Inbox → Active → Delegated → Done; Eisenhower preserved as Priority metadata; Check-by enforcement on Delegated; Blocked state removed |

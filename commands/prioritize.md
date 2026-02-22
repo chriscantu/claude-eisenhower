@@ -13,9 +13,9 @@ If the file does not exist, inform the user: "No task board found. Run /intake t
 
 ## Step 2: Identify what to prioritize
 
-If $ARGUMENTS is provided, find the matching task in the Unprocessed section and prioritize only that task.
-If no argument is provided, prioritize ALL tasks in the `## Unprocessed` section.
-If there are no unprocessed tasks, say: "No unprocessed tasks found. Use /intake to add new tasks."
+If $ARGUMENTS is provided, find the matching task in the Inbox section and prioritize only that task.
+If no argument is provided, prioritize ALL tasks in the `## Inbox` section.
+If there are no Inbox tasks, say: "No inbox tasks found. Use /intake to add new tasks."
 
 ## Step 3: Apply the Eisenhower Matrix
 
@@ -24,11 +24,11 @@ For each task, evaluate:
 **Urgency check**: Is action needed within 1–3 days? Consider the urgency signal, due date, and source.
 **Importance check**: Does this advance engineering goals, team health, strategic outcomes, or your core Director responsibilities? Is this YOUR work or someone else's urgency?
 
-Map to quadrant:
-- **Q1** (Urgent + Important) → Must do now
-- **Q2** (Important, Not Urgent) → Schedule for focused work
-- **Q3** (Urgent, Not Important) → Delegate if possible
-- **Q4** (Not Urgent, Not Important) → Defer or eliminate
+Map to quadrant (used as Priority metadata, not status):
+- **Q1** (Urgent + Important) → State: Active, Owner: me — must do now
+- **Q2** (Important, Not Urgent) → State: Active, Owner: me — schedule for focused work
+- **Q3** (Urgent, Not Important) → State: Delegated, Owner: delegate alias — requires Check-by date
+- **Q4** (Not Urgent, Not Important) → State: Done, Note: "Eliminated — Q4 cut {date}"
 
 **Authority flag**: If a task description contains language like "requires your sign-off", "executive decision", "personnel decision", or "sensitive communication on your behalf", flag it before classifying Q3. Say: "This may require your authority — consider Q1 instead." Ask the user to confirm Q1 or keep Q3.
 
@@ -38,12 +38,14 @@ For each task, show:
 
 ```
 Task: [title]
-Quadrant: Q[X] — [label]
+Priority: Q[X] — [label]
+State: [Active / Delegated / Done]
+Owner: [me / delegate alias]
 Reasoning: [1–2 sentence explanation]
-Recommended action: [Do now / Schedule for [timeframe] / Delegate to [role] / Defer]
+Recommended action: [Do now / Schedule for [timeframe] / Delegate to [alias] / Eliminate]
 ```
 
-Then ask: "Does this assignment look right? I'll save it once you confirm — or tell me if any should be reclassified."
+Then ask: "Does this look right? I'll save it once you confirm — or tell me if any should be reclassified."
 
 ## Step 4b: For each Q3 task — load the stakeholder graph and suggest a delegate
 
@@ -77,16 +79,22 @@ After classifying a task as Q3, before saving:
 ## Step 5: Save confirmed assignments
 
 After user confirms (or adjusts), update TASKS.md:
-1. Remove each task from `## Unprocessed`
-2. Move it to the correct quadrant section
+1. Remove each task from `## Inbox`
+2. Move it to the correct state section (`## Active`, `## Delegated`, or `## Done`)
 3. Preserve all original task fields
-4. Add the quadrant label and recommended action to the task record
-5. For Q3: add `Suggested delegate: [alias]` (or `Delegate to: [not yet assigned — see stakeholders.yaml]` if no graph)
+4. Add the following fields to the task record:
+   - `Priority:` Q1 / Q2 / Q3 / Q4
+   - `State:` Active / Delegated / Done
+   - `Owner:` me / delegate alias
+5. For Delegated: require a `Check-by:` date before saving. If not provided, ask: "What date should I check in on this?" Do not save without it.
+6. For Q3: add `Owner: [alias]` (or `Owner: [not yet assigned — see stakeholders.yaml]` if no graph)
+7. For Q4: add `Note: Eliminated — Q4 cut {today's date}` and move to `## Done`
 
 Confirm: "Prioritization complete. Run /schedule to assign dates and block time."
 
 ## Edge cases
 
-- If a task is ambiguous (could be Q1 or Q2), default to Q2 and flag it: "I've placed this in Q2 but flag it if it's more urgent than I think."
-- If the user says "just do them all as Q1" — gently push back: "Happy to mark all as Q1, but that may defeat the purpose. Want to talk through a couple of them first?"
-- If a Q3 task description signals it requires the user's personal authority, flag it for reclassification to Q1 before proceeding (see Step 3 Authority flag).
+- If a task is ambiguous (could be Q1 or Q2), default to Q2 / Active and flag it: "I've placed this in Active (Q2) but flag it if it's more urgent than I think."
+- If the user says "just do them all as Q1" — gently push back: "Happy to mark all as Active, but that may defeat the purpose. Want to talk through a couple of them first?"
+- If a Q3 task description signals it requires the user's personal authority, flag it for reclassification to Q1 / Active before proceeding (see Step 3 Authority flag).
+- If a user reports a task is blocked: do NOT create a Blocked state. Instead, update the task's `Note:` field with the blocker context, ensure a `Check-by:` date is set, and keep the task in its current state (Active or Delegated). The forcing function is the check-by date — not a label.

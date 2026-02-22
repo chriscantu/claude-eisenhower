@@ -25,13 +25,13 @@ Extract the following fields:
 ```
 ---
 [ INTAKE — {today's date} ]
-Title:       {title}
-Description: {description}
-Source:      {source}
-Requester:   {requester}
-Urgency:     {urgency signal}
-Due date:    {raw due date}
-Status:      Unprocessed
+Title:        {title}
+Description:  {description}
+Source:       {source}
+Requester:    {requester}
+Urgency:      {urgency signal}
+Due date:     {raw due date}
+State:        Inbox
 ---
 ```
 
@@ -54,22 +54,18 @@ Example: source says "Vargas asked for this" → alias entries include "Vargas" 
 ```markdown
 # Task Board
 
-## Unprocessed
+## Inbox
 
-## Q1 — Urgent + Important
+## Active
 
-## Q2 — Important, Not Urgent
+## Delegated
 
-## Q3 — Urgent, Not Important (Delegate)
-
-## Q4 — Defer / Eliminate
-
-## Completed
+## Done
 ```
 
-2. Append the formatted task record to the `## Unprocessed` section.
+2. Append the formatted task record to the `## Inbox` section.
 
-3. Confirm to the user what was captured in a brief, friendly summary. Example: "Got it — I've logged '[title]' as a new task from [source]. Run /prioritize when you're ready to assign it a quadrant."
+3. Confirm to the user what was captured in a brief, friendly summary. Example: "Got it — I've logged '[title]' as a new task from [source]. Run /prioritize when you're ready to assign it a state and owner."
 
 4. If the source or requester is unclear, ask ONE clarifying question before saving.
 
