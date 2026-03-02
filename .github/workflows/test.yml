@@ -1,0 +1,44 @@
+name: Test Suite
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Jest (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node: ['20', '22']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: scripts
+        # postinstall creates tests/node_modules → scripts/node_modules symlink
+
+      - name: Run tests
+        run: npx jest --no-coverage --ci
+        working-directory: scripts
+        # Runs jest directly (not npm test) to bypass pretest re-running postinstall,
+        # which would hit EEXIST on the already-created symlink.
+        # --ci: fail on snapshot mismatches, disable interactive watch mode.
