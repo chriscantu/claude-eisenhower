@@ -1,5 +1,5 @@
 ---
-description: Delegate a task directly — score candidates, confirm, and write a Q3 entry to TASKS.md
+description: Delegate a task directly — score candidates, confirm, and write a Delegated entry to TASKS.md
 argument-hint: [task title or description]
 allowed-tools: Read, Write, Edit
 ---
@@ -9,7 +9,7 @@ You are running the DELEGATE direct entry point for the claude-eisenhower plugin
 This command bypasses the full intake → prioritize → schedule chain. It is designed
 for ad-hoc delegation: a task that arrives mid-session and needs an owner immediately.
 
-A confirmed run produces a complete Q3 task record in TASKS.md, pushes a check-in
+A confirmed run produces a complete Delegated task record in TASKS.md, pushes a check-in
 Reminder, and logs a follow-up memory entry — no `/schedule` run needed.
 
 ---
@@ -123,7 +123,7 @@ Ready to delegate:
   Task:       [title]
   Delegate:   [alias]
   Check-in:   [2–3 business days from today — skip weekends]
-  TASKS.md:   Will write a Q3 entry
+  TASKS.md:   Will write a Delegated entry
   Reminders:  Will push "Check in: [alias] re: [title]" if adapter is configured
 
 Confirm? (yes / assign someone else / make this Q1 instead)
@@ -137,39 +137,41 @@ If the user says "make this Q1": stop. Say "Run /intake or /prioritize to log th
 
 ---
 
-## Step 6: Write the Q3 task record to TASKS.md
+## Step 6: Write the Delegated task record to TASKS.md
 
 Read TASKS.md from the workspace root. If the file does not exist, create it with
 these section headers before appending:
 
 ```markdown
-## Q1 — Do Now
+# Task Board
 
-## Q2 — Schedule
+## Inbox
 
-## Q3 — Delegate
+## Active
 
-## Q4 — Eliminate
+## Delegated
 
-## Unprocessed
-
-## Completed
+## Done
 ```
 
-Append the following record to the `## Q3 — Delegate` section:
+Append the following record to the `## Delegated` section:
 
 ```
-[ Q3 — DELEGATE — {TODAY} ]
-Title:           {task title}
-Description:     {task description or "(none provided)"}
-Source:          Direct delegation
-Requester:       Self
-Urgency:         Delegated
-Quadrant:        Q3 — Delegate if possible
-Delegate to:     {confirmed alias}
-Check-in date:   {check-in date — 2–3 business days, skip weekends}
-Scheduled:       {today's date}
-Action:          Delegated — check in {check-in date}
+---
+[ INTAKE — {TODAY} ]
+Title:       {task title}
+Description: {task description or "(none provided)"}
+Source:      Direct delegation
+Requester:   Self
+Urgency:     Delegated
+Due date:    Not specified
+Priority:    Q3
+State:       Delegated
+Owner:       {confirmed alias}
+Check-by:    {check-in date}
+Scheduled:   {today's date}
+Action:      Delegated — check in {check-in date}
+---
 ```
 
 Where `{TODAY}` and `{Scheduled}` are today's date in YYYY-MM-DD format.
@@ -219,7 +221,7 @@ Delegated ✓
   Task:       {title}
   Owner:      {alias}
   Check-in:   {check-in date}
-  TASKS.md:   Q3 entry written
+  TASKS.md:   Delegated entry written
   Reminders:  {push result}
   Memory:     Follow-up logged for {alias}
 

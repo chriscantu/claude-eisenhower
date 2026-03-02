@@ -164,6 +164,11 @@ integrations/specs/
   build-spec.md                       ← plugin packaging: npm run package / .plugin artifact
   setup-spec.md                       ← first-run setup and /setup reconfiguration
   github-release-spec.md              ← GitHub Actions release automation on v* tags
+  four-state-task-model-spec.md       ← Inbox→Active→Delegated→Done state model (v0.9.0)
+  slack-intake-spec.md                ← /scan-slack Slack DM + mention capture (planned v1.1)
+  tasks-schema-spec.md                ← canonical TASKS.md field schema + section structure (planned v1.0)
+  adapter-types-spec.md               ← TypeScript interfaces for TaskOutputRecord + PushResult (planned v1.0)
+  memory-schema-spec.md               ← glossary.md + people/*.md schema and write rules (planned v1.0)
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -175,9 +180,10 @@ Not specs (which describe *what* to build) — docs explain the built thing.
 
 ```
 integrations/docs/
-  calendar-performance-fix.md    ← ADR: why Swift EventKit instead of AppleScript
-  mac-calendar-planner-override.md ← override instructions for external plugin
-  scripts-reference.md           ← moved from scripts/README.md
+  calendar-performance-fix.md          ← ADR: why Swift EventKit instead of AppleScript
+  mac-calendar-planner-override.md     ← override instructions for external plugin
+  scripts-reference.md                 ← moved from scripts/README.md
+  architectural-review-2026-03-02.md   ← ADR: full codebase review at v0.9.1; decisions that shaped v1.0 roadmap
 ```
 
 ---
