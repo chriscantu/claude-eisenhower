@@ -41,19 +41,20 @@ export function addBusinessDaysStr(startDate: Date, days: number): string {
  * Returns 0 if end <= start.
  */
 export function businessDaysElapsed(start: Date, end: Date = new Date()): number {
-  const from = new Date(start);
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(end);
-  to.setHours(0, 0, 0, 0);
+  // Use UTC-based normalization to avoid timezone shifts from ISO date strings.
+  // new Date("YYYY-MM-DD") parses as UTC midnight; setHours() would shift to local
+  // midnight and roll the date back in any UTC-offset timezone (e.g. CST = UTC-6).
+  const from = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+  const to   = Date.UTC(end.getUTCFullYear(),   end.getUTCMonth(),   end.getUTCDate());
 
   if (from >= to) return 0;
 
   let count = 0;
-  const cursor = new Date(from);
+  let cursor = from;
   while (cursor < to) {
-    const dow = cursor.getDay();
+    const dow = new Date(cursor).getUTCDay();
     if (dow !== 0 && dow !== 6) count++;
-    cursor.setDate(cursor.getDate() + 1);
+    cursor += 86_400_000; // advance exactly one day in ms
   }
   return count;
 }
