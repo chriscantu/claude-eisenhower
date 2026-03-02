@@ -194,10 +194,9 @@ Ask: "Does this look right? I'll add these to your task board once you confirm â
 ## Step 9: Write confirmed tasks to TASKS.md
 
 After the user confirms:
-- Create TASKS.md if it does not exist using the standard task board structure
-- Append each confirmed task to the correct quadrant section
+- Create TASKS.md if it does not exist with these section headers: `# Task Board`, `## Inbox`, `## Active`, `## Delegated`, `## Done`
+- Append each confirmed task to the `## Inbox` section
 - Preserve all original task fields
-- Add quadrant label and recommended action
 
 Standard intake record format:
 ```
@@ -210,7 +209,8 @@ Requester:   {sender name + role}
 Urgency:     {deadline language or "Not specified"}
 Due date:    {due date or "Not specified"}
 Category:    {Admin/Compliance | VP Escalation | Company Survey}
-Status:      {Q1 | Q2 | Q3}
+Priority:    {Q1 | Q2 | Q3}
+State:       Inbox
 ---
 ```
 

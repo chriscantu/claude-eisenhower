@@ -28,7 +28,7 @@ When intaking a task, extract and record:
 
 Do NOT prioritize during intake. Capture first, judge later.
 
-Store new tasks in the TASKS.md file. Append to the "## Unprocessed" section.
+Store new tasks in the TASKS.md file. Append to the "## Inbox" section.
 
 ### Phase 2: PRIORITIZE
 Classify each task using the Eisenhower Matrix. See `references/eisenhower.md` for full rules.
@@ -47,13 +47,13 @@ Assign timing based on quadrant:
 - **Q1** → Assign today or the earliest available slot. Flag as critical.
 - **Q2** → Assign a specific future date. Block time for deep work.
 - **Q3** → Assign a date only if delegated; otherwise mark "async/when possible."
-- **Q4** → Stage in the `## Q4 — Defer / Eliminate` section first. Record the cut date and reasoning. Only move to `## Completed` at the weekly review if the task is confirmed eliminated — not immediately.
+- **Q4** → Eliminate. Move to the `## Done` section with a `Note: Eliminated — Q4 cut {YYYY-MM-DD}` and `Done: {date}`. Do not leave in Inbox — elimination is an active decision, not a deferral.
 
 If Mac Calendar integration is configured, use it to check availability before assigning dates.
 
 ### Phase 4: EXECUTE
 When a task is in progress or completed:
-- **Mark done** → Move task to `## Completed` section with completion date
+- **Mark done** → Move task to `## Done` section with `Done: {YYYY-MM-DD}`
 - **Partial progress** → Add a progress note to the task
 - **Follow-up needed** → Create a new intake task linked to the original
 - **Stakeholder update needed** → Record the stakeholder in memory for follow-up tracking
@@ -63,24 +63,23 @@ When a task is in progress or completed:
 Tasks are stored in TASKS.md (in the outputs folder or workspace). Use this structure:
 
 ```markdown
-## Unprocessed
-- [ ] [INTAKE DATE] Task title | Source: X | Requester: Y
+# Task Board
 
-## Q1 — Urgent + Important
-- [ ] [DUE: DATE] Task title | Source: X | Requester: Y
+## Inbox
 
-## Q2 — Important, Not Urgent
-- [ ] [SCHEDULED: DATE] Task title | Source: X | Requester: Y
+## Active
 
-## Q3 — Urgent, Not Important
-- [ ] [ASYNC] Task title | Delegate to: X | Source: Y
+## Delegated
 
-## Q4 — Defer / Eliminate
-- [ ] Task title | Deferred | Review on: DATE
-
-## Completed
-- [x] [DONE: DATE] Task title
+## Done
 ```
+
+Each task is a fenced record delimited by `---` with colon-separated key-value fields.
+Key fields: `Title`, `Description`, `Source`, `Requester`, `Urgency`, `Due date`,
+`Priority` (Q1/Q2/Q3/Q4), `State` (Inbox/Active/Delegated/Done), `Owner`,
+`Check-by` (required when State: Delegated), `Scheduled`, `Action`, `Done`.
+
+See `integrations/specs/tasks-schema-spec.md` for the complete field reference.
 
 ## Stakeholder Memory
 

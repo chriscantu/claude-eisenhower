@@ -233,6 +233,33 @@ alias, all follow-ups due this week, overdue check-ins not yet resolved.
 
 **Dependency**: YAML front matter in memory files (or a structured store).
 
+### Self-Skill Enhancer
+
+A research-driven skill upgrade engine that allows the plugin to improve its own
+skills and commands. The enhancer detects skill domain, mines sibling skills for
+patterns, dispatches parallel research agents to gather best practices, classifies
+improvements by Impact × Effort, then applies validated changes with dry-run diffs
+and regression safeguards.
+
+**Two workflows**:
+- **Full Enhancement** (9 phases): domain detection → artifact collection → sibling
+  mining → parallel research agents (up to 3) → classify/prioritize improvements →
+  dry-run diffs → safety checks → apply → re-score
+- **Targeted Enhancement** (5 phases): focused improvement on a specific skill
+  component without full research sweep
+
+**Guardrails**: Before/after scoring via skill-reviewer agent; capability
+preservation rules prevent removing working behaviors; regression safeguards run
+existing test suite before and after.
+
+**Reference implementation**: `skill-enhancer.md` (Cantu personal superpowers).
+
+**Triggers**: Plugin skills have drifted from codebase evolution, or a command
+needs to be upgraded without rewriting from scratch.
+
+**Dependency**: Task tool parallel agent support (already available). Skill-reviewer
+agent for before/after scoring comparison.
+
 ---
 
 ## Won't Do (Explicit Cuts)
