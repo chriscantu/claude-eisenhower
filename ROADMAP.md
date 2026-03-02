@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
-**Format**: Now / Next / Later
-**Last updated**: 2026-02-22
+**Format**: Now / Critical Fixes / Near-Term / Long-Term
+**Last updated**: 2026-03-02
 **Owner**: Cantu
 
 ---
@@ -10,98 +10,228 @@
 
 These features are complete, tested, and committed. The plugin is in active use.
 
-### Bug Fix (v0.9.1)
-**`/execute` now syncs task completion to Reminders.** Previously, `/schedule` pushed tasks to the Reminders adapter but `/execute` only updated TASKS.md — leaving reminders open after a task was marked done. Fixed by adding a Step 5 sync to `commands/execute.md` that calls `scripts/complete_reminder.applescript` after close-out. The script marks the reminder `completed = true` (stays in history, not deleted), handles Q3 check-in reminder title format, is idempotent, and is fully non-blocking. TASKS.md remains source of truth.
-
 ### Core Workflow (v0.1–v0.3)
 The four-phase task management loop is fully operational.
 
-- **`/intake`** — captures tasks from any source (Slack, email, meetings, self) in natural language; extracts title, source, requester, urgency automatically
-- **`/prioritize`** — Eisenhower matrix classification (Q1–Q4) with reasoning shown before saving; authority flag detects tasks that require Director sign-off
-- **`/schedule`** — quadrant-specific scheduling rules (Q1 = today, Q2 = focus block, Q3 = delegate + check-in, Q4 = eliminate); Step 1b surfaces overdue delegations before scheduling
-- **`/execute`** — mark done, log progress, delegate, create follow-ups; delegation-aware close-out updates memory and suppresses duplicate reminders
-- **`/scan-email`** — reads Apple Mail inbox, classifies actionable emails into Q1–Q3, checks calendar availability before proposing dates; read-only
+- **`/intake`** — captures tasks from any source in natural language; extracts title, source, requester, urgency automatically; alias-resolves requester names against stakeholder graph
+- **`/prioritize`** — Eisenhower matrix classification (Q1–Q4 as `Priority:` metadata) with reasoning before saving; authority flag detects tasks requiring Director sign-off; routes to correct state section
+- **`/schedule`** — quadrant-specific scheduling rules; Step 1b surfaces overdue delegations and stale capacity signals before scheduling new work
+- **`/execute`** — mark done, log progress, delegate, create follow-ups; syncs completion to Reminders adapter; delegation-aware close-out updates memory
+- **`/delegate`** — ad-hoc delegation: scores candidates, confirms, writes a Delegated entry, pushes a Reminder, and logs memory in one step
+- **`/scan-email`** — reads Apple Mail inbox, classifies actionable emails into Q1–Q3; checks calendar availability before proposing dates; read-only
+- **`/setup`** — conversational 5-step first-run flow; per-command config guards auto-trigger setup for missing config then resume the original command
 
-### Integrations (v0.2–v0.3)
-- **Mac Calendar** — real-time availability check via EventKit Swift script (no AppleScript `whose` clause — O(1) regardless of calendar size)
-- **Mac Reminders** — swappable adapter pushes confirmed tasks with correct title format, priority, and due date; Q3 tasks pushed as `"Check in: [alias] re: [title]"`
+### Integrations (v0.2–v0.3, v0.8)
+- **Mac Calendar** — real-time availability check via EventKit Swift script; O(1) regardless of calendar size
+- **Mac Reminders** — swappable adapter pushes confirmed tasks with correct title format, priority, and due date; completion synced on `/execute`
 - **Apple Mail** — configurable account and inbox; three scan modes (admin, escalations, all)
 
-### Delegation Engine (v0.4.0–v0.4.3)
-Full stakeholder graph with weighted scoring, tested end-to-end.
+### Delegation Engine (v0.4–v0.5)
+- **Stakeholder graph** (`stakeholders.yaml`) — local, gitignored, PII-safe; alias used everywhere
+- **Weighted scoring algorithm** — domain match (+3), relationship (+2/+1/0), capacity (+2/+1/−1); top candidate + runner-up surfaced
+- **Authority flag** — detects executive/personnel decisions; proposes reclassification before delegating
+- **Alias resolution** — `alias` is an array; first item is display name, rest are lookup terms; `resolveAlias()` normalizes at intake
+- **Capacity signal review** — surfaces overloaded delegates (2+ open tasks, 5+ business days) at schedule time; advisory only
+- **Lifecycle management** — `Synced:` field as dedup guard; overdue detection; follow-up auto-creation on missed check-ins
 
-- **Stakeholder graph** (`stakeholders.yaml`) — local, gitignored, PII-safe; alias used everywhere, full name never leaves the file
-- **Weighted scoring algorithm** — domain match (+3 each), relationship (direct_report +2, peer +1, vendor 0), capacity (high +2, medium +1, low −1); top candidate + runner-up within 2 points surfaced
-- **Authority flag** — detects "requires your sign-off", "executive decision", "personnel decision" in task descriptions; proposes Q1 reclassification before delegating
-- **Lifecycle management** — dedup guard (`Synced:` field as source of truth), delegation close-out on Mark Done, overdue check-in detection, follow-up auto-creation on "still in progress"
-- **24-test Jest suite** — 24/24 passing; covers Phase 0 (graph init), Phase 1 (scoring, ranking, edge cases, PII safety), and end-to-end chain
+### Four-State Task Model (v0.9.0)
+- **Inbox → Active → Delegated → Done** — action-oriented states replace Q1/Q2/Q3/Q4 as the status driver
+- **Eisenhower preserved as `Priority:` metadata** — the matrix classifies work; state tracks where it lives
+- **Check-by enforcement** — Delegated requires a Check-by date; no exceptions
+- **No Blocked state** — blockers are notes with a check-by forcing function
 
 ### Engineering Foundation (v0.4.1)
 - **`PRINCIPLES.md`** — DRY, SOLID, TDD, PII safety rules; read at every session
-- **`delegate-core.ts`** — single source of truth for all shared types and scoring functions; CLI and tests both import from it (zero duplication)
-- **Self-healing test setup** — `postinstall`/`pretest` npm hooks auto-create `tests/node_modules` symlink; `npm test` works cold after any fresh clone
+- **`delegate-core.ts`** — single source of truth for shared types, scoring, authority flag, Q3 constants, alias resolution, and date helpers
+- **113 passing tests** — covering delegation engine, alias resolution, capacity detection, schedule/execute pure logic
+- **Self-healing test setup** — `postinstall`/`pretest` hooks auto-create `tests/node_modules` symlink
 
 ---
 
-## Next — Planned (1–3 months)
+## Critical Fixes — v0.9.x
 
-### 1. Four-State Task Model (v0.9.0) — In Progress
-Replace Q1/Q2/Q3/Q4 as the status driver with four action-oriented states: **Inbox → Active → Delegated → Done**. The Eisenhower matrix is preserved as a `Priority:` metadata field, not the ongoing state label. Designed for a Platform team leader interfacing with 60+ teams where the core decision per task is: "own it, route it, or drop it — and when?"
+These are bugs or consistency gaps in the shipped code. Not new features — repairs.
+All are low-risk, targeted changes. See `integrations/specs/architectural-review-2026-03-02.md`
+for full analysis.
 
-Key rules:
-- Delegated requires a Check-by date — mandatory, no exceptions
-- No Blocked state — blockers are notes with a check-by forcing function
-- Schema is Markdown-first, designed for non-breaking YAML upgrade when filtering pain appears
+### v0.9.2 — Four-State Consistency Pass + Build Cleanup
 
-Spec: `integrations/specs/four-state-task-model-spec.md`
-Files changed: `commands/intake.md`, `commands/prioritize.md`, `TASKS.md` (runtime), `ROADMAP.md`
+**Problem 1 — Four-state model partially rolled out.**
+v0.9.0 updated `commands/intake.md` and `commands/prioritize.md` but missed four
+files that still reference the old Q1/Q2/Q3/Q4 vocabulary. Claude will write
+inconsistent TASKS.md records depending on which command path was followed.
 
+Files to fix:
+- `commands/delegate.md` Step 6 — creates `## Q3 — Delegate` section (should be `## Delegated`)
+- `commands/scan-email.md` Step 9 — writes `Status: Q1/Q2/Q3` in record format (should write `State: Inbox`)
+- `hooks/hooks.json` — SessionStart prompt references Q1/Q2/Q3/Q4 counts (should describe Inbox/Active/Delegated/Done)
+- `skills/claude-eisenhower/SKILL.md` — references `## Unprocessed` section and Q1-Q4 headers
 
-These are scoped and prioritized. The "what" is clear; sequencing is flexible.
+**Problem 2 — `dist/` committed to source control.**
+Compiled TypeScript artifacts live alongside source. They drift, cause unnecessary
+merge conflicts, and are regenerated at build/package time anyway.
 
-### ~~1. PII Aliasing in `/intake` (Requester field)~~ ✅ Shipped in v0.5.0
-Expanded in scope to system-wide alias resolution. `alias` is now an array — first item is display name, additional items are lookup terms (last name, nickname, shorthand). `resolveAlias()` and `getDisplayAlias()` added to `delegate-core.ts` as single source of truth. `/intake` resolves requester names against the graph before writing to TASKS.md.
+Fix: Add `dist/` to `.gitignore`. The GitHub Actions release workflow already calls
+`npm run build` before packaging — nothing breaks.
 
-### ~~2. `/delegate` as a Direct Entry Point~~ ✅ Shipped in v0.5.1
-Ad-hoc delegation command — scores candidates, confirms, writes a full Q3 entry to TASKS.md, pushes a Reminder, and logs follow-up memory in one step. No `/schedule` run needed.
+### v0.9.3 — Plugin Path Resolution
 
-### ~~3. Capacity Signal Review Prompt~~ ✅ Shipped in v0.5.2
-During `/schedule` Step 1b (Part B), after the overdue check-in scan: if any delegate has 2+ open Q3 tasks with at least one older than 5 business days, surface an advisory prompt before scheduling. No auto-update; user decides whether to adjust `capacity_signal` in `stakeholders.yaml`. Pure detection logic covered by `tests/schedule-capacity.test.ts` (15 tests, TEST-CAP-6xx).
+**Problem**: `~/repos/claude-eisenhower/` is hardcoded in four command files and all
+`cal_query.swift` invocations. Breaks for any clone at a different path; makes the
+plugin non-distributable to other users without manual path editing.
 
-### ~~4. GitHub Release Automation~~ ✅ Shipped in v0.7.0
-GitHub Actions workflow (`.github/workflows/release.yml`) triggers on `v*` tag push. Validates tag matches `plugin.json`, calls `npm run package`, publishes GitHub Release with `.plugin` attached. `workflow_dispatch` added for manual triggering without re-pushing a tag.
+Files affected: `commands/delegate.md`, `commands/schedule.md`,
+`commands/scan-email.md`, all `cal_query.swift` call sites.
 
-### ~~5. First-Run Setup~~ ✅ Shipped in v0.8.0
-New `/setup` command with conversational 5-step flow: calendar validation → email detection → Reminders naming → stakeholders starter (optional) → summary. Per-command config guards on `/scan-email`, `/schedule`, and `/delegate` auto-trigger setup for missing config then resume the original command.
-
-### ~~4. Regression Test Coverage for Phase 2–3 (`/schedule` + `/execute`)~~ ✅ Shipped in v0.5.3
-Extracted pure functions from the command layer and covered them with a 32-test Jest suite (TEST-DEL-7xx). Replaces manual/behavioral-only coverage for TEST-DEL-020–032. Functions covered: `isAlreadySynced`, `getDelegateState`, `buildFollowUpTitle`, `buildFollowUpRecord`, `isOverdue`, `getOverdueDelegations`, `addBusinessDays`.
+Fix: Investigate whether Cowork exposes a `$PLUGIN_ROOT` environment variable. If
+yes, replace all hardcoded paths. If no, add `plugin_root` to a shared config file
+and have commands read from it.
 
 ---
 
-## Later — Strategic Direction (3–6+ months)
+## Near-Term — Foundation (v1.0)
 
-These are intentional bets. Timing and scope are flexible; direction is set.
+Architectural work that makes the plugin robust, consistent, and testable. These
+are the structural investments that prevent the v0.9.x class of bugs from recurring.
+
+### 1. TASKS.md Schema Spec
+
+**Problem**: No canonical spec for the TASKS.md record format. Commands describe the
+format inline, which allows drift. This is the root cause of the v0.9.x bugs.
+
+**Plan**: Write `integrations/specs/tasks-schema-spec.md` defining every field,
+valid values, required vs. optional per state, and the canonical section structure.
+All commands reference this spec instead of duplicating the format.
+
+**Scope**: New spec file. No command changes. Future commands must cite the spec
+before describing their output format.
+
+### 2. TypeScript Adapter Contract Interfaces
+
+**Problem**: The `task_output_record` and `push_result` contracts are documented in
+`integrations/adapters/README.md` only — no machine-checkable TypeScript interfaces.
+Future adapters have no compiler-enforced contract.
+
+**Plan**: Export `TaskOutputRecord` and `PushResult` interfaces from a new
+`scripts/adapter-types.ts`. Both types are already described in the adapter README —
+this is a formalization, not new design. Update `integrations/adapters/README.md`
+to reference the TypeScript interfaces as the authoritative source.
+
+**Scope**: New `scripts/adapter-types.ts`. One import line change in `delegate-core.ts`.
+
+### 3. Four-State Model Test Suite
+
+**Problem**: The four-state model (v0.9.0) has a complete 10-scenario Gherkin spec
+in `integrations/specs/four-state-task-model-spec.md` but zero Jest coverage.
+
+**Plan**: New `tests/four-state.test.ts` covering all 10 FOUR-STATE-xxx Gherkin
+scenarios. Extract any pure functions needed (state transition routing,
+Check-by enforcement, section-to-state mapping).
+
+**Pattern**: Same approach as `tests/phase2-3.test.ts` — extract pure functions
+from the command layer and test them directly.
+
+### 4. Memory Schema Spec
+
+**Problem**: `memory/glossary.md` and `memory/people/*.md` format is described inline
+in `commands/execute.md` and `commands/schedule.md` — no single source of truth.
+Format drifts as commands evolve, and there is no spec to validate against.
+
+**Plan**: Write `integrations/specs/memory-schema-spec.md` defining the canonical
+structure for both file types, who writes them, and how alias filenames are derived.
+Commands reference this spec.
+
+---
+
+## Near-Term — Integrations (v1.1)
+
+New capabilities that extend the plugin's reach.
+
+### 1. Slack Intake (`/scan-slack`)
+
+Spec complete: `integrations/specs/slack-intake-spec.md`.
+
+Ship immediately upon Slack MCP connector availability in Cowork. No architectural
+work required — the feature plugs directly into the existing intake pipeline using
+the same confirmation table pattern as `/scan-email`.
+
+**Dependency**: Slack MCP connector availability in Cowork (blocking).
+
+### 2. Weekly Review (`/review-week`)
+
+One command to start the week: overdue delegations + calendar load for the coming
+week + unprocessed tasks + memory entries approaching check-in date.
+
+**Dependency**: Mac Calendar integration already works. `mac-calendar-planner`
+override pattern already documented in `integrations/docs/`.
+
+### 3. Anti-Domain Support in Stakeholder Graph
+
+Add optional `anti_domains` field to `stakeholders.yaml` — domains that score a
+hard 0 for this person regardless of keyword match. Prevents routing work to people
+who should structurally never own it (e.g., vendor receiving internal architecture
+decisions).
+
+**Scope**: Schema addition + 2–3 new test cases in `tests/delegation.test.ts`.
+
+### 4. YAML Front Matter for TASKS.md
+
+Add YAML front matter to task records. Non-breaking — Markdown remains human-readable.
+Enables programmatic filtering by owner, state, and date without regex parsing.
+
+**Timing**: After TASKS.md schema spec is stable and validated by the four-state
+test suite. Schema first; structured encoding second.
+
+---
+
+## Long-Term — Architecture Evolution (v1.2+)
+
+Strategic bets for when the plugin scales beyond its current single-user, local-first
+design. Timing is flexible; direction is set.
+
+### Structured Task Store (YAML → SQLite)
+
+**When**: When TASKS.md filtering becomes the bottleneck — 50+ tasks, cross-owner
+queries, date range searches, multi-delegate reporting.
+
+**Design**: YAML front matter (v1.1) is the non-breaking bridge. When the pain
+materializes, write a migration script that reads YAML front matter and writes SQLite
+rows. TASKS.md becomes a view over the store, not the store itself.
+
+**Triggers**: User reports pain finding tasks by owner/date/state.
 
 ### Task Output Adapter Expansion
-The Reminders adapter works but Reminders is a personal tool. For teams, `/schedule` should push to Jira, Asana, or Linear. The adapter interface is already defined in `integrations/adapters/README.md` — it's a matter of building the adapter files and connectors.
-**Priority order**: Jira (most common in engineering orgs) → Linear (growing adoption) → Asana (cross-functional).
 
-### Slack / Chat Capture
-`/intake` supports Slack as a source label, but there's no direct Slack connector — you copy-paste the message. A Slack MCP connector would let `/intake` pull unread DMs and channel mentions directly, with source attribution preserved.
-**Dependency**: Slack MCP connector availability in Cowork.
+The Reminders adapter proves the pattern. When the plugin is used in team contexts,
+`/schedule` should push to Jira, Linear, or Asana.
 
-### Anti-Domain Support in Stakeholder Graph
-Open question #1 from the delegation spec. Some delegates should never receive certain types of work (e.g., a vendor shouldn't own internal architecture decisions). Add an optional `anti_domains` field to `stakeholders.yaml` schema — domains that score a hard 0 for this person regardless of keyword match.
-**Scope**: Schema addition + 2–3 new test cases in `delegation.test.ts`.
+**Priority**: Jira first (most common in engineering orgs) → Linear (growing adoption)
+→ Asana (cross-functional).
 
-### Weekly Review Automation
-The `mac-calendar-planner` plugin already surfaces calendar availability. A `weekly-review` command (or hook) could combine: overdue delegations from TASKS.md + calendar load for the coming week + unprocessed tasks + memory entries approaching check-in date. One command to start the week oriented.
-**Dependency**: `mac-calendar-planner` integration pattern already established via `integrations/docs/mac-calendar-planner-override.md`.
+**Dependency**: MCP connectors for each system. Adapter contract interfaces (v1.0)
+must land first to give these a TypeScript interface to implement against.
 
 ### Source Control Integration (GitHub / GitLab)
-`/scan-email` handles GitHub notification emails today, but they're lossy (no PR metadata). A direct GitHub connector would let `/intake` pull PR review requests, assigned issues, and failing CI notifications with full context — author, branch, PR title, status.
+
+`/scan-email` handles GitHub notification emails today, but they're lossy (no PR
+metadata). A direct GitHub connector would let `/intake` pull PR review requests,
+assigned issues, and failing CI with full context — author, branch, PR title, status.
+
 **Dependency**: GitHub MCP connector availability in Cowork.
+
+### Multi-Adapter Fan-Out
+
+Allow `/schedule` to push to multiple adapters simultaneously (e.g., Reminders + Jira).
+
+**Triggers**: User manages tasks in two systems simultaneously and is manually
+reconciling between them.
+
+### Memory System as a Queryable Layer
+
+A `/memory` command (or agent) that surfaces: all pending delegations for a given
+alias, all follow-ups due this week, overdue check-ins not yet resolved.
+
+**Dependency**: YAML front matter in memory files (or a structured store).
 
 ---
 
@@ -116,15 +246,34 @@ These were considered and deliberately excluded to keep the plugin focused.
 | Multi-delegate splitting of a single task | Adds coordination overhead; better to break the task at `/intake` |
 | Building stakeholder graph from task history | Interesting v2 idea; requires enough history to be useful — premature now |
 | Automatic follow-up scheduling (no user prompt) | Follow-up cadence is a judgment call; always ask before creating |
+| Blocked state | Anti-pattern — creates a holding area with no forcing function. Every stuck task needs an action decision (escalate / re-delegate / drop). |
 
 ---
 
 ## Open Questions
 
-1. ~~Should `/delegate` be a command or a flag on `/prioritize`?~~ → Resolved: dedicated command (see `integrations/specs/delegate-entry-point-spec.md`, Decisions Log item #1)
-2. When a delegate's `capacity_signal` changes, should the plugin prompt a review of all open Q3 tasks assigned to them?
-3. Should there be a `max_delegations` field in `stakeholders.yaml` to cap how many open items one person can hold?
-4. Is the `Requester:` field in TASKS.md worth aliasing, or is it acceptable to have source-verbatim names there since TASKS.md is gitignored?
+1. **Plugin path resolution**: Does the Cowork plugin system expose a `$PLUGIN_ROOT`
+   environment variable? If yes, the hardcoded path fix is trivial. If no, a shared
+   config field is the right approach. *(Blocking for v0.9.3)*
+
+2. **Memory system ownership**: Is `productivity:memory-management` the long-term
+   stakeholder memory system, or should this plugin own its memory fully? Currently
+   both are used. Decouple or consolidate?
+
+3. **YAML front matter timing**: Should YAML front matter land in v1.0 alongside
+   the schema spec, or after the spec has been stable for one release cycle?
+   Recommendation: spec first — validate field definitions are stable before adding
+   parsing complexity.
+
+4. **Behavioral test ceiling**: Should tests cover the full command flow, or is
+   pure-function coverage + Gherkin spec the right ceiling for a Claude-operated
+   plugin? Recommendation: the latter — you cannot test Claude's judgment in Jest.
+
+5. When a delegate's `capacity_signal` changes, should the plugin prompt a review
+   of all open Delegated tasks assigned to them?
+
+6. Should there be a `max_delegations` field in `stakeholders.yaml` to cap how
+   many open items one person can hold?
 
 ---
 
@@ -143,7 +292,12 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.5.1 | `/delegate` direct entry point: new command, inline Reminders push, memory log, 31-test suite |
 | v0.5.2 | Capacity signal review prompt: `/schedule` Step 1b Part B, 15-test suite (TEST-CAP-6xx) |
 | v0.5.3 | Phase 2–3 automated test coverage: 32-test suite (DEL-7xx), replaces TEST-DEL-020–032 manual |
-| v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`); build-spec.md and setup-spec.md |
-| v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish; `workflow_dispatch` for manual runs |
+| v0.6.0 | scan-email crash fix (U+FFFC ASCII strip); build packaging system (`npm run package` / `release`) |
+| v0.7.0 | GitHub Actions release workflow: tag-triggered `.plugin` artifact build + GitHub Release publish |
 | v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template |
-| v0.9.0 | Four-state task model: Inbox → Active → Delegated → Done; Eisenhower preserved as Priority metadata; Check-by enforcement on Delegated; Blocked state removed |
+| v0.9.0 | Four-state task model: Inbox → Active → Delegated → Done; Eisenhower preserved as Priority metadata |
+| v0.9.1 | `/execute` Reminders sync: completion now propagates to adapter; `complete_reminder.applescript` |
+| v0.9.2 | *(planned)* Four-state consistency pass + `dist/` removed from source control |
+| v0.9.3 | *(planned)* Plugin path resolution — replace hardcoded `~/repos/claude-eisenhower/` |
+| v1.0.0 | *(planned)* Foundation: TASKS.md schema spec, adapter contract interfaces, four-state test suite, memory schema spec |
+| v1.1.0 | *(planned)* Integrations: `/scan-slack`, `/review-week`, anti-domain support, YAML front matter |
