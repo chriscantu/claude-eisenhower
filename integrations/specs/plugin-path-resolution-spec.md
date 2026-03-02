@@ -1,6 +1,6 @@
 # Spec: Plugin Path Resolution
 **Version**: v0.9.3
-**Status**: Draft — pending implementation
+**Status**: Implemented — v0.9.3
 **Author**: Cantu
 **Date**: 2026-03-02
 
@@ -37,22 +37,20 @@ The hardcoded path currently appears in:
 
 ---
 
-## Investigation Gate
+## Investigation Gate — Resolved
 
-**Before implementing**, answer the open question from the ADR:
+**Finding**: `$CLAUDE_PLUGIN_ROOT` exists as a Claude Code variable BUT is only
+injected when executing `command:`-type hooks (e.g., `"type": "command"` in hooks.json).
+It is NOT present in the bash/shell environment used by the Bash tool or the
+`mcp__Control_your_Mac__osascript` MCP tool — which is how all claude-eisenhower
+script calls are executed.
 
-> Does Cowork expose a `$PLUGIN_ROOT` environment variable (or equivalent) that
-> Claude Code commands can read at runtime?
+**Evidence**: `env | grep CLAUDE_PLUGIN_ROOT` returns empty in Bash tool context.
+The `superpowers` plugin uses it in hooks.json `command:` hooks only. Official
+plugin-dev documentation confirms: "available in plugin commands" refers to
+command-type hooks, not MCP tool calls.
 
-**How to investigate**:
-1. Check Cowork's plugin/command execution environment for documented env vars
-2. Test with `do shell script "echo $PLUGIN_ROOT 2>&1"` inside an osascript block
-3. Check Claude Code documentation for any `$CLAUDE_PLUGIN_ROOT` or similar variable
-
-**Resolution branches**:
-
-- **If `$PLUGIN_ROOT` is available** → Use it directly in all call sites. No config file needed.
-- **If no env var is available** → Add `plugin_root` field to `integrations/config/task-output-config.md` (the existing shared config) and read it at each call site.
+**Decision**: Strategy B (config file). `plugin_root` added to `task-output-config.md`.
 
 ---
 

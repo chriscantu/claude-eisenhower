@@ -58,7 +58,9 @@ Ask: "Confirm delegation, or should this be reclassified as Q1 instead?"
 
 ## Step 3: Load the stakeholder graph and score
 
-Read `integrations/config/stakeholders.yaml` from `~/repos/claude-eisenhower/`.
+Read `plugin_root` from `integrations/config/task-output-config.md` (default: `~/repos/claude-eisenhower` if not set).
+
+Read `integrations/config/stakeholders.yaml` from `{plugin_root}/`.
 
 **If the file does not exist:**
 > No stakeholder graph found. Copy `integrations/config/stakeholders.yaml.example`
@@ -75,7 +77,7 @@ Ask: "Who should own this?" Accept a manually-entered alias and skip to Step 5.
 Run the scoring CLI:
 
 ```
-do shell script "cd ~/repos/claude-eisenhower/scripts && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
+do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
 ```
 
 Parse the JSON output. The `status` field will be one of:

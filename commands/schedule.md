@@ -205,15 +205,17 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 
 If the user asks to block time or mentions Mac Calendar, check availability before locking in a Q2 date.
 
-First read `calendar_name` from `integrations/config/calendar-config.md`, then run:
+Read `integrations/config/task-output-config.md` for:
+- `plugin_root` — the plugin installation path (default: `~/repos/claude-eisenhower` if not set)
+- The active adapter and list name used in Step 6
+
+Read `calendar_name` from `integrations/config/calendar-config.md`, then run:
 
 ```applescript
-do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
+do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
 ```
 
 This returns business day availability instantly regardless of calendar size.
 Do NOT use AppleScript's `whose` clause — it times out on large calendars.
-
-Also read `integrations/config/task-output-config.md` for the active adapter and list name used in Step 6.
 
 Offer: "Want me to check your calendar before committing to that day?"

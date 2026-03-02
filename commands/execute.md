@@ -39,11 +39,11 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
 5. **Sync to task output adapter** (Reminders or configured system):
-   - Read `integrations/config/task-output-config.md`
+   - Read `integrations/config/task-output-config.md` for: `plugin_root` (default: `~/repos/claude-eisenhower` if not set), the active adapter, and adapter settings
    - If the active adapter is still a placeholder (`~~task_output`) → skip silently
    - If the active adapter is `reminders`:
      - Read `list_name` from the `### reminders` block
-     - Run: `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript {title} {list_name}`
+     - Run: `osascript {plugin_root}/scripts/complete_reminder.applescript {title} {list_name}`
      - **For Q3 tasks** that were pushed as check-in reminders, the title in Reminders was prefixed: "Check in: [delegate] re: [original title]". Use that prefixed form as the lookup title.
      - Interpret the result:
        - `success:` → append `Synced: Reminders completed — [today's date]` to the task record in TASKS.md
