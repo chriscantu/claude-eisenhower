@@ -51,7 +51,7 @@ Then ask: "Does this look right? I'll save it once you confirm — or tell me if
 
 After classifying a task as Q3, before saving:
 
-1. **Check for stakeholder graph**: Read `integrations/config/stakeholders.yaml` (relative to the plugin root at `~/repos/claude-eisenhower/`).
+1. **Check for stakeholder graph**: Read `plugin_root` from `integrations/config/task-output-config.md` (default: `~/repos/claude-eisenhower` if not set), then read `{plugin_root}/integrations/config/stakeholders.yaml`.
 
    - If the file does not exist: say "No stakeholder graph found. Copy `integrations/config/stakeholders.yaml.example` to `stakeholders.yaml` and fill in your delegates to enable delegation suggestions." Save the task with `Delegate to: [not yet assigned — see stakeholders.yaml]` and continue.
    - If the file exists but the `stakeholders` list is empty: say "Stakeholder graph is empty — no delegates configured." Save with the same placeholder and continue.

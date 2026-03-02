@@ -126,9 +126,15 @@ If the user presses Enter or provides no input → use `Eisenhower List`.
 
 No osascript validation needed — the Reminders adapter creates the list on first push if it doesn't exist.
 
+**Ask:**
+> "What is the full path to your claude-eisenhower plugin folder? (Press Enter to use the default: '~/repos/claude-eisenhower')"
+
+If the user presses Enter or provides no input → use `~/repos/claude-eisenhower`.
+
 **Write** `integrations/config/task-output-config.md`:
 - Read `integrations/config/task-output-config.md.example`
-- Replace only `YOUR_REMINDERS_LIST_NAME` with the user's value (under the `### reminders` block)
+- Replace `~/repos/claude-eisenhower` in the `plugin_root:` line with the user's value
+- Replace `YOUR_REMINDERS_LIST_NAME` with the user's value (under the `### reminders` block)
 - Leave the `Active Adapter` line, all other adapter sections, and all comments unchanged
 - Write to `integrations/config/task-output-config.md`
 
@@ -158,6 +164,7 @@ Show a completion summary of everything that was written this session:
 ```
 ✅ Setup complete. Here's what I configured:
 
+  Plugin root:  [plugin_root]
   Calendar:     [calendar_name]
   Email:        [account_name] / [inbox_name]
   Reminders:    [list_name]

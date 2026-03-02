@@ -5,6 +5,12 @@ Edit this file to switch adapters or change target list/project settings.
 
 ---
 
+## Plugin Root
+
+plugin_root: ~/repos/claude-eisenhower
+
+---
+
 ## Active Adapter
 
 reminders
@@ -33,9 +39,11 @@ project_id:  ~~linear_project
 ## How to Set Up
 
 1. Copy this file: `cp task-output-config.md.example task-output-config.md`
-2. Set `list_name` under `### reminders` to the name of your Reminders list.
+2. Set `plugin_root` to the absolute path where this plugin is installed.
+   Default is `~/repos/claude-eisenhower` — update if you cloned elsewhere.
+3. Set `list_name` under `### reminders` to the name of your Reminders list.
    It will be created automatically if it doesn't exist.
-3. The actual `task-output-config.md` is gitignored — never committed.
+4. The actual `task-output-config.md` is gitignored — never committed.
 
 ## How to Switch Adapters
 
