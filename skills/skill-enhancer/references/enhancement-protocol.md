@@ -20,8 +20,10 @@ any enhancement session (Phase 1 baseline, Phase 6 regression check).
 **Counting rules:**
 - Steps: count top-level numbered items only (not sub-bullets)
 - Examples: count distinct fenced code blocks and labelled example sections
-- Guardrails: count items in any section labelled Guardrails, Rules, DO NOT, WARNING
-- Edge cases: count conditional handling items (`If X → Y` patterns)
+- Guardrails: count any bullet or numbered item containing `DO NOT`, `NEVER`,
+  `WARNING:`, or `CRITICAL:` anywhere in the file — not limited to labeled sections
+- Edge cases: count items in any `## Edge cases` section PLUS inline conditional
+  branches matching `If [condition] →` or `If [condition]:` patterns within numbered steps
 - Cross-references: count `> Read ...` or `See ...` directives pointing to other files
 
 ---
