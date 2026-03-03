@@ -89,7 +89,7 @@ and have commands read from it.
 
 ---
 
-## Near-Term — Infrastructure (v0.9.4)
+## Shipped — Infrastructure (v0.9.4)
 
 Internal technical improvements with no user-visible behavior change. These close
 the gap between what is tested and what is documented, and give the adapter contract
@@ -334,7 +334,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.1 | `/execute` Reminders sync: completion now propagates to adapter; `complete_reminder.applescript` |
 | v0.9.2 | Four-state consistency pass (delegate/scan-email/hooks/SKILL.md); `dist/` removed from source control |
 | v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
-| v0.9.4 | *(planned)* Adapter contract interfaces (`adapter-types.ts`); four-state model test suite |
+| v0.9.4 | Adapter contract interfaces (`adapter-types.ts`); four-state model test suite; QE audit (−6 low-signal tests) |
 | v0.9.5 | *(planned)* Self-Skill Enhancer — research-driven skill upgrade engine with parallel agents and regression safeguards |
 | v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
