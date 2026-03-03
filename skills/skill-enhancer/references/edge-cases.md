@@ -29,6 +29,13 @@ skills/skill-enhancer/references/[new-file].md — proceed? [y/n]"
 
 If user confirms: create new reference file, add `> Read references/[new-file].md`
 load instruction to SKILL.md at the appropriate phase.
+Naming convention for the new file: `[artifact-slug]-extended-[N].md` where
+`[artifact-slug]` is the artifact filename without extension and `[N]` starts at 1.
+Example: enhancing `commands/intake.md` → create `references/intake-extended-1.md`.
+If a `[slug]-extended-1.md` already exists, use `-2`, `-3`, etc.
+
+After creating the file: update `STRUCTURE.md` to register it under the
+`skills/skill-enhancer/references/` listing so the directory stays current.
 
 ---
 
