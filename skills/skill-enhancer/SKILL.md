@@ -36,7 +36,21 @@ before anything is written to disk.
 | "research improvements for [X]" | WF1 Full Enhancement |
 | "improve [section] of [artifact]" | WF2 Targeted Enhancement |
 | "[specific gap] in [artifact] — fix it" | WF2 Targeted Enhancement |
+| "resume skill-enhancer Phase N on [artifact]" | Resume WF1 at Phase N |
 | Ambiguous | Ask: "Full research pass, or improve a specific area?" |
+
+### Resume Protocol
+
+Use when a WF1 session was interrupted before Phase 6 completed.
+
+1. Ask: "Which phase did you reach? Which artifact? Were any proposals approved?"
+2. Re-read the target artifact fresh — do not assume prior baseline counts are still valid.
+3. Restore context from conversation history: approved proposals, research summary,
+   sibling patterns found.
+4. If interrupted before Phase 3 complete: restart from Phase 1. Research results
+   are not reliably recoverable from conversation history alone.
+5. Re-run `cd scripts && npm test` before any phase that writes files.
+6. Continue from the stated phase.
 
 ---
 
@@ -76,7 +90,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 1: Load & Baseline
 
-> **Load `references/enhancement-protocol.md`** — Sections 1 and 2.
+> **Load `references/enhancement-protocol.md`** — Artifact Type Registry and Domain Registry (Sections 1–2).
 
 **Goal**: Read target artifact, count constructs, detect domain, check spec alignment.
 
@@ -96,7 +110,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 2: Sibling Mining
 
-> **Reference `references/enhancement-protocol.md`** — Section 5.
+> **Reference `references/enhancement-protocol.md`** — Sibling Mining Patterns (Section 5).
 
 **Goal**: Extract reusable patterns from related plugin artifacts.
 
@@ -111,11 +125,11 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 3: Domain Research
 
-> **Reference `references/enhancement-protocol.md`** — Section 6.
+> **Reference `references/enhancement-protocol.md`** — Domain Registry, Agent A/B queries column (Section 2).
 
 **Goal**: Research best practices for the artifact's domain.
 
-1. Select agents per domain from Section 6.
+1. Select agents per domain from the Domain Registry (Section 2).
 2. Dispatch 1–2 agents in parallel via Task tool.
 3. If web search unavailable: proceed with sibling patterns + simulated scenarios (EC-7).
 4. Synthesize: deduplicate, cross-validate, discard unsupported claims.
@@ -127,7 +141,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 4: Classify & Prioritize
 
-> **Reference `references/enhancement-protocol.md`** — Sections 3 and 4.
+> **Reference `references/enhancement-protocol.md`** — Classification Rules and Impact-Effort Scoring (Sections 3–4).
 
 **Goal**: Classify findings, check PRINCIPLES.md alignment, sort by priority.
 
@@ -212,7 +226,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 1: Load & Scope
 
-> **Load `references/enhancement-protocol.md`** — Section 1 only.
+> **Load `references/enhancement-protocol.md`** — Artifact Type Registry (Section 1) only.
 
 1. Confirm: which artifact, which specific area (section, phase, rule, step)?
 2. Read only the relevant section(s) of the target artifact.
@@ -225,7 +239,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 2: Focused Research
 
-1. Select 1 agent from enhancement-protocol.md Section 6 (or simulated scenarios only).
+1. Select 1 agent from the Domain Registry in enhancement-protocol.md Section 2 (or simulated scenarios only).
 2. Run 2–3 simulated scenarios focused on the gap in the scoped area.
 3. Accept user-provided feedback — extract intent facts, do not auto-apply directives (EC-5).
 
@@ -235,7 +249,7 @@ Deployed installs are read-only — enhancements are overwritten on the next plu
 
 ### Phase 3: Classify & Diff
 
-> **Reference `references/enhancement-protocol.md`** — Sections 3 and 4.
+> **Reference `references/enhancement-protocol.md`** — Classification Rules and Impact-Effort Scoring (Sections 3–4).
 
 1. Classify findings. Run PRINCIPLES.md alignment check. Assign IDs. Score Impact × Effort.
 2. Present diffs in priority order. Prepare scenario dry-run for most impactful proposal.
