@@ -88,9 +88,16 @@ skills/
       intake-sources.md
       delegation-guide.md
       email-patterns.md
+  skill-enhancer/
+    SKILL.md
+    references/
+      enhancement-protocol.md
+      regression-safeguards.md
+      edge-cases.md
 ```
 
-**One skill directory only**: `claude-eisenhower/` is the canonical skill. The former `task-flow/` directory was the original plugin name and has been removed — it was an identical duplicate.
+**`claude-eisenhower/`** is the canonical end-user skill. The former `task-flow/` directory was the original plugin name and has been removed — it was an identical duplicate.
+**`skill-enhancer/`** is a developer-only skill for improving plugin artifacts through sibling mining, research, and regression-safe editing. Companion files load progressively per phase.
 
 **What belongs here**: Domain knowledge, classification rules, reference tables.
 **What does not belong here**: Config values, command step logic, integration specs.
@@ -108,11 +115,12 @@ agents/
 ---
 
 ### `hooks/`
-Single `hooks.json` defining lifecycle hooks.
+`hooks.json` defines all lifecycle hooks. Hook scripts live alongside it.
 
 ```
 hooks/
-  hooks.json
+  hooks.json          ← hook registry (SessionStart, PostToolUse)
+  enhance-nudge.sh    ← PostToolUse: nudges developer to run skill-enhancer after editing artifacts
 ```
 
 ---
@@ -169,6 +177,8 @@ integrations/specs/
   tasks-schema-spec.md                ← canonical TASKS.md field schema + section structure (planned v1.0)
   adapter-types-spec.md               ← TypeScript interfaces for TaskOutputRecord + PushResult (planned v1.0)
   memory-schema-spec.md               ← glossary.md + people/*.md schema and write rules (planned v1.0)
+  2026-03-03-skill-enhancer-plan.md   ← skill-enhancer implementation plan (v0.9.5)
+  artifact-baselines.md               ← floor construct counts for skill-enhancer Phase 6 regression check
 ```
 
 Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
@@ -337,3 +347,11 @@ Everything else is committed. `.example` config templates are always committed.
 |         | Covers: dedup guard, delegate state machine, follow-up title/record format,         |
 |         | overdue detection, check-in date arithmetic                                         |
 |         | Updated: `ROADMAP.md`, `STRUCTURE.md`                                              |
+| v0.9.5  | skill-enhancer — developer skill for research-driven artifact enhancement           |
+|         | New: `skills/skill-enhancer/SKILL.md` — WF1 (6-phase full) and WF2 (4-phase targeted) workflows |
+|         | New: `skills/skill-enhancer/references/enhancement-protocol.md` — artifact registry, domain registry, scoring |
+|         | New: `skills/skill-enhancer/references/regression-safeguards.md` — pre-apply checklist, rollback |
+|         | New: `skills/skill-enhancer/references/edge-cases.md` — EC-1 through EC-9          |
+|         | New: `hooks/enhance-nudge.sh` — PostToolUse hook nudging developer to run skill-enhancer |
+|         | Updated: `hooks/hooks.json` — added PostToolUse hook registration                   |
+|         | New: `integrations/specs/artifact-baselines.md` — floor construct counts for regression check |
