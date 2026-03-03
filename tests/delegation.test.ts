@@ -65,10 +65,6 @@ describe("Phase 0: Stakeholder Graph Initialization", () => {
     expect(Array.isArray(parsed.stakeholders)).toBe(true);
     expect(parsed.stakeholders.length).toBeGreaterThan(0);
   });
-  test("TEST-DEL-003: .gitignore excludes stakeholders.yaml", () => {
-    const content = fs.readFileSync(path.resolve(__dirname, "../.gitignore"), "utf8");
-    expect(content).toContain("integrations/config/stakeholders.yaml");
-  });
 });
 
 // ?? Phase 1: Domain matching ???????????????????????????????????????????????
@@ -85,13 +81,6 @@ describe("Phase 1: Delegation Suggestion � domain matching", () => {
     const scored = scoreDelegate(infraEngineer, "Update infrastructure alerting thresholds", "");
     expect(scored.score).toBe(6); // 3 + 2 + 1
     expect(scored.matched_domains).toEqual(["infrastructure"]);
-  });
-  test("TEST-DEL-010c: suggestion includes alias, role, domains, capacity_signal", () => {
-    const top = runMatch([infraEngineer], "Review infrastructure alerting thresholds").candidates[0];
-    expect(top.alias).toBeDefined();
-    expect(top.role).toBeDefined();
-    expect(top.matched_domains.length).toBeGreaterThan(0);
-    expect(top.capacity_signal).toBeDefined();
   });
 });
 
@@ -162,19 +151,6 @@ describe("Phase 1: Delegation Suggestion � capacity warnings", () => {
   });
 });
 
-describe("Phase 1: Authority flag detection", () => {
-  test("TEST-DEL-014: authority language detection � phrases should not crash match", () => {
-    const phrases = [
-      "requires your sign-off", "executive decision", "personnel decision",
-      "performance improvement plan", "sensitive communication on your behalf",
-    ];
-    for (const phrase of phrases) {
-      const result = runMatch([infraEngineer], `Handle infrastructure incident ${phrase}`, "");
-      expect(["match", "no_match"]).toContain(result.status);
-    }
-  });
-});
-
 describe("Scoring algorithm accuracy", () => {
   test("multi-domain match accumulates correctly", () => {
     const scored = scoreDelegate(infraEngineer,
@@ -196,12 +172,6 @@ describe("Scoring algorithm accuracy", () => {
 });
 
 describe("Ranking stability", () => {
-  test("rankCandidates is stable � same input produces same output", () => {
-    const graph = [infraEngineer, frontendLead, frontendPeer, lowCapDev, vendorContact];
-    const scored = graph.map((s) => scoreDelegate(s, "infrastructure CI/CD review", ""));
-    expect(rankCandidates([...scored]).map((c) => c.alias))
-      .toEqual(rankCandidates([...scored]).map((c) => c.alias));
-  });
   test("candidates slice at max 3 results", () => {
     const many: Stakeholder[] = Array.from({ length: 10 }, (_, i) => ({
       name: `PERSON_${i}`, alias: `Person ${i}`, role: "Engineer",

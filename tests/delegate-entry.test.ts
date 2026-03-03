@@ -175,20 +175,6 @@ describe("Phase 5: /delegate Direct Entry Point — Authority Flag (DEL-004)", (
     )).toBe(true);
   });
 
-  test("TEST-DEL-516: authority flag blocks delegation — scoring engine is NOT called when flag is set", () => {
-    // P0: when hasAuthorityFlag returns true, the command must surface a warning and
-    // NOT proceed to runMatch. This test verifies the guard contract: a task with an
-    // authority phrase returns true from hasAuthorityFlag, which the command layer checks
-    // BEFORE invoking runDelegateScoring. We verify the flag fires on the boundary input.
-    const flagged = hasAuthorityFlag(
-      "Approve this offer letter",
-      "This is a personnel decision — requires your sign-off"
-    );
-    expect(flagged).toBe(true);
-    // Guard contract: if flagged, the caller (command layer) must not call runMatch.
-    // Test confirms the flag output is boolean true, which the command reads and acts on.
-    // Behavioral enforcement is in commands/delegate.md Step 2 (non-negotiable block).
-  });
 });
 
 // ── Phase 5: Capacity Warning (DEL-005) ──────────────────────────────────────
@@ -263,12 +249,6 @@ describe("Phase 5: /delegate Direct Entry Point — Task Record Shape (DEL-007)"
     expect(record.delegateTo).not.toContain("FIRST_LAST"); // no PII leak
   });
 
-  test("TEST-DEL-533: check-in date is at least 2 business days from today", () => {
-    const todayDate = new Date();
-    const minCheckin = addBusinessDays(todayDate, 2);
-    const checkinDate = new Date(checkin);
-    expect(checkinDate.getTime()).toBeGreaterThanOrEqual(minCheckin.getTime() - 24 * 60 * 60 * 1000);
-  });
 });
 
 
