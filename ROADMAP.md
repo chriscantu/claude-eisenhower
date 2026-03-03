@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
 **Format**: Now / Critical Fixes / Near-Term / Long-Term
-**Last updated**: 2026-03-02
+**Last updated**: 2026-03-03
 **Owner**: Cantu
 
 ---
@@ -122,34 +122,42 @@ from the command layer and test them directly.
 
 ---
 
-## Near-Term — Self-Improvement (v0.9.5)
+## Shipped — Self-Improvement (v0.9.5)
 
 A meta-capability that allows the plugin to improve its own skills and commands
-without manual rewriting. Lands before v1.0 so it can be applied during the
-`/review-week` development cycle.
+without manual rewriting.
 
-### Self-Skill Enhancer
+### skill-enhancer
 
-A research-driven skill upgrade engine. Detects skill domain, mines sibling skills
-for patterns, dispatches parallel research agents to gather best practices, classifies
-improvements by Impact × Effort, then applies validated changes with dry-run diffs
-and regression safeguards.
+A research-driven skill upgrade engine. Detects artifact domain, mines sibling
+artifacts for reusable patterns, dispatches parallel research agents (Agent A best
+practices + Agent B counter-evidence), classifies improvements by Impact × Effort,
+then applies validated changes with dry-run diffs and regression safeguards.
 
 **Two workflows**:
-- **Full Enhancement** (9 phases): domain detection → artifact collection → sibling
-  mining → parallel research agents (up to 3) → classify/prioritize improvements →
-  dry-run diffs → safety checks → apply → re-score
-- **Targeted Enhancement** (5 phases): focused improvement on a specific skill
-  component without full research sweep
+- **WF1 Full Enhancement** (6 phases): environment gate → baseline + domain detection
+  → sibling mining → parallel research agents → classify/prioritize proposals →
+  apply with pre-apply checklist and npm test verification
+- **WF2 Targeted Enhancement** (4 phases): focused improvement on a specific area
+  without a full research sweep
 
-**Guardrails**: Before/after scoring via skill-reviewer agent; capability
-preservation rules prevent removing working behaviors; regression safeguards run
-existing test suite before and after.
+**Key files**:
+- `skills/skill-enhancer/SKILL.md` — workflow router, Phase 0 environment gate, WF1/WF2
+- `skills/skill-enhancer/references/enhancement-protocol.md` — artifact type registry,
+  unified domain registry (detection + Agent A/B queries in one table), classification
+  rules, Impact-Effort scoring, sibling mining patterns
+- `skills/skill-enhancer/references/regression-safeguards.md` — 7-check pre-apply
+  checklist, construct count comparison, rollback procedure, capability preservation rules
+- `skills/skill-enhancer/references/edge-cases.md` — EC-1 through EC-9 (stub, 300-line
+  overflow, same-domain siblings, no examples, directive feedback, test failures, no
+  web search, broken cross-references, no matching spec)
 
-**Reference implementation**: `skill-enhancer.md` (Cantu personal superpowers).
+**Hook**: `hooks/enhance-nudge.sh` fires after writing any `commands/` or `skills/`
+artifact in the source repo; session-deduped so it fires once per file per session.
 
-**Dependency**: Task tool parallel agent support (already available). Skill-reviewer
-agent for before/after scoring comparison.
+**Guardrails**: 12 explicitly listed in SKILL.md; capability preservation rules block
+removing phases, guardrails, or examples without explicit user approval; npm test
+auto-rollback on regression.
 
 ---
 
@@ -265,8 +273,7 @@ alias, all follow-ups due this week, overdue check-ins not yet resolved.
 
 ### Self-Skill Enhancer
 
-Moved to Near-Term (v0.9.5) — ships before v1.0 so it can be used during the
-`/review-week` development cycle. See the v0.9.5 section above for the full spec.
+Shipped as v0.9.5. See the v0.9.5 section above for the full spec.
 
 ---
 
@@ -335,6 +342,6 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.2 | Four-state consistency pass (delegate/scan-email/hooks/SKILL.md); `dist/` removed from source control |
 | v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
 | v0.9.4 | Adapter contract interfaces (`adapter-types.ts`); four-state model test suite; QE audit (−6 low-signal tests) |
-| v0.9.5 | *(planned)* Self-Skill Enhancer — research-driven skill upgrade engine with parallel agents and regression safeguards |
+| v0.9.5 | skill-enhancer — WF1/WF2 enhancement workflows, domain registry, regression safeguards, EC-1–EC-9, enhance-nudge hook |
 | v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
