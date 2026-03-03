@@ -202,6 +202,16 @@ Enables programmatic filtering by owner, state, and date without regex parsing.
 **Timing**: After TASKS.md schema spec is stable and validated by the four-state
 test suite. Schema first; structured encoding second.
 
+### 4. Direct unit tests for `addBusinessDays`
+
+`scripts/date-helpers.ts` exports `addBusinessDays` and `addBusinessDaysStr`, but
+both functions lack dedicated unit tests. `businessDaysElapsed` (their inverse) is
+well-covered in `schedule-capacity.test.ts`. Gap identified during v0.9.4 QE audit.
+
+**Scope**: 4–5 boundary cases added to `schedule-capacity.test.ts`:
+Monday+2, Friday+2 (spans weekend), n=0 (same day), n=1 on Friday → Monday.
+Small lift; no new file needed.
+
 ---
 
 ## Long-Term — Architecture Evolution (v1.2+)
