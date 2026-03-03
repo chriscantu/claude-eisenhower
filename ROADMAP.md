@@ -122,6 +122,37 @@ from the command layer and test them directly.
 
 ---
 
+## Near-Term — Self-Improvement (v0.9.5)
+
+A meta-capability that allows the plugin to improve its own skills and commands
+without manual rewriting. Lands before v1.0 so it can be applied during the
+`/review-week` development cycle.
+
+### Self-Skill Enhancer
+
+A research-driven skill upgrade engine. Detects skill domain, mines sibling skills
+for patterns, dispatches parallel research agents to gather best practices, classifies
+improvements by Impact × Effort, then applies validated changes with dry-run diffs
+and regression safeguards.
+
+**Two workflows**:
+- **Full Enhancement** (9 phases): domain detection → artifact collection → sibling
+  mining → parallel research agents (up to 3) → classify/prioritize improvements →
+  dry-run diffs → safety checks → apply → re-score
+- **Targeted Enhancement** (5 phases): focused improvement on a specific skill
+  component without full research sweep
+
+**Guardrails**: Before/after scoring via skill-reviewer agent; capability
+preservation rules prevent removing working behaviors; regression safeguards run
+existing test suite before and after.
+
+**Reference implementation**: `skill-enhancer.md` (Cantu personal superpowers).
+
+**Dependency**: Task tool parallel agent support (already available). Skill-reviewer
+agent for before/after scoring comparison.
+
+---
+
 ## Near-Term — First Major Milestone (v1.0)
 
 v1.0 is the first release that closes the weekly workflow loop. The four-phase
@@ -224,30 +255,8 @@ alias, all follow-ups due this week, overdue check-ins not yet resolved.
 
 ### Self-Skill Enhancer
 
-A research-driven skill upgrade engine that allows the plugin to improve its own
-skills and commands. The enhancer detects skill domain, mines sibling skills for
-patterns, dispatches parallel research agents to gather best practices, classifies
-improvements by Impact × Effort, then applies validated changes with dry-run diffs
-and regression safeguards.
-
-**Two workflows**:
-- **Full Enhancement** (9 phases): domain detection → artifact collection → sibling
-  mining → parallel research agents (up to 3) → classify/prioritize improvements →
-  dry-run diffs → safety checks → apply → re-score
-- **Targeted Enhancement** (5 phases): focused improvement on a specific skill
-  component without full research sweep
-
-**Guardrails**: Before/after scoring via skill-reviewer agent; capability
-preservation rules prevent removing working behaviors; regression safeguards run
-existing test suite before and after.
-
-**Reference implementation**: `skill-enhancer.md` (Cantu personal superpowers).
-
-**Triggers**: Plugin skills have drifted from codebase evolution, or a command
-needs to be upgraded without rewriting from scratch.
-
-**Dependency**: Task tool parallel agent support (already available). Skill-reviewer
-agent for before/after scoring comparison.
+Moved to Near-Term (v0.9.5) — ships before v1.0 so it can be used during the
+`/review-week` development cycle. See the v0.9.5 section above for the full spec.
 
 ---
 
@@ -316,5 +325,6 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.2 | Four-state consistency pass (delegate/scan-email/hooks/SKILL.md); `dist/` removed from source control |
 | v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
 | v0.9.4 | *(planned)* Adapter contract interfaces (`adapter-types.ts`); four-state model test suite |
+| v0.9.5 | *(planned)* Self-Skill Enhancer — research-driven skill upgrade engine with parallel agents and regression safeguards |
 | v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
