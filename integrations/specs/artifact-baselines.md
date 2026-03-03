@@ -1,8 +1,13 @@
 # Artifact Construct Baselines
 
 Recorded: 2026-03-03
-Purpose: Floor values for skill-enhancer Phase 6 regression check.
-Any post-enhancement construct count below these values is a hard warning.
+Purpose: Floor values — not rolling baselines — for skill-enhancer Phase 6 regression check.
+These counts reflect the plugin state at first recording. The regression check flags any
+construct count that drops below these values, indicating an accidental removal.
+
+Update these rows when a structural expansion is intentional: a new phase added to a command,
+a new guardrail section created, or a new example block deliberately introduced. Do not update
+after routine wording changes. When in doubt, leave the floor as-is.
 
 ## commands/intake.md
 - steps: 9
