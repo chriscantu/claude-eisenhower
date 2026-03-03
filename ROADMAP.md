@@ -89,24 +89,13 @@ and have commands read from it.
 
 ---
 
-## Near-Term — Foundation (v1.0)
+## Near-Term — Infrastructure (v0.9.4)
 
-Architectural work that makes the plugin robust, consistent, and testable. These
-are the structural investments that prevent the v0.9.x class of bugs from recurring.
+Internal technical improvements with no user-visible behavior change. These close
+the gap between what is tested and what is documented, and give the adapter contract
+a compiler-enforced boundary.
 
-### 1. TASKS.md Schema Spec
-
-**Problem**: No canonical spec for the TASKS.md record format. Commands describe the
-format inline, which allows drift. This is the root cause of the v0.9.x bugs.
-
-**Plan**: Write `integrations/specs/tasks-schema-spec.md` defining every field,
-valid values, required vs. optional per state, and the canonical section structure.
-All commands reference this spec instead of duplicating the format.
-
-**Scope**: New spec file. No command changes. Future commands must cite the spec
-before describing their output format.
-
-### 2. TypeScript Adapter Contract Interfaces
+### 1. TypeScript Adapter Contract Interfaces
 
 **Problem**: The `task_output_record` and `push_result` contracts are documented in
 `integrations/adapters/README.md` only — no machine-checkable TypeScript interfaces.
@@ -119,7 +108,7 @@ to reference the TypeScript interfaces as the authoritative source.
 
 **Scope**: New `scripts/adapter-types.ts`. One import line change in `delegate-core.ts`.
 
-### 3. Four-State Model Test Suite
+### 2. Four-State Model Test Suite
 
 **Problem**: The four-state model (v0.9.0) has a complete 10-scenario Gherkin spec
 in `integrations/specs/four-state-task-model-spec.md` but zero Jest coverage.
@@ -131,15 +120,23 @@ Check-by enforcement, section-to-state mapping).
 **Pattern**: Same approach as `tests/phase2-3.test.ts` — extract pure functions
 from the command layer and test them directly.
 
-### 4. Memory Schema Spec
+---
 
-**Problem**: `memory/glossary.md` and `memory/people/*.md` format is described inline
-in `commands/execute.md` and `commands/schedule.md` — no single source of truth.
-Format drifts as commands evolve, and there is no spec to validate against.
+## Near-Term — First Major Milestone (v1.0)
 
-**Plan**: Write `integrations/specs/memory-schema-spec.md` defining the canonical
-structure for both file types, who writes them, and how alias filenames are derived.
-Commands reference this spec.
+v1.0 is the first release that closes the weekly workflow loop. The four-phase
+Intake → Prioritize → Schedule → Execute cycle is complete, but there is no command
+to step back and review the week as a whole. `/review-week` fills that gap.
+That is the user-facing capability that justifies a major version milestone.
+
+### Weekly Review (`/review-week`)
+
+One command to start the week: surfaces overdue delegations + calendar load for the
+coming week + unprocessed Inbox tasks + memory entries approaching check-in date.
+Gives the Director a complete situational snapshot before making scheduling decisions.
+
+**Dependency**: Mac Calendar integration already works. `mac-calendar-planner`
+override pattern already documented in `integrations/docs/`.
 
 ---
 
@@ -157,15 +154,7 @@ the same confirmation table pattern as `/scan-email`.
 
 **Dependency**: Slack MCP connector availability in Cowork (blocking).
 
-### 2. Weekly Review (`/review-week`)
-
-One command to start the week: overdue delegations + calendar load for the coming
-week + unprocessed tasks + memory entries approaching check-in date.
-
-**Dependency**: Mac Calendar integration already works. `mac-calendar-planner`
-override pattern already documented in `integrations/docs/`.
-
-### 3. Anti-Domain Support in Stakeholder Graph
+### 2. Anti-Domain Support in Stakeholder Graph
 
 Add optional `anti_domains` field to `stakeholders.yaml` — domains that score a
 hard 0 for this person regardless of keyword match. Prevents routing work to people
@@ -174,7 +163,7 @@ decisions).
 
 **Scope**: Schema addition + 2–3 new test cases in `tests/delegation.test.ts`.
 
-### 4. YAML Front Matter for TASKS.md
+### 3. YAML Front Matter for TASKS.md
 
 Add YAML front matter to task records. Non-breaking — Markdown remains human-readable.
 Enables programmatic filtering by owner, state, and date without regex parsing.
@@ -208,7 +197,7 @@ The Reminders adapter proves the pattern. When the plugin is used in team contex
 **Priority**: Jira first (most common in engineering orgs) → Linear (growing adoption)
 → Asana (cross-functional).
 
-**Dependency**: MCP connectors for each system. Adapter contract interfaces (v1.0)
+**Dependency**: MCP connectors for each system. Adapter contract interfaces (v0.9.4)
 must land first to give these a TypeScript interface to implement against.
 
 ### Source Control Integration (GitHub / GitLab)
@@ -279,9 +268,9 @@ These were considered and deliberately excluded to keep the plugin focused.
 
 ## Open Questions
 
-1. **Plugin path resolution**: Does the Cowork plugin system expose a `$PLUGIN_ROOT`
-   environment variable? If yes, the hardcoded path fix is trivial. If no, a shared
-   config field is the right approach. *(Blocking for v0.9.3)*
+1. ~~**Plugin path resolution**~~: Resolved in v0.9.3. `$CLAUDE_PLUGIN_ROOT` is only
+   available for `command:`-type hooks, not MCP tool calls. Solution: `plugin_root`
+   field in `task-output-config.md`.
 
 2. **Memory system ownership**: Is `productivity:memory-management` the long-term
    stakeholder memory system, or should this plugin own its memory fully? Currently
@@ -324,7 +313,8 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.8.0 | First-run setup: `/setup` command, per-command config guards, stakeholders starter template |
 | v0.9.0 | Four-state task model: Inbox → Active → Delegated → Done; Eisenhower preserved as Priority metadata |
 | v0.9.1 | `/execute` Reminders sync: completion now propagates to adapter; `complete_reminder.applescript` |
-| v0.9.2 | *(planned)* Four-state consistency pass + `dist/` removed from source control |
-| v0.9.3 | *(planned)* Plugin path resolution — replace hardcoded `~/repos/claude-eisenhower/` |
-| v1.0.0 | *(planned)* Foundation: TASKS.md schema spec, adapter contract interfaces, four-state test suite, memory schema spec |
-| v1.1.0 | *(planned)* Integrations: `/scan-slack`, `/review-week`, anti-domain support, YAML front matter |
+| v0.9.2 | Four-state consistency pass (delegate/scan-email/hooks/SKILL.md); `dist/` removed from source control |
+| v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
+| v0.9.4 | *(planned)* Adapter contract interfaces (`adapter-types.ts`); four-state model test suite |
+| v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
+| v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
