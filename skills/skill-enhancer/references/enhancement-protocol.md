@@ -28,22 +28,23 @@ any enhancement session (Phase 1 baseline, Phase 6 regression check).
 
 ---
 
-## Section 2: Domain Detection
+## Section 2: Domain Registry
 
-Map artifact path to plugin domain. Domain determines which research queries to use
-in Phase 3.
+Maps artifact path to plugin domain and provides research agent queries for Phase 3.
+Agent B queries apply only to domains with known failure-mode literature; cells marked
+`—` skip counter-evidence research.
 
-| Artifact path | Domain | Key concepts |
-|---|---|---|
-| `commands/intake.md` | task-intake | capture, source parsing, inbox triage, no-prioritize-during-intake |
-| `commands/prioritize.md` | prioritization | Eisenhower matrix, Q1-Q4, urgency vs. importance |
-| `commands/schedule.md` | scheduling | capacity planning, time blocking, calendar integration, Q1/Q2 assignment |
-| `commands/execute.md` | execution | progress tracking, follow-up, stakeholder updates, done criteria |
-| `commands/delegate.md` | delegation | authority matching, check-by dates, re-escalation, alias resolution |
-| `commands/scan-email.md` | email-intake | email parsing, signal vs. noise, action item extraction |
-| `commands/setup.md` | onboarding | configuration, first-run, plugin setup |
-| `skills/claude-eisenhower/SKILL.md` | orchestration | workflow routing, phase coordination, all domains |
-| `skills/*/references/*.md` | varies | inherit domain from parent SKILL.md |
+| Artifact path | Domain | Key concepts | Agent A query | Agent B query |
+|---|---|---|---|---|
+| `commands/intake.md` | task-intake | capture, source parsing, inbox triage, no-prioritize-during-intake | "best practices for engineering manager task intake and inbox triage workflows 2025" | "common failures in task intake systems — what causes inbox overload" |
+| `commands/prioritize.md` | prioritization | Eisenhower matrix, Q1-Q4, urgency vs. importance | "Eisenhower matrix refinements and edge cases for engineering directors 2025" | "Eisenhower matrix criticism and failure modes" |
+| `commands/schedule.md` | scheduling | capacity planning, time blocking, calendar integration, Q1/Q2 assignment | "time blocking and capacity planning patterns for engineering managers 2025" | "time blocking failure modes and over-scheduling pitfalls" |
+| `commands/execute.md` | execution | progress tracking, follow-up, stakeholder updates, done criteria | "task follow-up and stakeholder update patterns for engineering managers 2025" | — |
+| `commands/delegate.md` | delegation | authority matching, check-by dates, re-escalation, alias resolution | "delegation frameworks for engineering directors — check-in cadence and re-escalation 2025" | "delegation failure patterns — what causes delegated tasks to stall" |
+| `commands/scan-email.md` | email-intake | email parsing, signal vs. noise, action item extraction | "engineering manager email triage and action item extraction patterns 2025" | — |
+| `commands/setup.md` | onboarding | configuration, first-run, plugin setup | "first-run plugin setup and configuration UX patterns for developer tools 2025" | — |
+| `skills/claude-eisenhower/SKILL.md` | orchestration | workflow routing, phase coordination, all domains | "AI-assisted productivity workflow design for engineering leaders 2025" | — |
+| `skills/*/references/*.md` | varies | inherit domain from parent SKILL.md | — (use parent SKILL.md domain row) | — |
 
 ---
 
@@ -122,32 +123,3 @@ a one-sentence description of what makes it worth reusing.
 
 ---
 
-## Section 6: Research Agent Prompts
-
-### Agent A: Domain Best Practices
-
-Domain-adapted query templates. Use the detected domain from Section 2.
-
-| Domain | Agent A query |
-|---|---|
-| task-intake | "best practices for engineering manager task intake and inbox triage workflows 2025" |
-| prioritization | "Eisenhower matrix refinements and edge cases for engineering directors 2025" |
-| scheduling | "time blocking and capacity planning patterns for engineering managers 2025" |
-| execution | "task follow-up and stakeholder update patterns for engineering managers 2025" |
-| delegation | "delegation frameworks for engineering directors — check-in cadence and re-escalation 2025" |
-| email-intake | "engineering manager email triage and action item extraction patterns 2025" |
-| orchestration | "AI-assisted productivity workflow design for engineering leaders 2025" |
-
-### Agent B: Counter-Evidence (dispatch when WF1 and domain is non-trivial)
-
-Searches for failure modes and anti-patterns in the artifact's domain.
-
-| Domain | Agent B query |
-|---|---|
-| task-intake | "common failures in task intake systems — what causes inbox overload" |
-| prioritization | "Eisenhower matrix criticism and failure modes" |
-| scheduling | "time blocking failure modes and over-scheduling pitfalls" |
-| delegation | "delegation failure patterns — what causes delegated tasks to stall" |
-
-If Agent B findings contradict Agent A: note both in research summary.
-User decides which direction to take before Phase 4.
