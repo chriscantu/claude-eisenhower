@@ -21,3 +21,5 @@ dist/
 
 # Plugin artifact � produced by npm run package, not committed
 *.plugin
+# Git worktrees - isolated development workspaces
+.worktrees/
