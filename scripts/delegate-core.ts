@@ -5,7 +5,12 @@
  * Imported by both match-delegate.ts (CLI) and tests/delegation.test.ts (tests).
  *
  * Algorithm defined in: integrations/specs/delegation-spec.md
+ *
+ * Also re-exports adapter contract types so consumers have a single import point.
  */
+
+// Adapter contract — formalizes integrations/adapters/README.md
+export type { TaskOutputRecord, PushResult } from "./adapter-types";
 
 export type Relationship = "direct_report" | "peer" | "vendor" | "partner";
 export type CapacitySignal = "high" | "medium" | "low";
