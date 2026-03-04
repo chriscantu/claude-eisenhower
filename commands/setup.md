@@ -135,12 +135,12 @@ No osascript validation needed — the Reminders adapter creates the list on fir
 
 After the user provides a path:
 1. Expand `~` to the user's home directory if present (substitute the literal home directory path for `~`).
-2. Verify the path exists and contains a `scripts/` subdirectory (allow up to 3 attempts):
+2. Verify the path exists and contains a `scripts/` subdirectory (allow up to 3 attempts total; each path submission — whether it returns `missing` or a shell error — counts as one attempt):
    ```applescript
-   set thePath to do shell script "echo " & quoted form of userProvidedPath
+   set thePath to do shell script "echo " & quoted form of "<user's expanded path>"
    do shell script "test -d " & quoted form of thePath & "/scripts && echo exists || echo missing"
    ```
-   Where `userProvidedPath` is the literal path the user provided (with `~` already expanded).
+   Substitute `<user's expanded path>` with the literal path the user provided, with `~` replaced by their home directory.
 3. If the shell command returns an error (not `exists` or `missing`): say "Could not verify the path due to a system error. Enter the path manually and I'll trust your input, or type 'skip'."
 4. If result is `missing`: say "That path doesn't look right — I can't find a scripts/ folder there. Double-check the path and try again." Re-ask (up to 3 total attempts).
 5. After 3 failed attempts: say "I wasn't able to verify the path. You can type 'skip' to configure `plugin_root` manually in `integrations/config/task-output-config.md` later."
