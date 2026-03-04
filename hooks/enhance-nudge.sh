@@ -29,7 +29,7 @@ if echo "$REPO_ROOT" | grep -q ".claude/plugins/cache"; then
 fi
 
 # Gate 3: session dedup — only fire once per file per session
-FILE_HASH=$(echo "$FILEPATH" | md5sum | cut -d' ' -f1)
+FILE_HASH=$(echo "$FILEPATH" | shasum | cut -d' ' -f1)
 DEDUP_FILE="/tmp/skill-enhancer-nudge-${FILE_HASH}.lock"
 
 if [ -f "$DEDUP_FILE" ]; then
