@@ -71,6 +71,10 @@ Use when a WF1 session was interrupted before Phase 6 completed.
    - Path contains `.claude/plugins/cache/` → **HALT** with deployed-install message below
    - No `.git` → **HALT**: "Not a source repository. Clone https://github.com/chriscantu/claude-eisenhower and run from there."
    - Remote mismatch → **WARN**: "Unexpected repository remote. Confirm this is claude-eisenhower? [y/n]"
+   - Target artifact is `skills/skill-enhancer/SKILL.md` → **HALT**.
+     Say: "Self-enhancement is not supported — the skill cannot improve its own
+     operating rules mid-session. Use the skill-creator skill to modify skill-enhancer."
+     **Stop here. Do not reach the Exit line. Do not proceed to Phase 1.**
 
 **Halt message — deployed install:**
 ```
@@ -84,10 +88,7 @@ To use this skill:
 Deployed installs are read-only — enhancements are overwritten on the next plugin update.
 ```
 
-   - Target artifact is `skills/skill-enhancer/SKILL.md` itself → **HALT** with:
-     "Self-enhancement is not supported — the skill cannot improve its own
-     operating rules mid-session. Use the skill-creator skill to modify
-     skill-enhancer."
+Any HALT above is terminal. Do not read the Exit line below.
 
 **Exit**: Environment confirmed. Proceed to Phase 1.
 
