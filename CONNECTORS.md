@@ -24,7 +24,7 @@ directly from that source rather than requiring manual intake.
 
 | Tool | Status | How it works |
 |------|--------|-------------|
-| productivity:memory-management | ✅ Active | Used for stakeholder follow-up tracking |
+| productivity:memory-management | Optional (external) | See External Skill Dependencies below |
 | Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `integrations/config/email-config.md`. |
 | Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `integrations/config/calendar-config.md`. |
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `integrations/config/task-output-config.md` and `integrations/adapters/`. |
