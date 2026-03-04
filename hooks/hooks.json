@@ -5,7 +5,7 @@
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "At the start of this session, check if TASKS.md exists at the root of the user's mounted workspace folder. If it exists, read it and provide a brief task context summary: how many tasks are in each state (Inbox/Active/Delegated/Done). Format as: '📋 Task Board: [N] Inbox, [N] Active, [N] Delegated, [N] Done.' If the file does not exist, say nothing — the user hasn't started using the task board yet.",
+          "prompt": "At the start of this session, check if TASKS.md exists at the root of the user's mounted workspace folder. If it does not exist, say nothing \u2014 the user has not started the task board yet.\n\nIf it exists:\n1. Count tasks by state: Inbox, Active, Delegated, Done. Output: 'Task Board: [N] Inbox, [N] Active, [N] Delegated, [N] Done.'\n2. Scan Active tasks for any with a Scheduled: date that is today or earlier. If any exist, append: 'Overdue: [N] active task(s) past their scheduled date.'\n3. Scan Delegated tasks for any with a Check-by: date that is today or earlier and not in the Done section. If any exist, append: 'Check-in due: [N] delegation(s) need follow-up.'\n\nPresent as a single-line summary. Example: 'Task Board: 2 Inbox, 3 Active, 1 Delegated, 8 Done. Overdue: 1 active task. Check-in due: 1 delegation.' Only include the overdue and check-in clauses if there are items to report.",
           "timeout": 15
         }
       ]
