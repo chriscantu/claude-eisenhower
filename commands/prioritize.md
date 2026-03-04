@@ -31,6 +31,8 @@ Map to quadrant (used as Priority metadata, not status):
 - **Q4** (Not Urgent, Not Important) → State: Done, Note: "Eliminated — Q4 cut {date}"
 
 **Authority flag**: If a task description contains language like "requires your sign-off", "executive decision", "personnel decision", or "sensitive communication on your behalf", flag it before classifying Q3. Say: "This may require your authority — consider Q1 instead." Ask the user to confirm Q1 or keep Q3.
+<!-- Canonical source: AUTHORITY_PATTERNS in scripts/delegate-core.ts.
+     Update both this list AND delegate-core.ts if patterns change. -->
 
 ## Step 4: Present your recommendation
 

@@ -15,6 +15,7 @@ import * as yaml from "js-yaml";
 import {
   Stakeholder, Relationship, CapacitySignal,
   scoreDelegate, rankCandidates, runMatch, resolveAlias, getDisplayAlias,
+  AUTHORITY_PATTERNS,
 } from "../scripts/delegate-core";
 import { loadStakeholders } from "../scripts/match-delegate";
 
@@ -313,5 +314,19 @@ describe("C2: loadStakeholders YAML parse guard", () => {
     const emptyYaml = path.join(tmpDir, "stakeholders.yaml");
     fs.writeFileSync(emptyYaml, "stakeholders: []");
     expect(loadStakeholders(emptyYaml)).toEqual([]);
+  });
+});
+
+// ── C4: AUTHORITY_PATTERNS contract ────────────────────────────────────────
+describe("C4: AUTHORITY_PATTERNS contract", () => {
+  test("exports exactly 4 authority patterns", () => {
+    expect(AUTHORITY_PATTERNS).toHaveLength(4);
+  });
+
+  test("contains all expected authority phrases", () => {
+    expect(AUTHORITY_PATTERNS).toContain("requires your sign-off");
+    expect(AUTHORITY_PATTERNS).toContain("executive decision");
+    expect(AUTHORITY_PATTERNS).toContain("personnel decision");
+    expect(AUTHORITY_PATTERNS).toContain("sensitive communication on your behalf");
   });
 });

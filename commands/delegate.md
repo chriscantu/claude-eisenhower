@@ -44,6 +44,8 @@ Before scoring, scan the task title and description for authority-sensitive lang
 - "executive decision"
 - "personnel decision"
 - "sensitive communication on your behalf"
+<!-- Canonical source: AUTHORITY_PATTERNS in scripts/delegate-core.ts.
+     Update both this list AND delegate-core.ts if patterns change. -->
 
 If any match (case-insensitive):
 
