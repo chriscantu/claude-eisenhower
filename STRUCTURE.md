@@ -297,9 +297,11 @@ integrations/config/email-config.md
 integrations/config/task-output-config.md
 integrations/config/stakeholders.yaml     ← PII — personal stakeholder graph
 .DS_Store
+dist/                                 ← build artifact — TypeScript compiled output, gitignored
+*.plugin                              ← build artifact — produced by npm run package, gitignored
 ```
 
-Everything else is committed. `.example` config templates are always committed.
+`.example` config templates are always committed. Build artifacts (`dist/`, `*.plugin`) are never committed — CI rebuilds them from source on every release.
 
 ---
 
