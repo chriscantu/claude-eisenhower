@@ -28,10 +28,16 @@ function findGraphPath(): string {
   return path.join(repoRoot, "integrations", "config", "stakeholders.yaml");
 }
 
-function loadStakeholders(graphPath: string): Stakeholder[] | null {
+export function loadStakeholders(graphPath: string): Stakeholder[] | null {
   if (!fs.existsSync(graphPath)) return null;
   const raw = fs.readFileSync(graphPath, "utf8");
-  const parsed = yaml.load(raw) as StakeholderFile;
+  let parsed: StakeholderFile;
+  try {
+    parsed = yaml.load(raw) as StakeholderFile;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`stakeholders.yaml parse error: ${msg}`);
+  }
   if (!parsed?.stakeholders || parsed.stakeholders.length === 0) return [];
   return parsed.stakeholders;
 }
@@ -75,7 +81,14 @@ function run(): void {
   const taskTitle = args[0] ?? "";
   const taskDescription = args[1] ?? "";
   const graphPath = findGraphPath();
-  const stakeholders = loadStakeholders(graphPath);
+  let stakeholders: Stakeholder[] | null;
+  try {
+    stakeholders = loadStakeholders(graphPath);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.log(JSON.stringify({ status: "no_graph", candidates: [], message: msg }, null, 2));
+    return;
+  }
 
   if (stakeholders === null) {
     console.log(JSON.stringify({ status: "no_graph", candidates: [], message: buildMessage("no_graph", []) }, null, 2));
