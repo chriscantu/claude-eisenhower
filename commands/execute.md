@@ -107,7 +107,7 @@ If the productivity:memory-management skill is not available:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
-4. Suggest check-in date (3–5 business days unless deadline is sooner)
+5. Suggest check-in date (3–5 business days unless deadline is sooner)
 
 ## Step 4: Stakeholder wrap-up
 
