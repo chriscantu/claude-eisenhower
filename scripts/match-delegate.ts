@@ -103,4 +103,7 @@ function run(): void {
   console.log(JSON.stringify({ status, candidates, message: buildMessage(status, candidates) }, null, 2));
 }
 
-run();
+// Only execute when run directly (not when imported by tests or other modules)
+if (require.main === module) {
+  run();
+}
