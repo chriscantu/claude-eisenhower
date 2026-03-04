@@ -81,13 +81,18 @@ tell application "Mail"
     set msgSubject to subject of msg
     set msgSender to sender of msg
     set msgDate to (date received of msg) as string
-    set end of results to msgSubject & "|||" & msgSender & "|||" & msgDate
+    set msgIndex to i
+    set end of results to msgSubject & "|||" & msgSender & "|||" & msgDate & "|||" & msgIndex
   end repeat
   return results
 end tell
 ```
 
-Scan batches 1–10, 11–20, 21–30, 41–50 sequentially. After each batch, apply the category filter from Step 4 before fetching the next batch. Stop scanning when you have enough matched candidates or have scanned 50 messages.
+For each result, parse the four fields: subject, sender, date, and message index.
+The message index captured here is the stable reference for the Step 5 body fetch.
+Do NOT re-derive the index from the list position in Step 5 — always use the stored index value.
+
+Scan batches 1–10, 11–20, 21–30, 31–40, 41–50 sequentially. After each batch, apply the category filter from Step 4 before fetching the next batch. Stop scanning when you have enough matched candidates or have scanned 50 messages.
 
 ## Step 4: Filter for actionable emails
 
@@ -124,10 +129,16 @@ tell application "Mail"
       end if
     end repeat
     set preview to safeText
+  on error errMsg
+    return "BODY_UNAVAILABLE: " & errMsg
   end try
   return preview
 end tell
 ```
+
+If the returned value begins with "BODY_UNAVAILABLE:", the body could not be
+retrieved. In the confirmation table (Step 8), add a note for that email:
+"body unavailable — classified on subject only". Still log the task to TASKS.md (non-blocking).
 
 One call per matched email. Extract: any deadline language, due dates, urgency signals, and compliance escalation signals.
 
