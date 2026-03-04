@@ -33,7 +33,7 @@ If any exist, surface them first:
 
 Ask: "Do you want to mark any of these resolved, or create a follow-up? I'll handle the new items after."
 
-Process any responses (mark done → /execute flow, create follow-up → append to Unprocessed), then continue.
+Process any responses (mark done → /execute flow, create follow-up → append to ## Inbox), then continue.
 
 ### Part B — Capacity signal review
 
@@ -125,6 +125,14 @@ For every Q3 task being scheduled:
    - Expected by: check-in date
    - Status: pending
 
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
+This is a best-effort fallback — the full memory skill provides richer tracking.
+
 ## Step 4: Present the schedule summary
 
 Show a clean table before saving anything:
@@ -197,6 +205,14 @@ For every Q3 task with a confirmed delegate that does NOT already have a memory 
 - What was delegated and the expected outcome
 - Check-in date
 
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
+This is a best-effort fallback — the full memory skill provides richer tracking.
+
 **Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
 
 Confirm to the user: "Schedule saved. Run /execute as you complete work — or /intake to capture anything new that comes in."
@@ -206,7 +222,7 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 If the user asks to block time or mentions Mac Calendar, check availability before locking in a Q2 date.
 
 Read `integrations/config/task-output-config.md` for:
-- `plugin_root` — the plugin installation path (default: `~/repos/claude-eisenhower` if not set)
+- `plugin_root` — the plugin installation path (required — run /setup if not configured)
 - The active adapter and list name used in Step 6
 
 Read `calendar_name` from `integrations/config/calendar-config.md`, then run:

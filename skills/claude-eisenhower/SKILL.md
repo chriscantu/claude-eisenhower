@@ -6,6 +6,10 @@ description: >
   work on", "triage my backlog", "Eisenhower matrix", "Q1 Q2 Q3 Q4 tasks",
   "follow up with someone", "delegate a task", or any request related to
   the Intake → Prioritize → Schedule → Execute workflow.
+  "scan my inbox", "scan my email", "check my email for tasks",
+  "delegate this task", "delegate this to someone", "who should own this",
+  "set up the plugin", "configure claude-eisenhower", "setup", or any request
+  related to email triage, stakeholder delegation, or first-run configuration.
 version: 0.1.0
 ---
 
@@ -39,6 +43,10 @@ Classify each task using the Eisenhower Matrix. See `references/eisenhower.md` f
 | Q2 | Not Urgent + Important | Strategic work, growth, relationships | Schedule it |
 | Q3 | Urgent + Not Important | Interruptions, others' priorities | Delegate if possible |
 | Q4 | Not Urgent + Not Important | Busywork, time-wasters | Eliminate or defer |
+
+> For edge cases, reclassification signals, and Director-specific examples, see
+> `references/eisenhower.md` — that file is the authority. The table above is a
+> quick reference only.
 
 After classifying, present the quadrant assignment and reasoning to the user for confirmation before saving.
 
@@ -84,6 +92,14 @@ See `integrations/specs/tasks-schema-spec.md` for the complete field reference.
 ## Stakeholder Memory
 
 Use the productivity:memory-management skill to track stakeholders who need follow-up.
+
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
+This is a best-effort fallback — the full memory skill provides richer tracking.
 
 When a task involves a stakeholder commitment (you owe them an update, they owe you something, or you delegated to them), record:
 - Stakeholder name + role

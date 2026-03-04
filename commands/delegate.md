@@ -58,7 +58,7 @@ Ask: "Confirm delegation, or should this be reclassified as Q1 instead?"
 
 ## Step 3: Load the stakeholder graph and score
 
-Read `plugin_root` from `integrations/config/task-output-config.md` (default: `~/repos/claude-eisenhower` if not set).
+Read `plugin_root` from `integrations/config/task-output-config.md` (required — run /setup if not configured).
 
 Read `integrations/config/stakeholders.yaml` from `{plugin_root}/`.
 
@@ -213,6 +213,14 @@ Create a follow-up memory entry via `productivity:memory-management`:
 - **What was delegated**: task title and brief description
 - **Check-in date**: the confirmed date
 - **Status**: pending
+
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
+This is a best-effort fallback — the full memory skill provides richer tracking.
 
 ---
 

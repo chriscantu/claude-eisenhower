@@ -127,9 +127,26 @@ If the user presses Enter or provides no input → use `Eisenhower List`.
 No osascript validation needed — the Reminders adapter creates the list on first push if it doesn't exist.
 
 **Ask:**
-> "What is the full path to your claude-eisenhower plugin folder? (Press Enter to use the default: '~/repos/claude-eisenhower')"
+> "What is the full path to your claude-eisenhower plugin folder?
+> (This is where you cloned or installed the plugin. Example: ~/repos/claude-eisenhower)
+> Path: "
 
-If the user presses Enter or provides no input → use `~/repos/claude-eisenhower`.
+**Required** — do not proceed with an empty or unverified path.
+
+After the user provides a path:
+1. Expand `~` to the user's home directory if present (substitute the literal home directory path for `~`).
+2. Verify the path exists and contains a `scripts/` subdirectory (allow up to 3 attempts total; each path submission — whether it returns `missing` or a shell error — counts as one attempt):
+   ```applescript
+   set thePath to do shell script "echo " & quoted form of "<user's expanded path>"
+   do shell script "test -d " & quoted form of thePath & "/scripts && echo exists || echo missing"
+   ```
+   Substitute `<user's expanded path>` with the literal path the user provided, with `~` replaced by their home directory.
+3. If the shell command returns an error (not `exists` or `missing`): say "Could not verify the path due to a system error. Enter the path manually and I'll trust your input, or type 'skip'."
+4. If result is `missing`: say "That path doesn't look right — I can't find a scripts/ folder there. Double-check the path and try again." Re-ask (up to 3 total attempts).
+5. After 3 failed attempts: say "I wasn't able to verify the path. You can type 'skip' to configure `plugin_root` manually in `integrations/config/task-output-config.md` later."
+6. If result is `exists`: proceed with the verified path.
+
+**Do not fall back to a hardcoded default.** The path must be confirmed before writing config.
 
 **Write** `integrations/config/task-output-config.md`:
 - Read `integrations/config/task-output-config.md.example`
