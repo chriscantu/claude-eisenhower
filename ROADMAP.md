@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
 **Format**: Now / Critical Fixes / Near-Term / Long-Term
-**Last updated**: 2026-03-03
+**Last updated**: 2026-03-04
 **Owner**: Cantu
 
 ---
@@ -158,6 +158,69 @@ artifact in the source repo; session-deduped so it fires once per file per sessi
 **Guardrails**: 12 explicitly listed in SKILL.md; capability preservation rules block
 removing phases, guardrails, or examples without explicit user approval; npm test
 auto-rollback on regression.
+
+---
+
+## Critical Fixes — v0.9.6
+
+Skills and agents consistency pass. Fixes high and medium severity issues identified
+in the 2026-03-04 SME review of claude-eisenhower's skills, agents, and hooks.
+Full spec and task breakdown: `integrations/specs/2026-03-04-skills-agents-consistency-pass.md`.
+
+**Issues addressed:**
+- **H7** — `enhance-nudge.sh` uses `md5sum` (GNU-only); replaced with `shasum`
+  for macOS/Linux compatibility. Without this fix the session-dedup guard silently
+  fails and the nudge fires on every file write.
+- **H10** — `task-prioritizer` agent reads "the Unprocessed section" but TASKS.md
+  uses `## Inbox`. Agent found zero tasks to triage on every run.
+- **H5** — `skill-enhancer` Phase 3 dispatch was underspecified (no model, no tools,
+  no synthesis rules for conflicting agent results). Added concrete Task tool template.
+- **M6** — `skill-enhancer` WF1/WF2 routing ambiguity: "enhance" vs "improve" triggers
+  overlapped. Added disambiguation question and two additional router rows.
+- **M9** — `skill-enhancer` had no guard against self-enhancement. Added Phase 0 halt
+  if target artifact is `skills/skill-enhancer/SKILL.md` itself.
+- **M1** — `claude-eisenhower` SKILL.md triggers didn't cover scan-email, delegate,
+  or setup natural language phrases. Extended trigger description.
+- **M4/M11/M16** — Eisenhower scoring rules appeared in three places (SKILL.md, agent,
+  `eisenhower.md`) with a subtle divergence in the urgency boundary. Agent and SKILL.md
+  now reference `eisenhower.md` as the single authority.
+- **M15** — SessionStart hook only counted tasks by state. Extended prompt to surface
+  overdue Active tasks and Delegated check-ins at session open.
+- **H18** — `/setup` Step 3 defaulted `plugin_root` to `~/repos/claude-eisenhower`
+  silently. Now validates the path exists before writing config; blocks setup if invalid.
+- **H2** — `productivity:memory-management` was called across four artifacts with no
+  documentation, no install instructions, and no fallback. Registered in CONNECTORS.md;
+  added local `memory/stakeholders-log.md` fallback at each call site.
+
+### Low severity — deferred to v0.9.7 polish pass
+
+See v0.9.7 section below.
+
+---
+
+## Critical Fixes — v0.9.7 (Polish Pass)
+
+Low-severity UX and clarity improvements from the same 2026-03-04 SME review.
+No behavioral changes — these are clarifications and guardrail refinements.
+
+- **L3** — `claude-eisenhower` SKILL.md has no phase-to-command map. A user reading
+  the skill can't tell that Phase 1 = `/intake`, Phase 3 = `/schedule`, etc. Add a
+  `→ /command` annotation to each phase heading.
+- **L8** — `skill-enhancer` EC-4 forces every artifact with zero examples to produce
+  an example proposal classified as Quick Win "regardless of effort score." This
+  overrides the scoring framework and could force examples onto intentionally
+  example-free artifacts (lookup tables, configuration references). Soften to: propose
+  the example but allow rejection in Phase 5 without score override.
+- **L12** — `task-prioritizer` agent has no batch size cap. For inboxes with 20+ tasks
+  the agent could produce an unusably long response. Add: process the 15 most recently
+  added tasks first; note remaining count for the next pass.
+- **L13** — `task-prioritizer` agent ends with "Want to run /schedule to assign dates?"
+  — phrasing implies the agent will invoke the command, but its `tools` array is
+  Read/Write/Edit only. Reword as an instruction to the user: "Type /schedule to assign
+  dates, or /delegate for Q3 items."
+- **L14** — SessionStart hook unconditionally emits a 📋 emoji in its output format
+  string. This violates the system-level "no emoji unless requested" preference. Remove
+  the emoji from the format string.
 
 ---
 
@@ -343,5 +406,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
 | v0.9.4 | Adapter contract interfaces (`adapter-types.ts`); four-state model test suite; QE audit (−6 low-signal tests) |
 | v0.9.5 | skill-enhancer — WF1/WF2 enhancement workflows, domain registry, regression safeguards, EC-1–EC-9, enhance-nudge hook |
+| v0.9.6 | *(planned)* Skills & agents consistency pass — 10 medium/high issues from SME review |
+| v0.9.7 | *(planned)* Polish pass — 5 low-severity issues from SME review |
 | v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |

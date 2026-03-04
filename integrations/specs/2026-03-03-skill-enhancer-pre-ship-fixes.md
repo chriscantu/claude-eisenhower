@@ -12,7 +12,7 @@ sequentially).
 
 **Tech Stack:** Markdown skill files. Verification via `cd scripts && npm test`.
 
-**Design doc:** `docs/plans/2026-03-03-skill-enhancer-pre-ship-fixes-design.md`
+**Design doc:** `integrations/specs/2026-03-03-skill-enhancer-pre-ship-fixes-design.md`
 
 ---
 
