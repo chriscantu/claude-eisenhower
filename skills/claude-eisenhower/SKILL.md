@@ -58,8 +58,10 @@ Assign timing based on quadrant:
 - **Q4** → Stage for review. Move to `## Q4 — Defer / Eliminate` with
   `Deferred: {today's date} | Review on: {date 2 weeks out}`. At the weekly review,
   if the task still has no value, move to `## Done` with
-  `Note: Eliminated — Q4 cut {date}`. Do not eliminate immediately unless the user
-  explicitly confirms — staging keeps the decision visible and reversible.
+  `Note: Eliminated — Q4 cut {date}`. Do not eliminate immediately unless the user explicitly confirms. If the user
+  explicitly confirms "eliminate it now", move the task directly to `## Done` with
+  `Note: Eliminated — Q4 cut {date}`. Staging keeps the decision visible and
+  reversible for all other cases.
 
 If Mac Calendar integration is configured, use it to check availability before assigning dates.
 
