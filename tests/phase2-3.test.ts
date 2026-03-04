@@ -94,7 +94,7 @@ export function buildFollowUpDescription(
 }
 
 /**
- * Builds the complete follow-up intake record to append to ## Unprocessed.
+ * Builds the complete follow-up intake record to append to ## Inbox.
  * Field names and values match execute.md Step 3 spec exactly.
  */
 export function buildFollowUpRecord(
