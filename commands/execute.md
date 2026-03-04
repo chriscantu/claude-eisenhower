@@ -54,6 +54,12 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 6. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
 7. Offer to log a stakeholder update via the productivity:memory-management skill
 
+If the productivity:memory-management skill is not available, log the follow-up
+locally instead: append a line to `memory/stakeholders-log.md` (create the file if
+it doesn't exist) in this format:
+`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+This is a best-effort fallback — the full memory skill provides richer tracking.
+
 ### Log Progress
 1. Find the task in the board
 2. Append a progress note: `Progress [date]: [user's update]`
@@ -91,6 +97,12 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
    - Delegate name + role
    - What was handed off
    - Check-in date
+
+If the productivity:memory-management skill is not available, log the follow-up
+locally instead: append a line to `memory/stakeholders-log.md` (create the file if
+it doesn't exist) in this format:
+`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+This is a best-effort fallback — the full memory skill provides richer tracking.
 4. Suggest check-in date (3–5 business days unless deadline is sooner)
 
 ## Step 4: Stakeholder wrap-up

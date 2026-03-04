@@ -39,3 +39,22 @@ the specific tool name throughout this plugin's commands and skills.
 
 For example, replacing `~~chat` with `Slack` would update the intake source
 handling to reference Slack-specific context (channels, DM types, reactions).
+
+## External Skill Dependencies
+
+These skills are not bundled with claude-eisenhower but are called by its commands.
+Install them separately from the Claude plugins marketplace.
+
+### productivity:memory-management
+
+**Used by**: `/schedule` (Step 7), `/execute` (stakeholder wrap-up), `/delegate` (Step 8),
+`skills/claude-eisenhower/SKILL.md` (Stakeholder Memory section)
+
+**Purpose**: Persists stakeholder follow-up entries across sessions — who owns what,
+check-in dates, status.
+
+**If not installed**: The plugin will still operate; stakeholder follow-up tracking
+will be skipped. A warning note will appear at each call site.
+
+**Install**: Search "productivity" in Claude plugins marketplace and install the
+`productivity` plugin.

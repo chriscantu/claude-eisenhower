@@ -214,6 +214,12 @@ Create a follow-up memory entry via `productivity:memory-management`:
 - **Check-in date**: the confirmed date
 - **Status**: pending
 
+If the productivity:memory-management skill is not available, log the follow-up
+locally instead: append a line to `memory/stakeholders-log.md` (create the file if
+it doesn't exist) in this format:
+`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+This is a best-effort fallback — the full memory skill provides richer tracking.
+
 ---
 
 ## Step 9: Confirm to the user
