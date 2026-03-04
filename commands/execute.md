@@ -54,10 +54,12 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 6. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
 7. Offer to log a stakeholder update via the productivity:memory-management skill
 
-If the productivity:memory-management skill is not available, log the follow-up
-locally instead: append a line to `memory/stakeholders-log.md` (create the file if
-it doesn't exist) in this format:
-`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+If the user accepted the offer AND the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 This is a best-effort fallback — the full memory skill provides richer tracking.
 
 ### Log Progress
@@ -98,10 +100,12 @@ This is a best-effort fallback — the full memory skill provides richer trackin
    - What was handed off
    - Check-in date
 
-If the productivity:memory-management skill is not available, log the follow-up
-locally instead: append a line to `memory/stakeholders-log.md` (create the file if
-it doesn't exist) in this format:
-`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 This is a best-effort fallback — the full memory skill provides richer tracking.
 4. Suggest check-in date (3–5 business days unless deadline is sooner)
 

@@ -125,10 +125,12 @@ For every Q3 task being scheduled:
    - Expected by: check-in date
    - Status: pending
 
-If the productivity:memory-management skill is not available, log the follow-up
-locally instead: append a line to `memory/stakeholders-log.md` (create the file if
-it doesn't exist) in this format:
-`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 This is a best-effort fallback — the full memory skill provides richer tracking.
 
 ## Step 4: Present the schedule summary
@@ -203,10 +205,12 @@ For every Q3 task with a confirmed delegate that does NOT already have a memory 
 - What was delegated and the expected outcome
 - Check-in date
 
-If the productivity:memory-management skill is not available, log the follow-up
-locally instead: append a line to `memory/stakeholders-log.md` (create the file if
-it doesn't exist) in this format:
-`[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+If the productivity:memory-management skill is not available:
+1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
+2. Ensure the `memory/` directory exists before writing (create it if absent).
+3. Append a line to `memory/stakeholders-log.md`:
+   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
+4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 This is a best-effort fallback — the full memory skill provides richer tracking.
 
 **Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
