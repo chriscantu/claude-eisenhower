@@ -131,7 +131,7 @@ If the productivity:memory-management skill is not available:
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 ## Step 4: Present the schedule summary
 
@@ -211,7 +211,7 @@ If the productivity:memory-management skill is not available:
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 **Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
 

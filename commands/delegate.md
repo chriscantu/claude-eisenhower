@@ -222,7 +222,7 @@ If the productivity:memory-management skill is not available:
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 ---
 
