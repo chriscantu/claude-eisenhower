@@ -87,7 +87,7 @@ function run(): void {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.log(JSON.stringify({ status: "no_graph", candidates: [], message: msg }, null, 2));
-    return;
+    process.exit(1);
   }
 
   if (stakeholders === null) {
