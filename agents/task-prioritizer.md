@@ -86,6 +86,17 @@ Then ask for confirmation before writing any changes.
 
 ## After Confirmation
 
-Update TASKS.md: move each task to its confirmed quadrant section, preserve all original fields, add quadrant label and recommended action.
+Update TASKS.md: move each task to the correct four-state section, preserve all
+original fields, add Priority and State fields:
+
+- **Q1 tasks** → move to `## Active`. Set `Priority: Q1`, `State: Active`, `Owner: me`.
+- **Q2 tasks** → move to `## Active`. Set `Priority: Q2`, `State: Active`, `Owner: me`.
+- **Q3 tasks** → move to `## Delegated`. Set `Priority: Q3`, `State: Delegated`.
+  A `Check-by:` date is required — prompt for one before saving if not already present.
+- **Q4 tasks** → move to `## Q4 — Defer / Eliminate`. Set `Priority: Q4`.
+  Add `Deferred: {today's date} | Review on: {date 2 weeks out}`.
+
+Do NOT create `## Q1`, `## Q2`, `## Q3`, or `## Q4` section headers.
+The Quadrant column in your output table is for reasoning only — it is not a section name.
 
 Offer next step: "Tasks are prioritized. Want to run /schedule to assign dates?"
