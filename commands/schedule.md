@@ -218,7 +218,7 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 If the user asks to block time or mentions Mac Calendar, check availability before locking in a Q2 date.
 
 Read `integrations/config/task-output-config.md` for:
-- `plugin_root` — the plugin installation path (default: `~/repos/claude-eisenhower` if not set)
+- `plugin_root` — the plugin installation path (required — run /setup if not configured)
 - The active adapter and list name used in Step 6
 
 Read `calendar_name` from `integrations/config/calendar-config.md`, then run:
