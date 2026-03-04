@@ -127,9 +127,22 @@ If the user presses Enter or provides no input → use `Eisenhower List`.
 No osascript validation needed — the Reminders adapter creates the list on first push if it doesn't exist.
 
 **Ask:**
-> "What is the full path to your claude-eisenhower plugin folder? (Press Enter to use the default: '~/repos/claude-eisenhower')"
+> "What is the full path to your claude-eisenhower plugin folder?
+> (This is where you cloned or installed the plugin. Example: ~/repos/claude-eisenhower)
+> Path: "
 
-If the user presses Enter or provides no input → use `~/repos/claude-eisenhower`.
+**Required** — do not proceed with an empty or unverified path.
+
+After the user provides a path:
+1. Expand `~` to the user's home directory if present.
+2. Verify the path exists and contains a `scripts/` subdirectory:
+   ```applescript
+   do shell script "test -d " & quoted form of expandedPath & "/scripts && echo exists || echo missing"
+   ```
+3. If result is `missing`: say "That path doesn't look right — I can't find a scripts/ folder there. Double-check the path and try again." Then re-ask.
+4. If result is `exists`: proceed with the verified path.
+
+**Do not fall back to a hardcoded default.** The path must be confirmed before writing config.
 
 **Write** `integrations/config/task-output-config.md`:
 - Read `integrations/config/task-output-config.md.example`
