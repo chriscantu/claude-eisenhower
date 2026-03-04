@@ -39,7 +39,7 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
 5. **Sync to task output adapter** (Reminders or configured system):
-   - Read `integrations/config/task-output-config.md` for: `plugin_root` (default: `~/repos/claude-eisenhower` if not set), the active adapter, and adapter settings
+   - Read `integrations/config/task-output-config.md` for: `plugin_root` (required — run /setup if not configured), the active adapter, and adapter settings
    - If the active adapter is still a placeholder (`~~task_output`) → skip silently
    - If the active adapter is `reminders`:
      - Read `list_name` from the `### reminders` block
@@ -65,7 +65,7 @@ This is a best-effort fallback — the full memory skill provides richer trackin
 2. Append a progress note: `Progress [date]: [user's update]`
 3. **If the task has `Delegate to: [alias]` AND the check-in date has passed**:
    - Treat "still in progress" as a missed check-in
-   - Append to `## Unprocessed` in TASKS.md:
+   - Append to `## Inbox` in TASKS.md:
      ```
      [ INTAKE — [today's date] ]
      Title:       Follow up: [original task title] with [alias]
@@ -74,7 +74,7 @@ This is a best-effort fallback — the full memory skill provides richer trackin
      Requester:   [alias]
      Urgency:     Check-in overdue
      Due date:    Not specified
-     Status:      Unprocessed
+     State:       Inbox
      ```
    - Update `memory/glossary.md` Stakeholder Follow-ups: change the check-in date for this row to [today's date + 2 business days]
    - Update `memory/people/[alias-filename].md` delegation log: add progress note and new check-in date
@@ -87,7 +87,7 @@ This is a best-effort fallback — the full memory skill provides richer trackin
    - Source: Internal
    - Requester: Self
    - Description: What the follow-up action is
-2. Add it to `## Unprocessed` for prioritization
+2. Add it to `## Inbox` for prioritization
 3. Confirm: "Follow-up logged. Run /prioritize to assign it a quadrant."
 
 ### Delegate

@@ -110,7 +110,7 @@ export function buildFollowUpRecord(
     "Requester": alias,
     "Urgency": "Check-in overdue",
     "Due date": "Not specified",
-    "Status": "Unprocessed",
+    "State": "Inbox",
   };
 }
 
@@ -251,8 +251,8 @@ describe("Phase 3: Follow-up Record — buildFollowUpRecord (TEST-DEL-032)", () 
     expect(record["Urgency"]).toBe("Check-in overdue");
   });
 
-  test("TEST-DEL-726: Status field is 'Unprocessed'", () => {
-    expect(record["Status"]).toBe("Unprocessed");
+  test("TEST-DEL-726: State field is 'Inbox'", () => {
+    expect(record["State"]).toBe("Inbox");
   });
 
   test("TEST-DEL-728: Description references alias, today's date, and original check-in", () => {
