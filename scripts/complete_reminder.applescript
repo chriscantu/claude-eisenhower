@@ -68,29 +68,15 @@ on run argv
     end tell
 end run
 
--- Helper: lowercase and trim whitespace from a string
+-- Helper: lowercase and trim whitespace — handles full Unicode via shell tr
 on lowerTrim(str)
-    set str to my lower(str)
+    -- Trim leading/trailing spaces first
     repeat while str begins with " "
         set str to text 2 thru -1 of str
     end repeat
     repeat while str ends with " "
         set str to text 1 thru -2 of str
     end repeat
-    return str
+    -- Lowercase using POSIX tr (handles non-ASCII characters)
+    return do shell script "printf '%s' " & quoted form of str & " | tr '[:upper:]' '[:lower:]'"
 end lowerTrim
-
-on lower(str)
-    set upperChars to "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    set lowerChars to "abcdefghijklmnopqrstuvwxyz"
-    set result to ""
-    repeat with c in every character of str
-        set charOffset to offset of c in upperChars
-        if charOffset > 0 then
-            set result to result & character charOffset of lowerChars
-        else
-            set result to result & c
-        end if
-    end repeat
-    return result
-end lower
