@@ -2,9 +2,9 @@
  * prompt-contracts.test.ts
  *
  * Contract tests that enforce prompt vocabulary consistency across all command,
- * agent, and skill prompt files. Prevents accidental introduction of bare
- * quadrant headers (## Q1 / ## Q2 / ## Q3 / ## Q4) and enforces the required
- * memory-management guard line wherever the skill is referenced.
+ * agent, and skill prompt files. Prevents accidental introduction of prohibited
+ * section headers (## Q1–Q4 / ## Unprocessed / ## Backlog) and enforces the
+ * required memory-management guard line wherever the skill is referenced.
  *
  * Quality gate: Q2 — Prompt Vocabulary Contracts
  *
@@ -48,10 +48,11 @@ function readContent(filePath: string): string {
 }
 
 /**
- * Return any lines in `content` that are a bare ## Q1/Q2/Q3/Q4 header.
+ * Return any lines in `content` that are a prohibited bare section header.
  * "## Q4 — Defer / Eliminate" does NOT match "## Q4" exactly and is allowed.
+ * Prohibited headers: ## Q1/Q2/Q3/Q4, ## Unprocessed, ## Backlog.
  */
-function findBareQuadrantHeaders(content: string): string[] {
+function findProhibitedHeaders(content: string): string[] {
   const lines = content.split("\n");
   return lines.filter((line) => {
     const trimmed = line.trim();
@@ -59,20 +60,22 @@ function findBareQuadrantHeaders(content: string): string[] {
       trimmed === "## Q1" ||
       trimmed === "## Q2" ||
       trimmed === "## Q3" ||
-      trimmed === "## Q4"
+      trimmed === "## Q4" ||
+      trimmed === "## Unprocessed" ||
+      trimmed === "## Backlog"
     );
   });
 }
 
 // ── Test group 1: Prohibited bare quadrant section headers ────────────────
 
-describe("Prompt Contracts: no bare Q1–Q4 section headers (Q2-001)", () => {
+describe("Prompt Contracts: no prohibited section headers (Q2-001)", () => {
   for (const filePath of allPromptFiles) {
     const relPath = path.relative(repoRoot, filePath);
 
-    test(`Q2-001: ${relPath} must not contain bare ## Q1/Q2/Q3/Q4 headers`, () => {
+    test(`Q2-001: ${relPath} must not contain bare ## Q1/Q2/Q3/Q4/Unprocessed/Backlog headers`, () => {
       const content = readContent(filePath);
-      const violations = findBareQuadrantHeaders(content);
+      const violations = findProhibitedHeaders(content);
 
       if (violations.length > 0) {
         const detail = violations
