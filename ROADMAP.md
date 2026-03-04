@@ -167,6 +167,11 @@ Skills and agents consistency pass. Fixes high and medium severity issues identi
 in the 2026-03-04 SME review of claude-eisenhower's skills, agents, and hooks.
 Full spec and task breakdown: `integrations/specs/2026-03-04-skills-agents-consistency-pass.md`.
 
+> **Status**: PR #6 open — blocked on architect/AI SME review findings.
+> 5 critical issues + 5 important issues must be resolved before merge.
+> Fix plan: `integrations/specs/2026-03-04-v0.9.6-pr-review-findings.md`
+> Worktree: `.worktrees/v0.9.6-consistency-pass` (branch: `v0.9.6/skills-agents-consistency-pass`)
+
 **Issues addressed:**
 - **H7** — `enhance-nudge.sh` uses `md5sum` (GNU-only); replaced with `shasum`
   for macOS/Linux compatibility. Without this fix the session-dedup guard silently
