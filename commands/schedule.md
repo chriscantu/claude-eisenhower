@@ -33,7 +33,7 @@ If any exist, surface them first:
 
 Ask: "Do you want to mark any of these resolved, or create a follow-up? I'll handle the new items after."
 
-Process any responses (mark done → /execute flow, create follow-up → append to Unprocessed), then continue.
+Process any responses (mark done → /execute flow, create follow-up → append to ## Inbox), then continue.
 
 ### Part B — Capacity signal review
 

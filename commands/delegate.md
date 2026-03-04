@@ -58,7 +58,7 @@ Ask: "Confirm delegation, or should this be reclassified as Q1 instead?"
 
 ## Step 3: Load the stakeholder graph and score
 
-Read `plugin_root` from `integrations/config/task-output-config.md` (default: `~/repos/claude-eisenhower` if not set).
+Read `plugin_root` from `integrations/config/task-output-config.md` (required — run /setup if not configured).
 
 Read `integrations/config/stakeholders.yaml` from `{plugin_root}/`.
 
