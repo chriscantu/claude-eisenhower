@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
 **Format**: Now / Critical Fixes / Near-Term / Long-Term
-**Last updated**: 2026-03-04
+**Last updated**: 2026-03-05
 **Owner**: Cantu
 
 ---
@@ -294,6 +294,27 @@ is now defined once. Commands delegate by intent only.
 
 ---
 
+## Shipped — v1.0.2 (Memory Robustness)
+
+Patch release. No user-visible behavior change.
+
+### Memory robustness fixes
+
+- **Schema constants** — `GLOSSARY_COLUMNS` and `glossaryColIndex()` defined once in `delegate-core.ts`; shared between runtime and tests. Eliminates the schema drift risk between write and read paths.
+- **Header validation guard** — `loadPendingCounts()` now validates `glossary.md` header against `GLOSSARY_COLUMNS` before parsing. Schema mismatch emits a warning to stderr and returns `{}` safely instead of silently returning wrong counts.
+- **Memory-manager fallback targets corrected** — all four operations (`log-delegation`, `resolve-delegation`, `update-checkin`, `query-pending`) now reference the canonical two-file fallback schema (`memory/glossary.md` + `memory/people/`). Previously pointed to deprecated `stakeholders-log.md`.
+- **Known limitation documented** — `loadPendingCounts()` JSDoc and `memory-system-adr.md` now explain that pending-count scoring is inoperative when the primary backend is active (entries go to external store, not `glossary.md`). Static `capacity_signal` still fires.
+
+**Changes:**
+- Updated: `scripts/delegate-core.ts` — `GLOSSARY_COLUMNS` constant, `glossaryColIndex()` helper
+- Updated: `scripts/match-delegate.ts` — `validateGlossaryHeader()`, `loadPendingCounts()` column-name resolution, known-limitation JSDoc
+- Updated: `skills/memory-manager/SKILL.md` — all 4 operations use two-file fallback schema
+- Updated: `skills/memory-manager/references/memory-operations.md` — two-file fallback documentation
+- Updated: `integrations/docs/memory-system-adr.md` — Read Paths table, Known Limitation section
+- 185 tests passing.
+
+---
+
 ## Near-Term — Integrations (v1.1)
 
 New capabilities that extend the plugin's reach.
@@ -461,4 +482,6 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.6 | Skills & agents consistency pass — 10 medium/high issues from SME review |
 | v0.9.7 | SME review remediation (9 findings) + 3 quality gates (shell injection audit, AppleScript test protocol, prompt contract tests) — PR #7 |
 | v1.0.0 | `/review-week` — Friday readiness snapshot; Memory Access Layer; Mermaid architecture docs |
+| v1.0.1 | Memory Manager DRY refactor — inline try/fallback consolidated into `memory-manager` skill |
+| v1.0.2 | Memory robustness — live pending counts, schema constants, drift prevention, known-limitation docs |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
