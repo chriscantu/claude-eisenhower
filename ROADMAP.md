@@ -222,25 +222,12 @@ Three rounds of AI SME review (v0.9.5–v0.9.7) produced 9 remediation findings 
 
 ---
 
-## Housekeeping — integrations/specs/ Cleanup
+## Shipped — Housekeeping (integrations/specs/ Cleanup)
 
-`integrations/specs/` has accumulated session execution plans alongside permanent
-feature specs. Session plans are working documents used during implementation — once
-the work ships, they are historical noise with no ongoing reference value. The durable
-artifacts (ADRs, acceptance criteria, schema specs) should remain; the plans should go.
-
-**Candidates for removal** (all work shipped):
-
-| File | Why removable |
-|------|--------------|
-| `2026-03-03-skill-enhancer-plan.md` | Implementation plan for v0.9.5 skill-enhancer — work shipped |
-| `2026-03-03-skill-enhancer-pre-ship-fixes-design.md` | Design doc for pre-ship fixes — work shipped |
-| `2026-03-03-skill-enhancer-pre-ship-fixes.md` | Execution plan for pre-ship fixes — work shipped |
-| `2026-03-04-skills-agents-consistency-pass.md` | Execution plan for v0.9.6 consistency pass — work shipped |
-| `2026-03-04-v0.9.6-pr-review-findings.md` | PR review findings doc — addressed in v0.9.7 |
-
-**Keep** — these are permanent reference documents, not session artifacts:
-all `*-spec.md` files, `artifact-baselines.md`, `2026-03-04-quality-gates-spec.md`.
+Removed 5 session execution plans that accumulated during v0.9.5–v0.9.7 implementation.
+These were working documents with no ongoing reference value once the work shipped.
+`integrations/specs/` now contains only permanent reference documents: `*-spec.md` files,
+`artifact-baselines.md`, and `2026-03-04-quality-gates-spec.md`.
 
 ---
 
