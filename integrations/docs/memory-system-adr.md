@@ -44,3 +44,32 @@ removed from all command files:
 - `commands/delegate.md` (Step 8 — log-delegation)
 - `commands/review-week.md` (Step 3 — query-pending)
 - `skills/claude-eisenhower/SKILL.md` (Stakeholder Memory — references memory-manager)
+
+## Read Paths
+
+There are two distinct read paths for delegation memory, serving different consumers:
+
+| Path | Consumer | What it reads | When it works |
+|------|----------|---------------|---------------|
+| `memory-manager: query-pending` | `/review-week` Step 3 | Primary backend or `glossary.md` | Both backends |
+| `loadPendingCounts()` in `scripts/match-delegate.ts` | Delegate scoring algorithm | `memory/glossary.md` only | Local fallback only |
+
+The scoring read path (`loadPendingCounts`) is implemented in TypeScript and cannot call the
+prompt-layer memory-manager skill. It reads `glossary.md` directly and validates the header
+against `GLOSSARY_COLUMNS` (defined in `scripts/delegate-core.ts`).
+
+## Known Limitation: Scoring in Primary-Backend Mode
+
+When `productivity:memory-management` is active (primary backend), delegation entries are
+written to the external skill's store — not to `memory/glossary.md`. As a result,
+`loadPendingCounts()` returns `{}` and the pending-count penalty in `scoreDelegate()` is
+inoperative for those users.
+
+**Impact:** `capacity_warning` still fires from the static `capacity_signal` field in
+`stakeholders.yaml`; only the live overload adjustment (`PENDING_PENALTY × overload`) is
+absent. This is acceptable degradation — the algorithm still functions, it just lacks
+the real-time workload signal.
+
+**Not a dual-write fix:** The correct long-term solution would be an API-callable query
+interface on the primary backend, not writing to both systems. Until that interface exists,
+pending-count scoring is a best-effort signal in primary-backend mode.
