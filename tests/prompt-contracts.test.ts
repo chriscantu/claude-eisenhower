@@ -99,7 +99,10 @@ const MEMORY_GUARD_LINE =
   "Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.";
 
 describe("Prompt Contracts: memory guard line present (Q2-002)", () => {
-  for (const filePath of commandFiles) {
+  // Guard line must be present in any command OR skill file that references
+  // productivity:memory-management. After the memory-manager refactor the guard
+  // lives in skills/memory-manager/SKILL.md, so skill files are included here.
+  for (const filePath of [...commandFiles, ...skillFiles]) {
     const relPath = path.relative(repoRoot, filePath);
 
     test(`Q2-002: ${relPath} — if it mentions ${MEMORY_SKILL_TOKEN}, it must contain the guard line`, () => {

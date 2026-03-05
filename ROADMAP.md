@@ -267,6 +267,33 @@ to reference new docs.
 
 ---
 
+## Shipped — v1.0.1 (Memory Manager — DRY Refactor)
+
+Patch release. No user-visible behavior change.
+
+### Memory Manager skill
+
+Three separate memory patterns existed across the plugin:
+- **Write/create**: 4-step try-skill-then-fallback block copy-pasted 6 times across 4 files
+- **Read**: Memory Access Layer inline in `review-week.md` Step 3
+- **Update**: Direct writes to `memory/glossary.md` and `memory/people/*.md` in `execute.md` with no abstraction
+
+All three consolidated into `skills/memory-manager/SKILL.md` — a single internal skill
+with four operations: `log-delegation`, `resolve-delegation`, `update-checkin`, `query-pending`.
+The backend contract (try `productivity:memory-management`, fall back to `memory/stakeholders-log.md`)
+is now defined once. Commands delegate by intent only.
+
+**Changes:**
+- New: `skills/memory-manager/SKILL.md` + `references/memory-operations.md`
+- Updated: `commands/schedule.md`, `commands/execute.md`, `commands/delegate.md`, `commands/review-week.md`
+- Updated: `skills/claude-eisenhower/SKILL.md` — Stakeholder Memory section points to memory-manager
+- Updated: `tests/prompt-contracts.test.ts` — Q2-002 extended to skill files (guard line now in skill)
+- Deprecated: `integrations/docs/memory-access-layer.md` — superseded by memory-manager
+- Updated: `integrations/docs/memory-system-adr.md`, `integrations/docs/architecture.md`
+- 155 tests passing.
+
+---
+
 ## Near-Term — Integrations (v1.1)
 
 New capabilities that extend the plugin's reach.

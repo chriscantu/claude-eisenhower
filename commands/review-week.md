@@ -62,30 +62,18 @@ Record: inbox count, active count (total Active tasks in TASKS.md), delegated co
 
 ---
 
-## Step 3: Query the Memory Access Layer
+## Step 3: Query delegation memory
 
-Follow the Memory Access Layer pattern (see `integrations/docs/memory-access-layer.md`).
+Invoke the memory-manager skill:
+`query-pending — within: 5 business days`
 
-Goal: retrieve pending delegation entries with check-in date within the next 5 business days.
-
-**Attempt 1 — productivity:memory-management skill**
-Query for pending stakeholder entries with check-in date between today and 5 business days
-from now. If results are returned, use them.
-
-**Attempt 2 — local fallback**
-If the skill is unavailable, read `memory/stakeholders-log.md`.
-Parse each line matching the format:
-`[YYYY-MM-DD] [alias] | [task title] | check-in: [YYYY-MM-DD] | status: pending`
-Filter for: status = pending AND check-in date within next 5 business days.
+The skill returns a unified list regardless of which backend was active (this command
+does not branch on the backend). See `skills/memory-manager/SKILL.md` for the contract.
 
 **Deduplication**
-Cross-reference memory results against the TASKS.md upcoming check-ins (Section B above).
+Cross-reference the results against the TASKS.md upcoming check-ins (Section B above).
 If the same alias + task title appears in both, suppress the memory-only entry.
 TASKS.md is the authoritative source for that entry.
-
-The caller (this command) does not branch based on which backend was used.
-
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 ---
 

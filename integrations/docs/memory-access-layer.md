@@ -1,9 +1,17 @@
 # Memory Access Layer
 
 **Date**: 2026-03-04
-**Status**: Accepted
+**Status**: Superseded — see `skills/memory-manager/SKILL.md` (v1.0.1)
 **Scope**: All commands and skills that read stakeholder delegation entries
 **Related**: `memory-system-adr.md` (write contract)
+
+---
+
+> **Superseded in v1.0.1.** The read contract defined here has been unified with write
+> and update contracts into the `memory-manager` skill
+> (`skills/memory-manager/SKILL.md`). This document is retained as a historical
+> record of the read-abstraction design decision. Do not implement the pattern described
+> below inline in commands — use the memory-manager skill instead.
 
 ---
 

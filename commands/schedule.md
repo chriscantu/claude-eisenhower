@@ -119,19 +119,8 @@ For every Q3 task being scheduled:
    - Update the task record: `Delegate to: [alias]`
    - Set `Check-in date: [2–3 business days from today]`
 
-3. **Create a follow-up memory entry** via `productivity:memory-management`:
-   - Stakeholder: delegate alias
-   - What was delegated: task title
-   - Expected by: check-in date
-   - Status: pending
-
-If the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+3. **Create a follow-up memory entry** via the memory-manager skill:
+   `log-delegation — alias: [confirmed delegate alias], task: [task title], check_in_date: [date]`
 
 ## Step 4: Present the schedule summary
 
@@ -200,18 +189,9 @@ Task output: [N] pushed to Reminders (Eisenhower List)
 
 ## Step 7: Log Q3 stakeholders
 
-For every Q3 task with a confirmed delegate that does NOT already have a memory entry, log to `productivity:memory-management`:
-- Stakeholder alias and role
-- What was delegated and the expected outcome
-- Check-in date
-
-If the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+For every Q3 task with a confirmed delegate that does NOT already have a memory entry,
+invoke the memory-manager skill:
+`log-delegation — alias: [alias], task: [task title], check_in_date: [check-in date]`
 
 **Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
 

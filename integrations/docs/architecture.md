@@ -1,13 +1,13 @@
 # Architecture Overview
 
 **Last updated**: 2026-03-04
-**Version**: v1.0.0
+**Version**: v1.0.1
 
 Three diagrams, each answering a different architectural question:
 
 1. **System Architecture** — what components exist and how they relate
 2. **Task State Machine** — how a task moves from intake to done
-3. **Memory Access Layer** — how delegation memory is read/written transparently
+3. **Memory Manager** — how delegation memory is read/written transparently via the unified skill
 
 ---
 
@@ -40,6 +40,7 @@ flowchart TD
         direction LR
         eis["claude-eisenhower\nSKILL"]
         enh["skill-enhancer\nSKILL"]
+        memmgr["memory-manager\nSKILL"]
         agent["task-prioritizer\nAgent"]
         sshook["SessionStart Hook"]
         nudgehook["enhance-nudge\nPostToolUse Hook"]
@@ -80,7 +81,7 @@ flowchart TD
     %% ── Infrastructure ──────────────────────────────────────────
     subgraph INF["Infrastructure"]
         direction LR
-        jest["Jest  153 tests"]
+        jest["Jest  155 tests"]
         gh["GitHub Actions\nCI · Release"]
     end
 
@@ -113,13 +114,10 @@ flowchart TD
     schedule --> remscripts --> macrem
     execute --> remscripts
 
-    %% Memory write path
-    schedule & execute & delegate -->|"write  primary"| pmm
-    schedule & execute & delegate -.->|"fallback"| mem
-
-    %% Memory read path  (Memory Access Layer — new in v1.0)
-    reviewweek -->|"read via Memory Access Layer"| pmm
-    reviewweek -.->|"fallback"| mem
+    %% Memory operations — all routed through memory-manager (v1.0.1)
+    schedule & execute & delegate & reviewweek -->|"memory ops"| memmgr
+    memmgr -->|"primary"| pmm
+    memmgr -.->|"fallback"| mem
     reviewweek -->|"analytics"| mem
 
     %% Support layer
@@ -170,13 +168,14 @@ stateDiagram-v2
 
 ---
 
-## 3. Memory Access Layer
+## 3. Memory Manager
 
-Introduced in v1.0 for `/review-week`. Defines how delegation memory is read without
-knowledge of which backend stored it. See `memory-access-layer.md` for the full contract.
+Introduced in v1.0.1. Unifies all delegation memory operations (read, write, update)
+under the `memory-manager` skill (`skills/memory-manager/SKILL.md`). Replaces the
+inline try/fallback pattern that was duplicated across 6 command locations.
 
-The write pattern (enforced since v0.9.7 per `memory-system-adr.md`) is shown alongside
-for completeness — together they make the memory backend fully transparent to callers.
+See `memory-system-adr.md` for the original write contract and `memory-access-layer.md`
+(superseded) for the read-only predecessor.
 
 ```mermaid
 flowchart TD

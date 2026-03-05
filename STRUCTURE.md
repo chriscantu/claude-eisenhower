@@ -96,6 +96,10 @@ skills/
       enhancement-protocol.md
       regression-safeguards.md
       edge-cases.md
+  memory-manager/
+    SKILL.md
+    references/
+      memory-operations.md
 ```
 
 **`claude-eisenhower/`** is the canonical end-user skill. The former `task-flow/` directory was the original plugin name and has been removed — it was an identical duplicate.

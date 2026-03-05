@@ -210,19 +210,8 @@ Show a one-line result: `✓ Check-in pushed to Reminders` or `⚠ Reminder push
 
 ## Step 8: Log to memory
 
-Create a follow-up memory entry via `productivity:memory-management`:
-- **Stakeholder**: delegate alias and role
-- **What was delegated**: task title and brief description
-- **Check-in date**: the confirmed date
-- **Status**: pending
-
-If the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Invoke the memory-manager skill:
+`log-delegation — alias: [confirmed alias], task: [task title], check_in_date: [check-in date]`
 
 ---
 
