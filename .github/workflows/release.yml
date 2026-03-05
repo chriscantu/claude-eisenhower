@@ -62,6 +62,19 @@ jobs:
         run: npm run package
         working-directory: scripts
 
+      - name: Verify artifact version matches tag
+        run: |
+          ARTIFACT="claude-eisenhower-${{ steps.plugin_version.outputs.version }}.plugin"
+          # Extract plugin.json from the built artifact and confirm version inside matches
+          ARTIFACT_VERSION=$(unzip -p "$ARTIFACT" .claude-plugin/plugin.json | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])")
+          PLUGIN_VERSION="${{ steps.plugin_version.outputs.version }}"
+          if [ "$ARTIFACT_VERSION" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Artifact contains version $ARTIFACT_VERSION but plugin.json says $PLUGIN_VERSION."
+            echo "::error::This means the archive was built from a different commit than HEAD. Rebuild from a clean, committed state."
+            exit 1
+          fi
+          echo "✅ Artifact version $ARTIFACT_VERSION matches tag v$PLUGIN_VERSION"
+
       - name: Extract release notes from ROADMAP.md
         id: release_notes
         run: |
