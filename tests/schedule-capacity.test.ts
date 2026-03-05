@@ -12,7 +12,7 @@
  * Run: cd scripts && npm test
  */
 
-import { businessDaysElapsed } from "../scripts/date-helpers";
+import { businessDaysElapsed, addBusinessDays, addBusinessDaysStr } from "../scripts/date-helpers";
 
 // ── Pure helper: detect stale delegates ──────────────────────────────────────
 
@@ -203,5 +203,47 @@ describe("Capacity Signal Review — detectStaleDelegates", () => {
     expect(detectStaleDelegates(delegations, 5, today)).toHaveLength(0);
     // Custom threshold 3: flagged (4 > 3)
     expect(detectStaleDelegates(delegations, 3, today)).toHaveLength(1);
+  });
+});
+
+// ── Tests: addBusinessDays / addBusinessDaysStr ────────────────────────────
+describe("addBusinessDays — boundary cases", () => {
+  // Use new Date(year, month-1, day) — creates local-midnight dates.
+  // Avoids the UTC-vs-local shift that "YYYY-MM-DD" string parsing causes:
+  // new Date("2026-03-06") parses as UTC midnight, which in CST (UTC-6) is
+  // Thursday March 5 at 6pm local — one day behind. addBusinessDays uses
+  // local-time setDate/getDay, so inputs and expectations must match.
+  const monday    = new Date(2026, 2, 2);  // Mon Mar 2
+  const friday    = new Date(2026, 2, 6);  // Fri Mar 6
+  const wednesday = new Date(2026, 2, 4);  // Wed Mar 4
+
+  test("TEST-ABD-001: Monday + 2 = Wednesday (no weekend in range)", () => {
+    expect(addBusinessDays(monday, 2)).toEqual(new Date(2026, 2, 4));
+  });
+
+  test("TEST-ABD-002: Friday + 2 = Tuesday (spans one weekend)", () => {
+    expect(addBusinessDays(friday, 2)).toEqual(new Date(2026, 2, 10));
+  });
+
+  test("TEST-ABD-003: n=0 returns same day unchanged", () => {
+    expect(addBusinessDays(wednesday, 0)).toEqual(wednesday);
+  });
+
+  test("TEST-ABD-004: Friday + 1 = Monday (skips weekend)", () => {
+    expect(addBusinessDays(friday, 1)).toEqual(new Date(2026, 2, 9));
+  });
+
+  test("TEST-ABD-005: addBusinessDaysStr returns YYYY-MM-DD string", () => {
+    // toISOString() is UTC — use a UTC-noon anchor to get a stable date string
+    // regardless of local timezone offset.
+    const fridayNoon = new Date(2026, 2, 6, 12, 0, 0);
+    expect(addBusinessDaysStr(fridayNoon, 1)).toBe("2026-03-09");
+  });
+
+  test("TEST-ABD-006: addBusinessDays does not mutate input date", () => {
+    const input = new Date(2026, 2, 6);
+    const inputTime = input.getTime();
+    addBusinessDays(input, 3);
+    expect(input.getTime()).toBe(inputTime);
   });
 });
