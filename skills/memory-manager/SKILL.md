@@ -39,14 +39,17 @@ failure mode details.
    - Expected by: `check_in_date`
    - Status: pending
 
-2. If the skill is unavailable, fall back to local file:
+2. If the skill is unavailable, fall back to local files:
    - Notify the caller: "Note: memory-management skill not found. Logging locally."
-   - Ensure `memory/` directory exists (create if absent).
-   - Append to `memory/stakeholders-log.md`:
-     `[YYYY-MM-DD] [alias] | [task_title] | check-in: [check_in_date] | status: pending`
+   - Ensure `memory/people/` directory exists (create if absent).
+   - Write using the canonical schema in `integrations/specs/memory-schema-spec.md`:
+     - Append a new row to the `## Stakeholder Follow-ups` table in `memory/glossary.md`:
+       `| [alias] | [task_title] | [YYYY-MM-DD] | [check_in_date] | Pending |`
+     - Create or append to `memory/people/[alias-filename].md` (filename derived per spec):
+       `| [task_title] | [YYYY-MM-DD] | [check_in_date] | Pending | — |`
    - If the write fails: "Could not record this follow-up ([reason]). Track it manually."
 
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Do NOT write to local memory files if productivity:memory-management succeeded.
 
 **Returns:** success | fallback-success | failed
 
@@ -67,13 +70,13 @@ Do NOT write to memory/stakeholders-log.md if productivity:memory-management suc
    - Find entry matching `alias` + `task_title`
    - Set status to: `Resolved — [resolved_date]`
 
-2. If the skill is unavailable, fall back to local file:
-   - Find the matching line in `memory/stakeholders-log.md`:
-     `[*] [alias] | [task_title] | check-in: [*] | status: pending`
-   - Update that line's status field to: `status: resolved`
-   - If no matching line found: log warning internally, continue (non-blocking).
+2. If the skill is unavailable, fall back to local files:
+   - Find the row matching `alias` + `task_title` in the `## Stakeholder Follow-ups` table of `memory/glossary.md`
+   - Update its Status cell to: `Resolved — [resolved_date]`
+   - Apply the same status update to the matching row in `memory/people/[alias-filename].md`
+   - If no matching row found: log warning internally, continue (non-blocking).
 
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Do NOT write to local memory files if productivity:memory-management succeeded.
 
 **Returns:** success | fallback-success | not-found (non-blocking)
 
@@ -94,12 +97,13 @@ Do NOT write to memory/stakeholders-log.md if productivity:memory-management suc
    - Find entry matching `alias` + `task_title`
    - Update `check-in` date to `new_check_in_date`
 
-2. If the skill is unavailable, fall back to local file:
-   - Find the matching line in `memory/stakeholders-log.md`
-   - Update that line's `check-in:` field to `new_check_in_date`
-   - If no matching line found: log warning internally, continue (non-blocking).
+2. If the skill is unavailable, fall back to local files:
+   - Find the row matching `alias` + `task_title` in the `## Stakeholder Follow-ups` table of `memory/glossary.md`
+   - Update its Check-by cell to `new_check_in_date`
+   - Apply the same check-in update to the matching row in `memory/people/[alias-filename].md`
+   - If no matching row found: log warning internally, continue (non-blocking).
 
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Do NOT write to local memory files if productivity:memory-management succeeded.
 
 **Returns:** success | fallback-success | not-found (non-blocking)
 
@@ -118,15 +122,15 @@ Do NOT write to memory/stakeholders-log.md if productivity:memory-management suc
    - Filter for: status = pending AND check-in date within `within_business_days` business days
    - If results are returned, use them.
 
-2. If the skill is unavailable, fall back to local file:
-   - Read `memory/stakeholders-log.md`
-   - Parse lines matching format: `[YYYY-MM-DD] [alias] | [task title] | check-in: [YYYY-MM-DD] | status: pending`
-   - Filter for: status = pending AND check-in date within `within_business_days` business days
+2. If the skill is unavailable, fall back to local files:
+   - Read the `## Stakeholder Follow-ups` table in `memory/glossary.md`
+   - Parse rows with Status = `Pending` (case-insensitive)
+   - Filter for: Check-by date within `within_business_days` business days from today
 
 3. Return a unified list regardless of which backend was used. The caller does not
    branch on which backend was active.
 
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Do NOT write to local memory files if productivity:memory-management succeeded.
 
 **Deduplication (caller's responsibility):**
 Cross-reference results against TASKS.md Delegated records before displaying.
@@ -142,8 +146,8 @@ Empty list if both backends fail (non-blocking).
 
 | Scenario | Behavior |
 |----------|----------|
-| Skill unavailable, local file missing | Create `memory/` dir; write/read new file |
-| Skill unavailable, local file unreadable | Empty result (non-blocking for query-pending) |
-| Skill returns error | Fall through to local file |
+| Skill unavailable, local files missing | Create `memory/people/` dir; write/read new files |
+| Skill unavailable, local files unreadable | Empty result (non-blocking for query-pending) |
+| Skill returns error | Fall through to local files |
 | Both backends fail | Surface non-blocking warning; instruct manual tracking |
 | Entry not found on resolve/update | Non-blocking; log warning internally |

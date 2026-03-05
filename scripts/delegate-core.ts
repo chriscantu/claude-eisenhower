@@ -89,14 +89,50 @@ export const REL_RANK: Record<Relationship, number> = {
   direct_report: 2, peer: 1, vendor: 0, partner: 0,
 };
 
+// ── Memory schema constants — single source of truth ─────────────────────────
+//
+// These mirror integrations/specs/memory-schema-spec.md.
+// loadPendingCounts() validates the glossary header against GLOSSARY_COLUMNS.
+// Commands that write memory rows must use these column names verbatim.
+// Changing a column name here is the ONLY place it needs to change.
+
+/** Canonical columns for the Stakeholder Follow-ups table in memory/glossary.md */
+export const GLOSSARY_COLUMNS = [
+  "Alias", "Task", "Delegated on", "Check-by", "Status",
+] as const;
+
+/** Canonical columns for each memory/people/{alias}.md Delegations table */
+export const PEOPLE_COLUMNS = [
+  "Task", "Delegated on", "Check-by", "Status", "Notes",
+] as const;
+
+export type GlossaryColumn = (typeof GLOSSARY_COLUMNS)[number];
+export type PeopleColumn   = (typeof PEOPLE_COLUMNS)[number];
+
+/**
+ * Returns the 0-based index of a GLOSSARY_COLUMNS entry by name.
+ * Used by parsers so column positions are never hardcoded.
+ */
+export function glossaryColIndex(col: GlossaryColumn): number {
+  return GLOSSARY_COLUMNS.indexOf(col);
+}
+
 export function normalizeText(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
 }
 
+/**
+ * Penalty applied to score per active pending delegation beyond the threshold.
+ * Kept alongside WEIGHTS so all scoring constants live in one place.
+ */
+export const PENDING_THRESHOLD = 2;
+export const PENDING_PENALTY = -2;
+
 export function scoreDelegate(
   stakeholder: Stakeholder,
   taskTitle: string,
-  taskDescription: string
+  taskDescription: string,
+  pendingCount = 0
 ): ScoredCandidate {
   const searchText = normalizeText(`${taskTitle} ${taskDescription}`);
   const matchedDomains: string[] = [];
@@ -109,6 +145,12 @@ export function scoreDelegate(
   }
   score += WEIGHTS.relationship[stakeholder.relationship] ?? 0;
   score += WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
+
+  // Apply a penalty for each pending task beyond the threshold.
+  // This gives the static capacity_signal real-time correction from memory.
+  const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
+  score += overload * PENDING_PENALTY;
+
   return {
     alias: getDisplayAlias(stakeholder),
     role: stakeholder.role,
@@ -116,7 +158,7 @@ export function scoreDelegate(
     capacity_signal: stakeholder.capacity_signal,
     score,
     matched_domains: matchedDomains,
-    capacity_warning: stakeholder.capacity_signal === "low",
+    capacity_warning: stakeholder.capacity_signal === "low" || pendingCount > PENDING_THRESHOLD,
     notes: stakeholder.notes,
   };
 }
@@ -131,10 +173,14 @@ export function rankCandidates(candidates: ScoredCandidate[]): ScoredCandidate[]
 export function runMatch(
   stakeholders: Stakeholder[],
   title: string,
-  desc = ""
+  desc = "",
+  pendingCounts: Record<string, number> = {}
 ): { status: MatchResult["status"]; candidates: ScoredCandidate[] } {
   if (stakeholders.length === 0) return { status: "empty_graph", candidates: [] };
-  const scored = stakeholders.map((s) => scoreDelegate(s, title, desc));
+  const scored = stakeholders.map((s) => {
+    const alias = getDisplayAlias(s);
+    return scoreDelegate(s, title, desc, pendingCounts[alias] ?? 0);
+  });
   const ranked = rankCandidates(scored);
   const viable = ranked.filter((c) => c.score > 0);
   if (viable.length === 0) return { status: "no_match", candidates: [] };

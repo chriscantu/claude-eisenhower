@@ -20,12 +20,100 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import {
   Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, runMatch, getDisplayAlias,
+  GLOSSARY_COLUMNS, glossaryColIndex,
 } from "./delegate-core";
+
+/**
+ * Validates that the parsed header row of memory/glossary.md matches GLOSSARY_COLUMNS.
+ * Returns { valid: true } on match; { valid: false, warning } on mismatch.
+ * The warning is designed to be written to stderr — it describes what was expected
+ * vs. found so the user can fix the file.
+ */
+export function validateGlossaryHeader(
+  headerCols: string[],
+  expected: readonly string[]
+): { valid: boolean; warning?: string } {
+  const missing = expected.filter((col) => !headerCols.includes(col));
+  if (missing.length === 0) return { valid: true };
+  return {
+    valid: false,
+    warning:
+      `[glossary schema warning] memory/glossary.md columns don't match the canonical schema.\n` +
+      `  Expected : ${expected.join(" | ")}\n` +
+      `  Found    : ${headerCols.join(" | ")}\n` +
+      `  Missing  : ${missing.join(", ")}\n` +
+      `  Scoring proceeds without live pending-count data. ` +
+      `Fix the header or re-run /schedule to rebuild the file.\n`,
+  };
+}
+
+/**
+ * Reads memory/glossary.md and returns a map of { alias → pending task count }.
+ * Only "Pending" rows (case-insensitive) in the Stakeholder Follow-ups table count.
+ * Column positions are resolved by name via GLOSSARY_COLUMNS — no hardcoded indices.
+ * If the file is missing: returns {} silently (offline / first run).
+ * If the header doesn't match GLOSSARY_COLUMNS: warns to stderr, returns {} (Option A).
+ *
+ * KNOWN LIMITATION — local fallback only:
+ * This function reads only memory/glossary.md (the local fallback file). When the
+ * primary backend (productivity:memory-management skill) is active, delegation entries
+ * are NOT written to glossary.md — they go into the external skill's store instead.
+ * In that mode, loadPendingCounts() will return {} and pending-count scoring will be
+ * inoperative. This is a best-effort signal, not a guaranteed invariant.
+ */
+export function loadPendingCounts(glossaryPath: string): Record<string, number> {
+  if (!fs.existsSync(glossaryPath)) return {};
+  const lines = fs.readFileSync(glossaryPath, "utf8").split("\n");
+  const counts: Record<string, number> = {};
+  let inTable = false;
+  let headerValidated = false;
+  let aliasIdx = -1;
+  let statusIdx = -1;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("## Stakeholder Follow-ups")) { inTable = true; continue; }
+    if (inTable && trimmed.startsWith("##")) break; // next section — stop
+    if (!inTable || !trimmed.startsWith("|")) continue;
+
+    // Separator rows (e.g. |---|---|) — skip regardless of validation state
+    if (trimmed.replace(/[|\s-]/g, "").length === 0) continue;
+
+    const cols = trimmed.split("|").map((c) => c.trim()).filter(Boolean);
+
+    // First substantive row in the table is the header — validate before parsing data
+    if (!headerValidated) {
+      const { valid, warning } = validateGlossaryHeader(cols, GLOSSARY_COLUMNS);
+      if (!valid) {
+        process.stderr.write(warning!);
+        return {};
+      }
+      aliasIdx  = glossaryColIndex("Alias");
+      statusIdx = glossaryColIndex("Status");
+      headerValidated = true;
+      continue;
+    }
+
+    if (cols.length <= Math.max(aliasIdx, statusIdx)) continue;
+    const alias  = cols[aliasIdx];
+    const status = cols[statusIdx];
+    if (status.toLowerCase() === "pending") {
+      counts[alias] = (counts[alias] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
 
 function findGraphPath(): string {
   const scriptDir = path.dirname(__filename);
   const repoRoot = path.resolve(scriptDir, "..");
   return path.join(repoRoot, "integrations", "config", "stakeholders.yaml");
+}
+
+function findGlossaryPath(): string {
+  const scriptDir = path.dirname(__filename);
+  const repoRoot = path.resolve(scriptDir, "..");
+  return path.join(repoRoot, "memory", "glossary.md");
 }
 
 export function loadStakeholders(graphPath: string): Stakeholder[] | null {
@@ -99,7 +187,8 @@ function run(): void {
     return;
   }
 
-  const { status, candidates } = runMatch(stakeholders, taskTitle, taskDescription);
+  const pendingCounts = loadPendingCounts(findGlossaryPath());
+  const { status, candidates } = runMatch(stakeholders, taskTitle, taskDescription, pendingCounts);
   console.log(JSON.stringify({ status, candidates, message: buildMessage(status, candidates) }, null, 2));
 }
 
