@@ -97,15 +97,10 @@ See `integrations/specs/tasks-schema-spec.md` for the complete field reference.
 
 ## Stakeholder Memory
 
-Use the productivity:memory-management skill to track stakeholders who need follow-up.
-
-If the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+Use the `memory-manager` skill (`skills/memory-manager/SKILL.md`) for all stakeholder
+memory operations (log-delegation, resolve-delegation, update-checkin, query-pending).
+The memory-manager handles all backend logic — do not implement the try/fallback pattern
+inline in commands or this skill.
 
 When a task involves a stakeholder commitment (you owe them an update, they owe you something, or you delegated to them), record:
 - Stakeholder name + role

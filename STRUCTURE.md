@@ -67,8 +67,10 @@ commands/
   prioritize.md
   schedule.md
   execute.md
-  scan-email.md
   delegate.md
+  scan-email.md
+  review-week.md
+  setup.md
 ```
 
 **What belongs here**: Command prompt text, step-by-step behavior, allowed tools.
@@ -94,6 +96,10 @@ skills/
       enhancement-protocol.md
       regression-safeguards.md
       edge-cases.md
+  memory-manager/
+    SKILL.md
+    references/
+      memory-operations.md
 ```
 
 **`claude-eisenhower/`** is the canonical end-user skill. The former `task-flow/` directory was the original plugin name and has been removed — it was an identical duplicate.
@@ -190,11 +196,15 @@ Not specs (which describe *what* to build) — docs explain the built thing.
 
 ```
 integrations/docs/
+  architecture.md                      ← Mermaid diagrams: system overview, task state machine, memory access layer
   calendar-performance-fix.md          ← ADR: why Swift EventKit instead of AppleScript
   mac-calendar-planner-override.md     ← override instructions for external plugin
+  memory-system-adr.md                 ← ADR: single write target for delegation memory (Option B)
+  memory-access-layer.md               ← Memory Access Layer read contract (transparent backend for /review-week)
   scripts-reference.md                 ← moved from scripts/README.md
   architectural-review-2026-03-02.md   ← ADR: full codebase review at v0.9.1; decisions that shaped v1.0 roadmap
   applescript-test-protocol.md         ← manual test protocol: 8 test cases for complete_reminder and push_reminder
+  security-audit-applescript.md        ← AppleScript shell injection audit (v0.9.7)
 ```
 
 ---

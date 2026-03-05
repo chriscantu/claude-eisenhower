@@ -21,15 +21,22 @@ while eliminating dual-write.
 
 ## Implementation
 
-Each memory-write block in commands and skills follows this pattern:
+As of v1.0.1, all memory operations (read, write, update) are consolidated in the
+`memory-manager` skill (`skills/memory-manager/SKILL.md`). Commands invoke operations
+by intent; the skill owns the try-skill-then-fallback contract.
+
+The 4-step inline pattern described below was the original implementation and has been
+removed from all command files:
 1. Attempt `productivity:memory-management`
 2. If skill succeeds → done. Do not write to `memory/`
 3. If skill unavailable → write to `memory/stakeholders-log.md`
 4. If both fail → surface non-blocking warning, instruct manual tracking
 
-## Files Updated
+## Files Using memory-manager (v1.0.1)
 
-- `commands/schedule.md` (Steps 3b, 7)
-- `commands/execute.md` (Mark Done, Delegate sections)
-- `commands/delegate.md` (Step 8)
-- `skills/claude-eisenhower/SKILL.md` (Stakeholder Memory section)
+- `skills/memory-manager/SKILL.md` — canonical implementation
+- `commands/schedule.md` (Steps 3b, 7 — log-delegation)
+- `commands/execute.md` (Mark Done → resolve-delegation; Log Progress → update-checkin; Delegate → log-delegation)
+- `commands/delegate.md` (Step 8 — log-delegation)
+- `commands/review-week.md` (Step 3 — query-pending)
+- `skills/claude-eisenhower/SKILL.md` (Stakeholder Memory — references memory-manager)

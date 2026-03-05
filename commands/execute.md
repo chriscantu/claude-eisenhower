@@ -34,8 +34,8 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 2. Add `Done: [today's date]` to the task record
 3. Remove the checkbox marker `[ ]` and replace with `[x]`
 4. **If the task has `Delegate to: [alias]`** (it was a delegated Q3 task):
-   - Update `memory/glossary.md` Stakeholder Follow-ups table: set the Status for this alias + task title row to `Resolved — [today's date]`
-   - Update `memory/people/[alias-filename].md` delegation log row for this task to `Resolved — [today's date]`
+   - Invoke the memory-manager skill:
+     `resolve-delegation — alias: [alias], task: [task title], resolved_date: [today's date]`
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
 5. **Sync to task output adapter** (Reminders or configured system):
@@ -52,15 +52,10 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
        - `error:` → append `Synced: failed — [error message]` and show a non-blocking warning: "⚠ Could not mark reminder complete: [error message]"
    - This step is **non-blocking** — a failed or skipped sync does not prevent task completion in TASKS.md
 6. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
-7. Offer to log a stakeholder update via the productivity:memory-management skill
+7. Offer to log a stakeholder update via the memory-manager skill
 
-If the user accepted the offer AND the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+If the user accepted the offer, invoke the memory-manager skill:
+`log-delegation — alias: [requester/alias], task: [task title], check_in_date: [agreed follow-up date]`
 
 ### Log Progress
 1. Find the task in the board
@@ -78,8 +73,8 @@ Do NOT write to memory/stakeholders-log.md if productivity:memory-management suc
      Due date:    Not specified
      State:       Inbox
      ```
-   - Update `memory/glossary.md` Stakeholder Follow-ups: change the check-in date for this row to [today's date + 2 business days]
-   - Update `memory/people/[alias-filename].md` delegation log: add progress note and new check-in date
+   - Invoke the memory-manager skill:
+     `update-checkin — alias: [alias], task: [original task title], new_check_in_date: [today's date + 2 business days]`
    - Confirm: "Follow-up task created for [alias]. New check-in date: [date]."
 4. Otherwise ask: "Any blockers? Should we adjust the due date?"
 
@@ -95,19 +90,9 @@ Do NOT write to memory/stakeholders-log.md if productivity:memory-management suc
 ### Delegate
 1. Move task to Q3 section
 2. Record delegate name in the task
-3. Use productivity:memory-management to log:
-   - Delegate name + role
-   - What was handed off
-   - Check-in date
-
-If the productivity:memory-management skill is not available:
-1. Notify the user: "Note: memory-management skill not found. Logging locally to memory/stakeholders-log.md."
-2. Ensure the `memory/` directory exists before writing (create it if absent).
-3. Append a line to `memory/stakeholders-log.md`:
-   `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
-4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
-5. Suggest check-in date (3–5 business days unless deadline is sooner)
+3. Invoke the memory-manager skill:
+   `log-delegation — alias: [delegate alias], task: [task title], check_in_date: [check-in date]`
+4. Suggest check-in date (3–5 business days unless deadline is sooner)
 
 ## Step 4: Stakeholder wrap-up
 

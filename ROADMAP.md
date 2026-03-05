@@ -222,43 +222,75 @@ Three rounds of AI SME review (v0.9.5–v0.9.7) produced 9 remediation findings 
 
 ---
 
-## Housekeeping — integrations/specs/ Cleanup
+## Shipped — Housekeeping (integrations/specs/ Cleanup)
 
-`integrations/specs/` has accumulated session execution plans alongside permanent
-feature specs. Session plans are working documents used during implementation — once
-the work ships, they are historical noise with no ongoing reference value. The durable
-artifacts (ADRs, acceptance criteria, schema specs) should remain; the plans should go.
-
-**Candidates for removal** (all work shipped):
-
-| File | Why removable |
-|------|--------------|
-| `2026-03-03-skill-enhancer-plan.md` | Implementation plan for v0.9.5 skill-enhancer — work shipped |
-| `2026-03-03-skill-enhancer-pre-ship-fixes-design.md` | Design doc for pre-ship fixes — work shipped |
-| `2026-03-03-skill-enhancer-pre-ship-fixes.md` | Execution plan for pre-ship fixes — work shipped |
-| `2026-03-04-skills-agents-consistency-pass.md` | Execution plan for v0.9.6 consistency pass — work shipped |
-| `2026-03-04-v0.9.6-pr-review-findings.md` | PR review findings doc — addressed in v0.9.7 |
-
-**Keep** — these are permanent reference documents, not session artifacts:
-all `*-spec.md` files, `artifact-baselines.md`, `2026-03-04-quality-gates-spec.md`.
+Removed 5 session execution plans that accumulated during v0.9.5–v0.9.7 implementation.
+These were working documents with no ongoing reference value once the work shipped.
+`integrations/specs/` now contains only permanent reference documents: `*-spec.md` files,
+`artifact-baselines.md`, and `2026-03-04-quality-gates-spec.md`.
 
 ---
 
-## Near-Term — First Major Milestone (v1.0)
+## Shipped — v1.0 (Weekly Review + Architecture Documentation)
 
-v1.0 is the first release that closes the weekly workflow loop. The four-phase
-Intake → Prioritize → Schedule → Execute cycle is complete, but there is no command
-to step back and review the week as a whole. `/review-week` fills that gap.
-That is the user-facing capability that justifies a major version milestone.
+Closes the weekly workflow loop. The four-phase Intake → Prioritize → Schedule → Execute
+cycle is complete; `/review-week` adds the Friday readiness snapshot that ties it together.
+Spec: `integrations/specs/review-week-spec.md`.
 
 ### Weekly Review (`/review-week`)
 
-One command to start the week: surfaces overdue delegations + calendar load for the
-coming week + unprocessed Inbox tasks + memory entries approaching check-in date.
-Gives the Director a complete situational snapshot before making scheduling decisions.
+Friday afternoon command. Surfaces in one output:
+- 🔴 Overdue delegations (require action before weekend)
+- 🟡 Delegated check-ins due next week
+- 📋 Active tasks due next week
+- 📬 Inbox backlog count + oldest item age
+- 📆 Calendar load for next Mon–Fri (via `cal_query.swift`)
+- ✅ Recommended next steps (generated from surfaced signals)
 
-**Dependency**: Mac Calendar integration already works. `mac-calendar-planner`
-override pattern already documented in `integrations/docs/`.
+Writes a structured analytics line to `memory/review-log.md` after each run (no PII;
+counts only). Silent write — not surfaced to the user.
+
+### Memory Access Layer
+
+First command to need memory reads (not just writes). Defines a transparent read
+abstraction: `productivity:memory-management` primary, `memory/stakeholders-log.md`
+fallback. Same return shape regardless of backend. Command never branches on which
+backend was used. See `integrations/docs/memory-access-layer.md` for the full contract.
+
+### Architecture Documentation
+
+Three Mermaid diagrams added to `integrations/docs/architecture.md`:
+system overview (all layers + key connections), task state machine
+(Inbox → Active → Delegated → Done with command labels), and memory access layer
+(write path + read path side by side). `STRUCTURE.md` and `PRINCIPLES.md` updated
+to reference new docs.
+
+---
+
+## Shipped — v1.0.1 (Memory Manager — DRY Refactor)
+
+Patch release. No user-visible behavior change.
+
+### Memory Manager skill
+
+Three separate memory patterns existed across the plugin:
+- **Write/create**: 4-step try-skill-then-fallback block copy-pasted 6 times across 4 files
+- **Read**: Memory Access Layer inline in `review-week.md` Step 3
+- **Update**: Direct writes to `memory/glossary.md` and `memory/people/*.md` in `execute.md` with no abstraction
+
+All three consolidated into `skills/memory-manager/SKILL.md` — a single internal skill
+with four operations: `log-delegation`, `resolve-delegation`, `update-checkin`, `query-pending`.
+The backend contract (try `productivity:memory-management`, fall back to `memory/stakeholders-log.md`)
+is now defined once. Commands delegate by intent only.
+
+**Changes:**
+- New: `skills/memory-manager/SKILL.md` + `references/memory-operations.md`
+- Updated: `commands/schedule.md`, `commands/execute.md`, `commands/delegate.md`, `commands/review-week.md`
+- Updated: `skills/claude-eisenhower/SKILL.md` — Stakeholder Memory section points to memory-manager
+- Updated: `tests/prompt-contracts.test.ts` — Q2-002 extended to skill files (guard line now in skill)
+- Deprecated: `integrations/docs/memory-access-layer.md` — superseded by memory-manager
+- Updated: `integrations/docs/memory-system-adr.md`, `integrations/docs/architecture.md`
+- 155 tests passing.
 
 ---
 
@@ -428,5 +460,5 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.5 | skill-enhancer — WF1/WF2 enhancement workflows, domain registry, regression safeguards, EC-1–EC-9, enhance-nudge hook |
 | v0.9.6 | Skills & agents consistency pass — 10 medium/high issues from SME review |
 | v0.9.7 | SME review remediation (9 findings) + 3 quality gates (shell injection audit, AppleScript test protocol, prompt contract tests) — PR #7 |
-| v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
+| v1.0.0 | `/review-week` — Friday readiness snapshot; Memory Access Layer; Mermaid architecture docs |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
