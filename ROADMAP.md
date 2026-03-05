@@ -231,21 +231,39 @@ These were working documents with no ongoing reference value once the work shipp
 
 ---
 
-## Near-Term — First Major Milestone (v1.0)
+## Shipped — v1.0 (Weekly Review + Architecture Documentation)
 
-v1.0 is the first release that closes the weekly workflow loop. The four-phase
-Intake → Prioritize → Schedule → Execute cycle is complete, but there is no command
-to step back and review the week as a whole. `/review-week` fills that gap.
-That is the user-facing capability that justifies a major version milestone.
+Closes the weekly workflow loop. The four-phase Intake → Prioritize → Schedule → Execute
+cycle is complete; `/review-week` adds the Friday readiness snapshot that ties it together.
+Spec: `integrations/specs/review-week-spec.md`.
 
 ### Weekly Review (`/review-week`)
 
-One command to start the week: surfaces overdue delegations + calendar load for the
-coming week + unprocessed Inbox tasks + memory entries approaching check-in date.
-Gives the Director a complete situational snapshot before making scheduling decisions.
+Friday afternoon command. Surfaces in one output:
+- 🔴 Overdue delegations (require action before weekend)
+- 🟡 Delegated check-ins due next week
+- 📋 Active tasks due next week
+- 📬 Inbox backlog count + oldest item age
+- 📆 Calendar load for next Mon–Fri (via `cal_query.swift`)
+- ✅ Recommended next steps (generated from surfaced signals)
 
-**Dependency**: Mac Calendar integration already works. `mac-calendar-planner`
-override pattern already documented in `integrations/docs/`.
+Writes a structured analytics line to `memory/review-log.md` after each run (no PII;
+counts only). Silent write — not surfaced to the user.
+
+### Memory Access Layer
+
+First command to need memory reads (not just writes). Defines a transparent read
+abstraction: `productivity:memory-management` primary, `memory/stakeholders-log.md`
+fallback. Same return shape regardless of backend. Command never branches on which
+backend was used. See `integrations/docs/memory-access-layer.md` for the full contract.
+
+### Architecture Documentation
+
+Three Mermaid diagrams added to `integrations/docs/architecture.md`:
+system overview (all layers + key connections), task state machine
+(Inbox → Active → Delegated → Done with command labels), and memory access layer
+(write path + read path side by side). `STRUCTURE.md` and `PRINCIPLES.md` updated
+to reference new docs.
 
 ---
 
@@ -415,5 +433,5 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.5 | skill-enhancer — WF1/WF2 enhancement workflows, domain registry, regression safeguards, EC-1–EC-9, enhance-nudge hook |
 | v0.9.6 | Skills & agents consistency pass — 10 medium/high issues from SME review |
 | v0.9.7 | SME review remediation (9 findings) + 3 quality gates (shell injection audit, AppleScript test protocol, prompt contract tests) — PR #7 |
-| v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
+| v1.0.0 | `/review-week` — Friday readiness snapshot; Memory Access Layer; Mermaid architecture docs |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
