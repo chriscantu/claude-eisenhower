@@ -194,6 +194,7 @@ integrations/docs/
   mac-calendar-planner-override.md     ← override instructions for external plugin
   scripts-reference.md                 ← moved from scripts/README.md
   architectural-review-2026-03-02.md   ← ADR: full codebase review at v0.9.1; decisions that shaped v1.0 roadmap
+  applescript-test-protocol.md         ← manual test protocol: 8 test cases for complete_reminder and push_reminder
 ```
 
 ---
@@ -217,7 +218,10 @@ Executable scripts only. No documentation files.
 ```
 scripts/
   cal_query.swift           ← EventKit calendar query (used by /schedule, /scan-email)
+  complete_reminder.applescript ← Reminders complete adapter (used by /execute)
+                                  Manual test protocol: integrations/docs/applescript-test-protocol.md
   push_reminder.applescript ← Reminders write adapter (used by /schedule)
+                              Manual test protocol: integrations/docs/applescript-test-protocol.md
   delegate-core.ts          ← shared types + pure scoring functions (imported by CLI and tests)
   match-delegate.ts         ← CLI entry point — file I/O, argument parsing, human-readable output
   build-plugin.js           ← packaging script — produces claude-eisenhower-{version}.plugin
@@ -297,9 +301,11 @@ integrations/config/email-config.md
 integrations/config/task-output-config.md
 integrations/config/stakeholders.yaml     ← PII — personal stakeholder graph
 .DS_Store
+dist/                                 ← build artifact — TypeScript compiled output, gitignored
+*.plugin                              ← build artifact — produced by npm run package, gitignored
 ```
 
-Everything else is committed. `.example` config templates are always committed.
+`.example` config templates are always committed. Build artifacts (`dist/`, `*.plugin`) are never committed — CI rebuilds them from source on every release.
 
 ---
 

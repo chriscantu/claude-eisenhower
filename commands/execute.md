@@ -60,7 +60,7 @@ If the user accepted the offer AND the productivity:memory-management skill is n
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 ### Log Progress
 1. Find the task in the board
@@ -106,8 +106,8 @@ If the productivity:memory-management skill is not available:
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
-4. Suggest check-in date (3–5 business days unless deadline is sooner)
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
+5. Suggest check-in date (3–5 business days unless deadline is sooner)
 
 ## Step 4: Stakeholder wrap-up
 

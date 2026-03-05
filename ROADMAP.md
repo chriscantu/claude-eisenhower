@@ -161,16 +161,11 @@ auto-rollback on regression.
 
 ---
 
-## Critical Fixes — v0.9.6
+## Shipped — Critical Fixes (v0.9.6)
 
 Skills and agents consistency pass. Fixes high and medium severity issues identified
 in the 2026-03-04 SME review of claude-eisenhower's skills, agents, and hooks.
 Full spec and task breakdown: `integrations/specs/2026-03-04-skills-agents-consistency-pass.md`.
-
-> **Status**: PR #6 open — blocked on architect/AI SME review findings.
-> 5 critical issues + 5 important issues must be resolved before merge.
-> Fix plan: `integrations/specs/2026-03-04-v0.9.6-pr-review-findings.md`
-> Worktree: `.worktrees/v0.9.6-consistency-pass` (branch: `v0.9.6/skills-agents-consistency-pass`)
 
 **Issues addressed:**
 - **H7** — `enhance-nudge.sh` uses `md5sum` (GNU-only); replaced with `shasum`
@@ -203,29 +198,49 @@ See v0.9.7 section below.
 
 ---
 
-## Critical Fixes — v0.9.7 (Polish Pass)
+## Shipped — Critical Fixes (v0.9.7)
 
-Low-severity UX and clarity improvements from the same 2026-03-04 SME review.
-No behavioral changes — these are clarifications and guardrail refinements.
+Three rounds of AI SME review (v0.9.5–v0.9.7) produced 9 remediation findings plus
+3 follow-on quality gate improvements. PR #7. All 153 tests pass.
 
-- **L3** — `claude-eisenhower` SKILL.md has no phase-to-command map. A user reading
-  the skill can't tell that Phase 1 = `/intake`, Phase 3 = `/schedule`, etc. Add a
-  `→ /command` annotation to each phase heading.
-- **L8** — `skill-enhancer` EC-4 forces every artifact with zero examples to produce
-  an example proposal classified as Quick Win "regardless of effort score." This
-  overrides the scoring framework and could force examples onto intentionally
-  example-free artifacts (lookup tables, configuration references). Soften to: propose
-  the example but allow rejection in Phase 5 without score override.
-- **L12** — `task-prioritizer` agent has no batch size cap. For inboxes with 20+ tasks
-  the agent could produce an unusably long response. Add: process the 15 most recently
-  added tasks first; note remaining count for the next pass.
-- **L13** — `task-prioritizer` agent ends with "Want to run /schedule to assign dates?"
-  — phrasing implies the agent will invoke the command, but its `tools` array is
-  Read/Write/Edit only. Reword as an instruction to the user: "Type /schedule to assign
-  dates, or /delegate for Q3 items."
-- **L14** — SessionStart hook unconditionally emits a 📋 emoji in its output format
-  string. This violates the system-level "no emoji unless requested" preference. Remove
-  the emoji from the format string.
+**Remediation (9 findings):**
+- **C1/I3** — `scan-email`: fixed 31–40 batch gap; stored `msgIndex` to prevent TOCTOU
+  index drift; surface body-fetch errors via `BODY_UNAVAILABLE:` prefix
+- **C2** — `match-delegate.ts`: guard `yaml.load()` with structured JSON error output;
+  `require.main` guard prevents test-import side effects
+- **C3** — `SKILL.md`: aligned Q4 with two-step staging (stage → weekly review or explicit confirm)
+- **C4** — regression tests for `AUTHORITY_PATTERNS`; cross-reference comments in prompts
+- **I1** — gitignored `dist/` and `*.plugin` build artifacts
+- **I2** — Option B single-write memory pattern enforced across all fallback blocks; ADR added
+- **I4** — `complete_reminder.applescript`: POSIX `tr` for full Unicode lowercasing
+- **I5** — `task-prioritizer`: four-state section routing; bare `## Q1`–`## Q4` headers prohibited
+
+**Quality gates (3 new):**
+- **S1** — AppleScript shell injection audit: all `do shell script` calls verified safe-quoted
+- **Q1** — Manual test protocol for AppleScript scripts (8 test cases)
+- **Q2** — Prompt consistency contract tests: prohibits vocabulary drift in Markdown prompt files
+
+---
+
+## Housekeeping — integrations/specs/ Cleanup
+
+`integrations/specs/` has accumulated session execution plans alongside permanent
+feature specs. Session plans are working documents used during implementation — once
+the work ships, they are historical noise with no ongoing reference value. The durable
+artifacts (ADRs, acceptance criteria, schema specs) should remain; the plans should go.
+
+**Candidates for removal** (all work shipped):
+
+| File | Why removable |
+|------|--------------|
+| `2026-03-03-skill-enhancer-plan.md` | Implementation plan for v0.9.5 skill-enhancer — work shipped |
+| `2026-03-03-skill-enhancer-pre-ship-fixes-design.md` | Design doc for pre-ship fixes — work shipped |
+| `2026-03-03-skill-enhancer-pre-ship-fixes.md` | Execution plan for pre-ship fixes — work shipped |
+| `2026-03-04-skills-agents-consistency-pass.md` | Execution plan for v0.9.6 consistency pass — work shipped |
+| `2026-03-04-v0.9.6-pr-review-findings.md` | PR review findings doc — addressed in v0.9.7 |
+
+**Keep** — these are permanent reference documents, not session artifacts:
+all `*-spec.md` files, `artifact-baselines.md`, `2026-03-04-quality-gates-spec.md`.
 
 ---
 
@@ -411,7 +426,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v0.9.3 | Plugin path resolution (`plugin_root` config); UTC timezone fix in `businessDaysElapsed`; CI test workflow |
 | v0.9.4 | Adapter contract interfaces (`adapter-types.ts`); four-state model test suite; QE audit (−6 low-signal tests) |
 | v0.9.5 | skill-enhancer — WF1/WF2 enhancement workflows, domain registry, regression safeguards, EC-1–EC-9, enhance-nudge hook |
-| v0.9.6 | *(planned)* Skills & agents consistency pass — 10 medium/high issues from SME review |
-| v0.9.7 | *(planned)* Polish pass — 5 low-severity issues from SME review |
+| v0.9.6 | Skills & agents consistency pass — 10 medium/high issues from SME review |
+| v0.9.7 | SME review remediation (9 findings) + 3 quality gates (shell injection audit, AppleScript test protocol, prompt contract tests) — PR #7 |
 | v1.0.0 | *(planned)* Weekly review command (`/review-week`) — closes the weekly workflow loop |
 | v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |

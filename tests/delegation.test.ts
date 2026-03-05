@@ -10,11 +10,14 @@
 
 import * as path from "path";
 import * as fs from "fs";
+import * as os from "os";
 import * as yaml from "js-yaml";
 import {
   Stakeholder, Relationship, CapacitySignal,
   scoreDelegate, rankCandidates, runMatch, resolveAlias, getDisplayAlias,
+  AUTHORITY_PATTERNS,
 } from "../scripts/delegate-core";
+import { loadStakeholders } from "../scripts/match-delegate";
 
 // ?? Fixtures ???????????????????????????????????????????????????????????????
 
@@ -280,5 +283,50 @@ describe("Alias Resolution (TEST-DEL-203)", () => {
     const result = runMatch([vpProduct], "roadmap alignment", "product requirements");
     expect(result.status).toBe("match");
     expect(result.candidates[0].alias).toBe("Jordan V.");
+  });
+});
+
+// ── C2: YAML parse guard ─────────────────────────────────────────────────────
+
+describe("C2: loadStakeholders YAML parse guard", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "eisenhower-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("throws a clean Error on malformed YAML", () => {
+    const badYaml = path.join(tmpDir, "stakeholders.yaml");
+    fs.writeFileSync(badYaml, "bad: yaml: :\n  - [invalid");
+    expect(() => loadStakeholders(badYaml)).toThrow("stakeholders.yaml parse error");
+  });
+
+  test("returns null when file does not exist", () => {
+    const missing = path.join(tmpDir, "missing.yaml");
+    expect(loadStakeholders(missing)).toBeNull();
+  });
+
+  test("returns empty array for valid YAML with empty stakeholders list", () => {
+    const emptyYaml = path.join(tmpDir, "stakeholders.yaml");
+    fs.writeFileSync(emptyYaml, "stakeholders: []");
+    expect(loadStakeholders(emptyYaml)).toEqual([]);
+  });
+});
+
+// ── C4: AUTHORITY_PATTERNS contract ────────────────────────────────────────
+describe("C4: AUTHORITY_PATTERNS contract", () => {
+  test("exports exactly 4 authority patterns", () => {
+    expect(AUTHORITY_PATTERNS).toHaveLength(4);
+  });
+
+  test("contains all expected authority phrases", () => {
+    expect(AUTHORITY_PATTERNS).toContain("requires your sign-off");
+    expect(AUTHORITY_PATTERNS).toContain("executive decision");
+    expect(AUTHORITY_PATTERNS).toContain("personnel decision");
+    expect(AUTHORITY_PATTERNS).toContain("sensitive communication on your behalf");
   });
 });

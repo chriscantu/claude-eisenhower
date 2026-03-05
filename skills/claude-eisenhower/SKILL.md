@@ -55,7 +55,13 @@ Assign timing based on quadrant:
 - **Q1** → Assign today or the earliest available slot. Flag as critical.
 - **Q2** → Assign a specific future date. Block time for deep work.
 - **Q3** → Assign a date only if delegated; otherwise mark "async/when possible."
-- **Q4** → Eliminate. Move to the `## Done` section with a `Note: Eliminated — Q4 cut {YYYY-MM-DD}` and `Done: {date}`. Do not leave in Inbox — elimination is an active decision, not a deferral.
+- **Q4** → Stage for review. Move to `## Q4 — Defer / Eliminate` with
+  `Deferred: {today's date} | Review on: {date 2 weeks out}`. At the weekly review,
+  if the task still has no value, move to `## Done` with
+  `Note: Eliminated — Q4 cut {date}`. Do not eliminate immediately unless the user explicitly confirms. If the user
+  explicitly confirms "eliminate it now", move the task directly to `## Done` with
+  `Note: Eliminated — Q4 cut {date}`. Staging keeps the decision visible and
+  reversible for all other cases.
 
 If Mac Calendar integration is configured, use it to check availability before assigning dates.
 
@@ -99,7 +105,7 @@ If the productivity:memory-management skill is not available:
 3. Append a line to `memory/stakeholders-log.md`:
    `[YYYY-MM-DD] [alias] | [task title] | check-in: [date] | status: pending`
 4. If the write fails: "Could not record this follow-up ([reason]). Track it manually."
-This is a best-effort fallback — the full memory skill provides richer tracking.
+Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.
 
 When a task involves a stakeholder commitment (you owe them an update, they owe you something, or you delegated to them), record:
 - Stakeholder name + role
