@@ -330,3 +330,38 @@ describe("C4: AUTHORITY_PATTERNS contract", () => {
     expect(AUTHORITY_PATTERNS).toContain("sensitive communication on your behalf");
   });
 });
+// ── Anti-domain veto (v1.1) ─────────────────────────────────────────────────
+describe("Anti-domain veto", () => {
+  const vendorWithVeto: Stakeholder = {
+    name: "VENDOR_1", alias: "Vendor A", role: "Account Manager",
+    relationship: "vendor",
+    domains: ["contracts", "procurement", "licensing"],
+    anti_domains: ["architecture", "internal", "personnel"],
+    capacity_signal: "high",
+  };
+
+  test("TEST-ANTI-001: stakeholder with matching anti_domain scores -Infinity", () => {
+    const result = scoreDelegate(vendorWithVeto, "Review internal architecture decision", "", 0);
+    expect(result.score).toBe(-Infinity);
+  });
+
+  test("TEST-ANTI-002: vetoed stakeholder still populates matched_domains for debugging", () => {
+    // Task matches both a positive domain AND an anti_domain — veto wins,
+    // but matched_domains is preserved for visibility.
+    const result = scoreDelegate(vendorWithVeto, "Renew licensing contracts for internal tooling", "", 0);
+    expect(result.score).toBe(-Infinity);
+    expect(result.matched_domains).toContain("licensing");
+    expect(result.matched_domains).toContain("contracts");
+  });
+
+  test("TEST-ANTI-003: stakeholder with no matching anti_domain scores normally", () => {
+    const result = scoreDelegate(vendorWithVeto, "Renew software licensing agreement", "", 0);
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  test("TEST-ANTI-004: vetoed candidate excluded from runMatch results", () => {
+    const result = runMatch([vendorWithVeto], "Review internal architecture decision");
+    expect(result.status).toBe("no_match");
+    expect(result.candidates).toHaveLength(0);
+  });
+});

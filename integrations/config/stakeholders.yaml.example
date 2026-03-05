@@ -18,6 +18,10 @@
 #   role          — Job title or working description
 #   relationship  — direct_report | peer | vendor | partner
 #   domains       — List of work areas this person can own. Used for matching.
+#   anti_domains  — Optional hard veto list. If any keyword matches the task text,
+#                   this person is excluded regardless of domain match or relationship.
+#                   Use for structural constraints (e.g., vendor who must never receive
+#                   internal architecture decisions).
 #   capacity_signal — high | medium | low — your subjective read, update manually
 #   contact_hint  — Optional: preferred channel (Slack, email, etc.)
 #   notes         — Optional: communication preferences, caveats, context
@@ -27,6 +31,8 @@
 #   Scores: domain match (+3 each), direct_report (+2), peer (+1),
 #           capacity high (+2), medium (+1), low (-1).
 #   Highest scorer is suggested. Ties broken by relationship type.
+#   Anti-domain veto overrides all scoring — matched_domains still visible for
+#   debugging even when vetoed.
 #
 # Alias resolution:
 #   When /intake sees "Requested by: Vargas", it resolves to "Jordan V." before
@@ -124,6 +130,10 @@ stakeholders:
       - contracts
       - procurement
       - licensing
+    anti_domains:           # optional — hard veto regardless of domain match
+      - architecture        # never route internal design decisions to a vendor
+      - internal
+      - personnel
     capacity_signal: high
     contact_hint: Email
     notes: Response SLA is 1 business day. Send formal written requests.
