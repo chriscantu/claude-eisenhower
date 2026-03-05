@@ -1,0 +1,13 @@
+{
+  "name": "claude-eisenhower",
+  "owner": {
+    "name": "Cantu"
+  },
+  "plugins": [
+    {
+      "name": "claude-eisenhower",
+      "source": ".",
+      "description": "4-phase task workflow for Directors of Engineering: Intake → Prioritize → Schedule → Execute using the Eisenhower matrix."
+    }
+  ]
+}
