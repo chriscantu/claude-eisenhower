@@ -1,7 +1,7 @@
 # claude-eisenhower — Product Roadmap
 
 **Format**: Now / Critical Fixes / Near-Term / Long-Term
-**Last updated**: 2026-03-05
+**Last updated**: 2026-03-05 (session 2)
 **Owner**: Cantu
 
 ---
@@ -315,9 +315,35 @@ Patch release. No user-visible behavior change.
 
 ---
 
-## Near-Term — Integrations (v1.1)
+## Shipped — v1.1.x (Delegation Engine + Test Coverage)
 
-New capabilities that extend the plugin's reach.
+### v1.1.1 — Anti-Domain Hard Veto (PR #10)
+
+Added optional `anti_domains` field to the `Stakeholder` interface. If any keyword
+in the list matches the task text, the stakeholder is unconditionally excluded from
+delegation candidates (score set to `-Infinity`) regardless of domain match or
+relationship weight. `matched_domains` is still populated on vetoed candidates for
+debugging visibility.
+
+**Changes**: `scripts/delegate-core.ts` (type + veto logic), `tests/delegation.test.ts`
+(4 new tests: TEST-ANTI-001–004), `integrations/config/stakeholders.yaml.example`
+(field docs + vendor example with `anti_domains`). 189 tests passing.
+
+### v1.1.2 — `addBusinessDays` Boundary Case Coverage (PR #11)
+
+Closed the test gap flagged in the v0.9.4 QE audit: `addBusinessDays` and
+`addBusinessDaysStr` had zero dedicated unit tests. 6 new tests (TEST-ABD-001–006)
+covering Monday+2, Friday+2 (spans weekend), n=0, Friday+1 → Monday, string output,
+and mutation guard.
+
+Also documented the UTC-vs-local timezone trap: `new Date("YYYY-MM-DD")` parses as
+UTC midnight and misaligns with `addBusinessDays`'s local-time arithmetic in
+non-UTC timezones (same class of bug as the v0.9.3 `businessDaysElapsed` fix).
+Tests use `new Date(year, month-1, day)` throughout to avoid it. 195 tests passing.
+
+---
+
+## Near-Term — Integrations (v1.1 remaining)
 
 ### 1. Slack Intake (`/scan-slack`)
 
@@ -329,32 +355,13 @@ the same confirmation table pattern as `/scan-email`.
 
 **Dependency**: Slack MCP connector availability in Cowork (blocking).
 
-### 2. Anti-Domain Support in Stakeholder Graph
-
-Add optional `anti_domains` field to `stakeholders.yaml` — domains that score a
-hard 0 for this person regardless of keyword match. Prevents routing work to people
-who should structurally never own it (e.g., vendor receiving internal architecture
-decisions).
-
-**Scope**: Schema addition + 2–3 new test cases in `tests/delegation.test.ts`.
-
-### 3. YAML Front Matter for TASKS.md
+### 2. YAML Front Matter for TASKS.md
 
 Add YAML front matter to task records. Non-breaking — Markdown remains human-readable.
 Enables programmatic filtering by owner, state, and date without regex parsing.
 
 **Timing**: After TASKS.md schema spec is stable and validated by the four-state
 test suite. Schema first; structured encoding second.
-
-### 4. Direct unit tests for `addBusinessDays`
-
-`scripts/date-helpers.ts` exports `addBusinessDays` and `addBusinessDaysStr`, but
-both functions lack dedicated unit tests. `businessDaysElapsed` (their inverse) is
-well-covered in `schedule-capacity.test.ts`. Gap identified during v0.9.4 QE audit.
-
-**Scope**: 4–5 boundary cases added to `schedule-capacity.test.ts`:
-Monday+2, Friday+2 (spans weekend), n=0 (same day), n=1 on Friday → Monday.
-Small lift; no new file needed.
 
 ---
 
@@ -484,4 +491,6 @@ These were considered and deliberately excluded to keep the plugin focused.
 | v1.0.0 | `/review-week` — Friday readiness snapshot; Memory Access Layer; Mermaid architecture docs |
 | v1.0.1 | Memory Manager DRY refactor — inline try/fallback consolidated into `memory-manager` skill |
 | v1.0.2 | Memory robustness — live pending counts, schema constants, drift prevention, known-limitation docs |
-| v1.1.0 | *(planned)* Integrations: `/scan-slack` (blocked on Slack MCP), anti-domain support, YAML front matter |
+| v1.1.1 | Anti-domain hard veto — `anti_domains` field on Stakeholder; `-Infinity` score; matched_domains preserved; 4 tests (PR #10) |
+| v1.1.2 | `addBusinessDays` test coverage — 6 boundary cases (TEST-ABD-001–006); UTC-vs-local trap documented; 195 tests (PR #11) |
+| v1.1.x | *(planned)* `/scan-slack` (blocked on Slack MCP), YAML front matter for TASKS.md |
