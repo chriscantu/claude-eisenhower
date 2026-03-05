@@ -5,46 +5,44 @@ Covers local file formats, return shapes, and field semantics.
 
 ---
 
-## Local File: `memory/stakeholders-log.md`
+## Local Files: Two-File Fallback System
 
-Single-file fallback for all delegation memory when `productivity:memory-management`
-is unavailable. One line per delegation event.
+Two-file fallback for all delegation memory when `productivity:memory-management`
+is unavailable. Column definitions are canonical — see `integrations/specs/memory-schema-spec.md`.
 
-### Line Format
+### `memory/glossary.md` — Global Follow-up Table
+
+Section: `## Stakeholder Follow-ups`
+Columns: `Alias | Task | Delegated on | Check-by | Status`
+
+One row per delegation entry:
 
 ```
-[YYYY-MM-DD] [alias] | [task title] | check-in: [YYYY-MM-DD] | status: pending|resolved
+| Alex R. | Review onboarding PR for new hire | 2026-02-19 | 2026-02-24 | Pending |
+| Alex R. | Update monitoring dashboards | 2026-02-20 | 2026-02-19 | Resolved — 2026-02-20 |
+| Jordan M. | Audit CI/CD pipeline | 2026-02-25 | 2026-03-01 | Pending |
 ```
 
-### Examples
+### `memory/people/[alias-filename].md` — Per-Delegate Log
+
+Filename derived from display alias per spec (e.g., "Alex R." → `alex-r.md`).
+Section: `## Delegations`
+Columns: `Task | Delegated on | Check-by | Status | Notes`
 
 ```
-[2026-02-19] Alex R. | Review onboarding PR for new hire | check-in: 2026-02-24 | status: pending
-[2026-02-20] Alex R. | Update monitoring dashboards | check-in: 2026-02-19 | status: resolved
-[2026-02-25] Jordan M. | Audit CI/CD pipeline | check-in: 2026-03-01 | status: pending
+| Review onboarding PR for new hire | 2026-02-19 | 2026-02-24 | Pending | — |
 ```
-
-### Field Semantics
-
-| Field | Description |
-|-------|-------------|
-| `[YYYY-MM-DD]` (first) | Date the delegation was logged |
-| `[alias]` | Delegate's display alias — must match stakeholders.yaml |
-| `[task title]` | Exact task title from TASKS.md |
-| `check-in: [YYYY-MM-DD]` | Date the caller intends to follow up |
-| `status: pending\|resolved` | Current state of the delegation |
 
 ### In-place Update Rules
 
 For `resolve-delegation` and `update-checkin` operations on the local fallback:
 
-1. Read all lines from `memory/stakeholders-log.md`
-2. Find the first line matching: alias = `[alias]` AND task title = `[task_title]` AND status = `pending`
-3. Replace that line with the updated version (status changed or check-in date changed)
-4. Write all lines back to the file
-5. If no matching line is found: log internally "No matching pending entry found for [alias] / [task_title]" and continue (non-blocking)
+1. Find the row in `memory/glossary.md` matching: Alias = `[alias]` AND Task = `[task_title]` AND Status = `Pending`
+2. Update the Status cell (resolve) or Check-by cell (update-checkin) in that row
+3. Apply the same update to the matching row in `memory/people/[alias-filename].md`
+4. If no matching row found: log internally "No matching pending entry for [alias] / [task_title]" and continue (non-blocking)
 
-Matching is case-insensitive on alias and task title.
+Matching is case-insensitive on Alias and Task.
 
 ---
 

@@ -96,7 +96,7 @@ describe("Prompt Contracts: no prohibited section headers (Q2-001)", () => {
 
 const MEMORY_SKILL_TOKEN = "productivity:memory-management";
 const MEMORY_GUARD_LINE =
-  "Do NOT write to memory/stakeholders-log.md if productivity:memory-management succeeded.";
+  "Do NOT write to local memory files if productivity:memory-management succeeded.";
 
 describe("Prompt Contracts: memory guard line present (Q2-002)", () => {
   // Guard line must be present in any command OR skill file that references

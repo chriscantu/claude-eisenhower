@@ -9,6 +9,9 @@
  *   - capacity_warning flag set when overloaded (even if static signal is "high")
  *   - runMatch() threads pendingCounts through to scoring
  *   - Backward compat: runMatch() with no pendingCounts behaves identically to before
+ *   - validateGlossaryHeader() detects schema drift (wrong/missing columns)
+ *   - loadPendingCounts() warns to stderr and returns {} on header mismatch (Option A)
+ *   - GLOSSARY_COLUMNS and PEOPLE_COLUMNS are exported and contain expected values
  *
  * Run: cd scripts && npm test
  */
@@ -20,8 +23,10 @@ import {
   Stakeholder, CapacitySignal, Relationship,
   scoreDelegate, runMatch,
   PENDING_THRESHOLD, PENDING_PENALTY,
+  GLOSSARY_COLUMNS, PEOPLE_COLUMNS,
+  glossaryColIndex,
 } from "../scripts/delegate-core";
-import { loadPendingCounts } from "../scripts/match-delegate";
+import { loadPendingCounts, validateGlossaryHeader } from "../scripts/match-delegate";
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -198,5 +203,169 @@ describe("PENDING-004: loadPendingCounts — glossary.md parsing", () => {
 | Alex E. | Task A | 2026-03-01 | 2026-03-05 | Resolved — 2026-03-04 |
 `);
     expect(loadPendingCounts(p)).toEqual({});
+  });
+});
+
+// ── SCHEMA-001: GLOSSARY_COLUMNS and PEOPLE_COLUMNS constants ─────────────────
+
+describe("SCHEMA-001: exported schema constants", () => {
+  test("GLOSSARY_COLUMNS contains all five required column names", () => {
+    expect(GLOSSARY_COLUMNS).toContain("Alias");
+    expect(GLOSSARY_COLUMNS).toContain("Task");
+    expect(GLOSSARY_COLUMNS).toContain("Delegated on");
+    expect(GLOSSARY_COLUMNS).toContain("Check-by");
+    expect(GLOSSARY_COLUMNS).toContain("Status");
+    expect(GLOSSARY_COLUMNS).toHaveLength(5);
+  });
+
+  test("PEOPLE_COLUMNS contains all five required column names", () => {
+    expect(PEOPLE_COLUMNS).toContain("Task");
+    expect(PEOPLE_COLUMNS).toContain("Delegated on");
+    expect(PEOPLE_COLUMNS).toContain("Check-by");
+    expect(PEOPLE_COLUMNS).toContain("Status");
+    expect(PEOPLE_COLUMNS).toContain("Notes");
+    expect(PEOPLE_COLUMNS).toHaveLength(5);
+  });
+
+  test("glossaryColIndex returns correct 0-based position for each column", () => {
+    expect(glossaryColIndex("Alias")).toBe(0);
+    expect(glossaryColIndex("Task")).toBe(1);
+    expect(glossaryColIndex("Delegated on")).toBe(2);
+    expect(glossaryColIndex("Check-by")).toBe(3);
+    expect(glossaryColIndex("Status")).toBe(4);
+  });
+});
+
+// ── SCHEMA-002: validateGlossaryHeader ───────────────────────────────────────
+
+describe("SCHEMA-002: validateGlossaryHeader", () => {
+  test("returns valid:true for exact column match", () => {
+    const result = validateGlossaryHeader(
+      ["Alias", "Task", "Delegated on", "Check-by", "Status"],
+      GLOSSARY_COLUMNS
+    );
+    expect(result.valid).toBe(true);
+    expect(result.warning).toBeUndefined();
+  });
+
+  test("returns valid:false when a column is missing", () => {
+    // 'Check-by' is the old drift case ('Check-in Date' was used instead)
+    const result = validateGlossaryHeader(
+      ["Alias", "Task", "Delegated on", "Check-in Date", "Status"],
+      GLOSSARY_COLUMNS
+    );
+    expect(result.valid).toBe(false);
+    expect(result.warning).toContain("Check-by");
+    expect(result.warning).toContain("Expected");
+    expect(result.warning).toContain("Found");
+  });
+
+  test("returns valid:false when header uses old 'Person' column name", () => {
+    // Regression: this was the actual drift found in glossary.md
+    const result = validateGlossaryHeader(
+      ["Person", "Delegated Task", "Check-in Date", "Status"],
+      GLOSSARY_COLUMNS
+    );
+    expect(result.valid).toBe(false);
+    expect(result.warning).toContain("Alias");
+    expect(result.warning).toContain("Task");
+    expect(result.warning).toContain("Delegated on");
+    expect(result.warning).toContain("Check-by");
+  });
+
+  test("warning message references expected columns verbatim", () => {
+    const result = validateGlossaryHeader(["Wrong"], GLOSSARY_COLUMNS);
+    expect(result.warning).toContain(GLOSSARY_COLUMNS.join(" | "));
+  });
+
+  test("returns valid:true even when extra columns are present (additive drift is safe)", () => {
+    // Extra columns at the end don't break parsing — only missing required ones do
+    const result = validateGlossaryHeader(
+      ["Alias", "Task", "Delegated on", "Check-by", "Status", "Extra Column"],
+      GLOSSARY_COLUMNS
+    );
+    expect(result.valid).toBe(true);
+  });
+});
+
+// ── SCHEMA-003: loadPendingCounts — Option A behavior on schema drift ─────────
+
+describe("SCHEMA-003: loadPendingCounts — Option A on header mismatch", () => {
+  let tmpDir: string;
+  let stderrOutput: string;
+  let stderrSpy: jest.SpyInstance;
+
+  const writeGlossary = (content: string) => {
+    const p = path.join(tmpDir, "glossary.md");
+    fs.writeFileSync(p, content);
+    return p;
+  };
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "eisenhower-schema-"));
+    stderrOutput = "";
+    stderrSpy = jest.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      stderrOutput += String(chunk);
+      return true;
+    });
+  });
+
+  afterEach(() => {
+    stderrSpy.mockRestore();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("returns {} when header uses old column names (does not throw)", () => {
+    const p = writeGlossary(`
+# Stakeholder Memory
+
+## Stakeholder Follow-ups
+
+| Person | Delegated Task | Check-in Date | Status |
+|--------|---------------|---------------|--------|
+| Alex E. | Task A | 2026-03-05 | Pending |
+`);
+    expect(() => loadPendingCounts(p)).not.toThrow();
+    expect(loadPendingCounts(p)).toEqual({});
+  });
+
+  test("writes warning to stderr on header mismatch", () => {
+    const p = writeGlossary(`
+# Stakeholder Memory
+
+## Stakeholder Follow-ups
+
+| Person | Delegated Task | Check-in Date | Status |
+|--------|---------------|---------------|--------|
+| Alex E. | Task A | 2026-03-05 | Pending |
+`);
+    loadPendingCounts(p);
+    expect(stderrOutput).toContain("glossary schema warning");
+    expect(stderrOutput).toContain("Expected");
+    expect(stderrOutput).toContain("Alias");
+  });
+
+  test("warning includes actionable fix hint", () => {
+    const p = writeGlossary(`
+## Stakeholder Follow-ups
+
+| Wrong | Columns | Here | Are | Bad |
+|-------|---------|------|-----|-----|
+| Alex E. | Task | 2026-03-01 | 2026-03-05 | Pending |
+`);
+    loadPendingCounts(p);
+    expect(stderrOutput).toMatch(/fix the header|re-run/i);
+  });
+
+  test("valid glossary produces no stderr output", () => {
+    const p = writeGlossary(`
+## Stakeholder Follow-ups
+
+| Alias | Task | Delegated on | Check-by | Status |
+|-------|------|-------------|----------|--------|
+| Alex E. | Task A | 2026-03-01 | 2026-03-05 | Pending |
+`);
+    loadPendingCounts(p);
+    expect(stderrOutput).toBe("");
   });
 });

@@ -89,6 +89,34 @@ export const REL_RANK: Record<Relationship, number> = {
   direct_report: 2, peer: 1, vendor: 0, partner: 0,
 };
 
+// ── Memory schema constants — single source of truth ─────────────────────────
+//
+// These mirror integrations/specs/memory-schema-spec.md.
+// loadPendingCounts() validates the glossary header against GLOSSARY_COLUMNS.
+// Commands that write memory rows must use these column names verbatim.
+// Changing a column name here is the ONLY place it needs to change.
+
+/** Canonical columns for the Stakeholder Follow-ups table in memory/glossary.md */
+export const GLOSSARY_COLUMNS = [
+  "Alias", "Task", "Delegated on", "Check-by", "Status",
+] as const;
+
+/** Canonical columns for each memory/people/{alias}.md Delegations table */
+export const PEOPLE_COLUMNS = [
+  "Task", "Delegated on", "Check-by", "Status", "Notes",
+] as const;
+
+export type GlossaryColumn = (typeof GLOSSARY_COLUMNS)[number];
+export type PeopleColumn   = (typeof PEOPLE_COLUMNS)[number];
+
+/**
+ * Returns the 0-based index of a GLOSSARY_COLUMNS entry by name.
+ * Used by parsers so column positions are never hardcoded.
+ */
+export function glossaryColIndex(col: GlossaryColumn): number {
+  return GLOSSARY_COLUMNS.indexOf(col);
+}
+
 export function normalizeText(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
 }
