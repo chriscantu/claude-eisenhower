@@ -7,8 +7,8 @@
 ## Decision
 
 `productivity:memory-management` is the single write target for stakeholder
-delegation entries. Local `memory/stakeholders-log.md` is a fallback used only
-when the skill is unavailable in the current session.
+delegation entries. Local memory files are a fallback used only when the skill
+is unavailable in the current session.
 
 Commands and skills must never write to both systems in the same session.
 
@@ -29,7 +29,11 @@ The 4-step inline pattern described below was the original implementation and ha
 removed from all command files:
 1. Attempt `productivity:memory-management`
 2. If skill succeeds → done. Do not write to `memory/`
-3. If skill unavailable → write to `memory/stakeholders-log.md`
+3. If skill unavailable → write to the two local fallback files:
+   - `memory/glossary.md` — global follow-up table (one row per delegation)
+   - `memory/people/{alias-filename}.md` — per-delegate delegation log
+   See `integrations/specs/memory-schema-spec.md` for the canonical schema of
+   both files, including column definitions and filename derivation rules.
 4. If both fail → surface non-blocking warning, instruct manual tracking
 
 ## Files Using memory-manager (v1.0.1)

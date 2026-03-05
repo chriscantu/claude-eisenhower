@@ -22,10 +22,44 @@ import {
   Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, runMatch, getDisplayAlias,
 } from "./delegate-core";
 
+/**
+ * Reads memory/glossary.md and returns a map of { alias → pending task count }.
+ * Only rows with Status "Pending" (case-insensitive) are counted.
+ * Returns an empty object if the file doesn't exist (offline / first run).
+ */
+export function loadPendingCounts(glossaryPath: string): Record<string, number> {
+  if (!fs.existsSync(glossaryPath)) return {};
+  const lines = fs.readFileSync(glossaryPath, "utf8").split("\n");
+  const counts: Record<string, number> = {};
+  let inTable = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("## Stakeholder Follow-ups")) { inTable = true; continue; }
+    if (inTable && trimmed.startsWith("##")) break; // next section — stop
+    if (!inTable || !trimmed.startsWith("|")) continue;
+    // Skip header and separator rows
+    if (trimmed.includes("Alias") || trimmed.replace(/[| -]/g, "").length === 0) continue;
+    const cols = trimmed.split("|").map((c) => c.trim()).filter(Boolean);
+    if (cols.length < 5) continue;
+    const alias = cols[0];
+    const status = cols[4];
+    if (status.toLowerCase() === "pending") {
+      counts[alias] = (counts[alias] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
 function findGraphPath(): string {
   const scriptDir = path.dirname(__filename);
   const repoRoot = path.resolve(scriptDir, "..");
   return path.join(repoRoot, "integrations", "config", "stakeholders.yaml");
+}
+
+function findGlossaryPath(): string {
+  const scriptDir = path.dirname(__filename);
+  const repoRoot = path.resolve(scriptDir, "..");
+  return path.join(repoRoot, "memory", "glossary.md");
 }
 
 export function loadStakeholders(graphPath: string): Stakeholder[] | null {
@@ -99,7 +133,8 @@ function run(): void {
     return;
   }
 
-  const { status, candidates } = runMatch(stakeholders, taskTitle, taskDescription);
+  const pendingCounts = loadPendingCounts(findGlossaryPath());
+  const { status, candidates } = runMatch(stakeholders, taskTitle, taskDescription, pendingCounts);
   console.log(JSON.stringify({ status, candidates, message: buildMessage(status, candidates) }, null, 2));
 }
 

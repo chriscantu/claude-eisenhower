@@ -93,10 +93,18 @@ export function normalizeText(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
 }
 
+/**
+ * Penalty applied to score per active pending delegation beyond the threshold.
+ * Kept alongside WEIGHTS so all scoring constants live in one place.
+ */
+export const PENDING_THRESHOLD = 2;
+export const PENDING_PENALTY = -2;
+
 export function scoreDelegate(
   stakeholder: Stakeholder,
   taskTitle: string,
-  taskDescription: string
+  taskDescription: string,
+  pendingCount = 0
 ): ScoredCandidate {
   const searchText = normalizeText(`${taskTitle} ${taskDescription}`);
   const matchedDomains: string[] = [];
@@ -109,6 +117,12 @@ export function scoreDelegate(
   }
   score += WEIGHTS.relationship[stakeholder.relationship] ?? 0;
   score += WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
+
+  // Apply a penalty for each pending task beyond the threshold.
+  // This gives the static capacity_signal real-time correction from memory.
+  const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
+  score += overload * PENDING_PENALTY;
+
   return {
     alias: getDisplayAlias(stakeholder),
     role: stakeholder.role,
@@ -116,7 +130,7 @@ export function scoreDelegate(
     capacity_signal: stakeholder.capacity_signal,
     score,
     matched_domains: matchedDomains,
-    capacity_warning: stakeholder.capacity_signal === "low",
+    capacity_warning: stakeholder.capacity_signal === "low" || pendingCount > PENDING_THRESHOLD,
     notes: stakeholder.notes,
   };
 }
@@ -131,10 +145,14 @@ export function rankCandidates(candidates: ScoredCandidate[]): ScoredCandidate[]
 export function runMatch(
   stakeholders: Stakeholder[],
   title: string,
-  desc = ""
+  desc = "",
+  pendingCounts: Record<string, number> = {}
 ): { status: MatchResult["status"]; candidates: ScoredCandidate[] } {
   if (stakeholders.length === 0) return { status: "empty_graph", candidates: [] };
-  const scored = stakeholders.map((s) => scoreDelegate(s, title, desc));
+  const scored = stakeholders.map((s) => {
+    const alias = getDisplayAlias(s);
+    return scoreDelegate(s, title, desc, pendingCounts[alias] ?? 0);
+  });
   const ranked = rankCandidates(scored);
   const viable = ranked.filter((c) => c.score > 0);
   if (viable.length === 0) return { status: "no_match", candidates: [] };
