@@ -95,8 +95,17 @@ if (!skipDirtyCheck) {
 }
 
 // ─── Step 4: Remove existing artifact ────────────────────────────────────────
+//
+// If a .plugin file already exists for this version, it was built at a different
+// time and may not match the current HEAD. Warn loudly before overwriting it —
+// this is the most common source of version drift when installing locally.
 
 if (fs.existsSync(artifactPath)) {
+  const existingStat = fs.statSync(artifactPath);
+  const ageMinutes = Math.round((Date.now() - existingStat.mtimeMs) / 60000);
+  console.warn(`\n⚠️  Warning: ${artifactName} already exists (built ${ageMinutes} minute(s) ago).`);
+  console.warn('   This stale artifact may not match the current git HEAD.');
+  console.warn('   Deleting it and rebuilding from HEAD now.\n');
   fs.unlinkSync(artifactPath);
 }
 
