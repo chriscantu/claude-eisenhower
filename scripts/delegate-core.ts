@@ -21,6 +21,15 @@ export interface Stakeholder {
   role: string;
   relationship: Relationship;
   domains: string[];
+  /**
+   * Optional hard-veto list. If any anti_domain keyword is found in the task
+   * text, this stakeholder is excluded from candidates regardless of domain
+   * match or relationship score. Score is set to -Infinity.
+   *
+   * Use for structural ownership constraints — e.g., a vendor who should
+   * never receive internal architecture decisions.
+   */
+  anti_domains?: string[];
   capacity_signal: CapacitySignal;
   contact_hint?: string;
   notes?: string;
@@ -137,6 +146,22 @@ export function scoreDelegate(
   const searchText = normalizeText(`${taskTitle} ${taskDescription}`);
   const matchedDomains: string[] = [];
   let score = 0;
+
+  // ── Anti-domain veto ──────────────────────────────────────────────────────
+  // Hard veto: if any anti_domain keyword appears in task text, this
+  // stakeholder is unconditionally excluded. -Infinity ensures runMatch()
+  // filters them out at the viable.filter(score > 0) step.
+  // matched_domains is still populated so callers can surface "vetoed despite
+  // matching X" in debug output or future /memory tooling.
+  let vetoed = false;
+  for (const anti of stakeholder.anti_domains ?? []) {
+    if (searchText.includes(normalizeText(anti))) {
+      vetoed = true;
+      break;
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   for (const domain of stakeholder.domains ?? []) {
     if (searchText.includes(normalizeText(domain))) {
       score += WEIGHTS.domain_match;
@@ -150,6 +175,10 @@ export function scoreDelegate(
   // This gives the static capacity_signal real-time correction from memory.
   const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
   score += overload * PENDING_PENALTY;
+
+  // Anti-domain veto overrides all scoring — applied last so matched_domains
+  // is still populated for debugging visibility.
+  if (vetoed) score = -Infinity;
 
   return {
     alias: getDisplayAlias(stakeholder),
