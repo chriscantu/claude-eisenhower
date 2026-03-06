@@ -1,7 +1,7 @@
 # Architecture Overview
 
-**Last updated**: 2026-03-04
-**Version**: v1.0.1
+**Last updated**: 2026-03-06
+**Version**: v1.1.3
 
 Three diagrams, each answering a different architectural question:
 
@@ -67,7 +67,7 @@ flowchart TD
     subgraph DAT["Data Stores  (gitignored)"]
         direction LR
         tasks[("TASKS.md")]
-        mem[("memory/\nstakeholders-log.md\nreview-log.md")]
+        mem[("memory/\nglossary.md · people/\nreview-log.md")]
     end
 
     %% ── External Systems ────────────────────────────────────────
@@ -81,7 +81,7 @@ flowchart TD
     %% ── Infrastructure ──────────────────────────────────────────
     subgraph INF["Infrastructure"]
         direction LR
-        jest["Jest  155 tests"]
+        jest["Jest  196 tests"]
         gh["GitHub Actions\nCI · Release"]
     end
 
@@ -235,7 +235,7 @@ flowchart TD
 | Data (runtime) | `TASKS.md` · `memory/` (stakeholders-log, review-log, people/, glossary) |
 | External | Mac Calendar · Mac Reminders · `productivity:memory-management` skill |
 | Adapters | `reminders.md` (active) · `jira.md` · `linear.md` · `asana.md` (planned) |
-| Infrastructure | Jest (153 tests) · GitHub Actions (CI + tag-based release) |
+| Infrastructure | Jest (196 tests) · GitHub Actions (CI + tag-based release) |
 
 ---
 

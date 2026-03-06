@@ -11,7 +11,8 @@ When adding a new file, find the right directory here before creating anything.
 | File | Purpose |
 |------|---------|
 | `README.md` | Plugin overview, workflow summary, setup instructions, usage examples |
-| `ROADMAP.md` | Now / Next / Later product roadmap — shipped features, planned work, strategic bets |
+| `CHANGELOG.md` | Version history — all shipped releases, changes, and findings resolved. Newest first. |
+| `ROADMAP.md` | Forward-looking plan — Near-Term, Long-Term, Won't Do, Open Questions, deferred TODOs. See CHANGELOG.md for history. |
 | `STRUCTURE.md` | This file — canonical directory structure and file placement rules |
 | `CONNECTORS.md` | Registry of all active and planned integrations |
 | `PRINCIPLES.md` | Engineering principles: DRY, SOLID, TDD, PII safety, structure rules |
@@ -180,9 +181,9 @@ integrations/specs/
   github-release-spec.md              ← GitHub Actions release automation on v* tags
   four-state-task-model-spec.md       ← Inbox→Active→Delegated→Done state model (v0.9.0)
   slack-intake-spec.md                ← /scan-slack Slack DM + mention capture (planned v1.1)
-  tasks-schema-spec.md                ← canonical TASKS.md field schema + section structure (planned v1.0)
-  adapter-types-spec.md               ← TypeScript interfaces for TaskOutputRecord + PushResult (planned v1.0)
-  memory-schema-spec.md               ← glossary.md + people/*.md schema and write rules (planned v1.0)
+  tasks-schema-spec.md                ← canonical TASKS.md field schema + section structure (shipped v1.0)
+  adapter-types-spec.md               ← TypeScript interfaces for TaskOutputRecord + PushResult (shipped v1.0)
+  memory-schema-spec.md               ← glossary.md + people/*.md schema and write rules (shipped v1.0)
   2026-03-03-skill-enhancer-plan.md   ← skill-enhancer implementation plan (v0.9.5)
   artifact-baselines.md               ← floor construct counts for skill-enhancer Phase 6 regression check
 ```
@@ -200,7 +201,7 @@ integrations/docs/
   calendar-performance-fix.md          ← ADR: why Swift EventKit instead of AppleScript
   mac-calendar-planner-override.md     ← override instructions for external plugin
   memory-system-adr.md                 ← ADR: single write target for delegation memory (Option B)
-  memory-access-layer.md               ← Memory Access Layer read contract (transparent backend for /review-week)
+  memory-access-layer.md               ← ⚠ Superseded — see skills/memory-manager/SKILL.md (v1.0.1)
   scripts-reference.md                 ← moved from scripts/README.md
   architectural-review-2026-03-02.md   ← ADR: full codebase review at v0.9.1; decisions that shaped v1.0 roadmap
   applescript-test-protocol.md         ← manual test protocol: 8 test cases for complete_reminder and push_reminder
@@ -263,6 +264,10 @@ tests/
   delegate-entry.test.ts       ← 31-test suite for /delegate entry point (v0.5.1, DEL-5xx)
   schedule-capacity.test.ts    ← 15-test suite for capacity signal review prompt (v0.5.2, CAP-6xx)
   phase2-3.test.ts             ← 32-test suite for /schedule + /execute pure logic (v0.5.3, DEL-7xx)
+  agent-contracts.test.ts      ← structural checks: plugin schema, hook registration, file presence
+  prompt-contracts.test.ts     ← vocabulary contract tests: prohibited headers, memory guard lines (Q2-002 covers commands, agents, skills)
+  anti-domain.test.ts          ← anti_domains veto logic (v1.1.1, TEST-ANTI-001–004)
+  business-days.test.ts        ← addBusinessDays boundary cases (v1.1.2, TEST-ABD-001–006)
   delegation-regression.md     ← plain-language test descriptions (BDD format)
   node_modules                 ← symlink → ../scripts/node_modules (not committed)
 ```
@@ -371,3 +376,14 @@ dist/                                 ← build artifact — TypeScript compiled
 |         | New: `hooks/enhance-nudge.sh` — PostToolUse hook nudging developer to run skill-enhancer |
 |         | Updated: `hooks/hooks.json` — added PostToolUse hook registration                   |
 |         | New: `integrations/specs/artifact-baselines.md` — floor construct counts for regression check |
+| v1.1.3  | DRY/SOLID audit — vocabulary consistency and reliability hardening; no new features  |
+|         | Updated: `commands/schedule.md` — four-state vocabulary (R1), plugin-root fallback (R5) |
+|         | Updated: `commands/execute.md` — four-state vocabulary in Mark Done and Delegate (R2) |
+|         | Updated: `commands/delegate.md` — removed duplicated authority pattern list (R4)    |
+|         | Updated: `commands/review-week.md` — plugin-root fallback clause (R5)               |
+|         | Updated: `scripts/package.json` — lstatSync for idempotent symlink creation (R3)    |
+|         | Updated: `tests/prompt-contracts.test.ts` — Q2-002 extended to agentFiles (R6)      |
+|         | Updated: `ROADMAP.md` — v1.1.3 entry, R7 Won't Do, R8/R9 TODO section; split into ROADMAP.md (forward-looking) + CHANGELOG.md (history) |
+|         | New: `CHANGELOG.md` — all shipped version history extracted from ROADMAP.md          |
+|         | Updated: `STRUCTURE.md` — test suite listing, spec status, memory-access-layer note |
+|         | Verified: `dist/` in .gitignore (D4); four-state consistency complete (D5)          |
