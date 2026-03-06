@@ -27,10 +27,10 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 ## Step 3: Handle each action
 
 ### Mark Done
-1. **If the task is in Q4**: Do NOT move to `## Completed` immediately. Instead:
-   - If the user explicitly confirms the task is being eliminated: move to `## Completed` and add `Done: [today's date] | Eliminated`
-   - If the task was just classified Q4 this session: leave it in `## Q4 — Defer / Eliminate` with `Deferred: [today's date]` and note `Review on: [date 2 weeks out]`. Q4 tasks stage there first; they are not the same as done.
-2. Move the task from its current quadrant to `## Completed`
+1. **If the task has `Priority: Q4`**: Do NOT move to `## Done` immediately. Instead:
+   - If the user explicitly confirms the task is being eliminated: move to `## Done` and add `Done: [today's date] | Eliminated — Q4 cut`
+   - If the task was just classified Q4 this session: leave it in `## Active` with `Deferred: [today's date]` and note `Review on: [date 2 weeks out]`. Q4 tasks stage in `## Active` first; they are not the same as done.
+2. Move the task to `## Done`
 2. Add `Done: [today's date]` to the task record
 3. Remove the checkbox marker `[ ]` and replace with `[x]`
 4. **If the task has `Delegate to: [alias]`** (it was a delegated Q3 task):
@@ -88,8 +88,8 @@ If the user accepted the offer, invoke the memory-manager skill:
 3. Confirm: "Follow-up logged. Run /prioritize to assign it a quadrant."
 
 ### Delegate
-1. Move task to Q3 section
-2. Record delegate name in the task
+1. Set `Priority: Q3` and `State: Delegated` on the task record (task stays in `## Active`)
+2. Record `Delegate to: [alias]` and `Check-by: [date]` in the task
 3. Invoke the memory-manager skill:
    `log-delegation — alias: [delegate alias], task: [task title], check_in_date: [check-in date]`
 4. Suggest check-in date (3–5 business days unless deadline is sooner)

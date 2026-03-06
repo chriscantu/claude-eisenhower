@@ -39,15 +39,12 @@ Proceed with whatever the user provides. Do not require intake first.
 
 ## Step 2: Authority flag check
 
-Before scoring, scan the task title and description for authority-sensitive language:
-- "requires your sign-off"
-- "executive decision"
-- "personnel decision"
-- "sensitive communication on your behalf"
-<!-- Canonical source: AUTHORITY_PATTERNS in scripts/delegate-core.ts.
-     Update both this list AND delegate-core.ts if patterns change. -->
+Before scoring, pass the task title and description through the `hasAuthorityFlag()` function
+defined in `scripts/delegate-core.ts` (called automatically via the scoring CLI in Step 3).
+The canonical authority pattern list is maintained in `AUTHORITY_PATTERNS` in that module —
+do not duplicate it here.
 
-If any match (case-insensitive):
+If any pattern matches (case-insensitive):
 
 > ⚠ This task may require your authority — are you sure you want to delegate it?
 

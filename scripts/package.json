@@ -4,7 +4,7 @@
   "description": "Scripts for the claude-eisenhower plugin",
   "private": true,
   "scripts": {
-    "postinstall": "node -e \"const{existsSync,symlinkSync}=require('fs'),{resolve}=require('path');const t=resolve(__dirname,'../tests/node_modules');if(!existsSync(t))symlinkSync(resolve(__dirname,'node_modules'),t);\" ",
+    "postinstall": "node -e \"const{lstatSync,symlinkSync}=require('fs'),{resolve}=require('path');const t=resolve(__dirname,'../tests/node_modules');let exists=false;try{lstatSync(t);exists=true;}catch(e){}if(!exists)symlinkSync(resolve(__dirname,'node_modules'),t);\" ",
     "pretest": "npm run postinstall",
     "test": "jest",
     "test:watch": "jest --watch",

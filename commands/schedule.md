@@ -25,7 +25,7 @@ If the file does not exist or has no prioritized tasks, inform the user: "No pri
 
 ### Part A — Overdue check-ins
 
-Scan TASKS.md for Q3 tasks that have a `Check-in date:` field set to today or earlier and are not yet in the `## Completed` section.
+Scan TASKS.md for tasks with `State: Delegated` that have a `Check-by:` date set to today or earlier and are not yet in the `## Done` section.
 
 If any exist, surface them first:
 "You have [N] delegated item(s) due for check-in today or overdue:"
@@ -37,9 +37,9 @@ Process any responses (mark done → /execute flow, create follow-up → append 
 
 ### Part B — Capacity signal review
 
-After handling overdue check-ins, scan all open Q3 tasks (not in `## Completed`) for delegates who may be overloaded.
+After handling overdue check-ins, scan all tasks with `State: Delegated` (not in `## Done`) for delegates who may be overloaded.
 
-For each delegate alias, collect all open Q3 tasks delegated to them. Count business days elapsed since each task's `Scheduled:` date (skip Saturdays and Sundays).
+For each delegate alias, collect all open delegated tasks assigned to them. Count business days elapsed since each task's `Scheduled:` date (skip Saturdays and Sundays).
 
 Flag any delegate who meets **both** conditions:
 - **2 or more** open delegations assigned to them, AND
@@ -89,11 +89,10 @@ If no argument, schedule all prioritized tasks that don't yet have a date assign
 - Frame the output as: "Delegated to [alias] — check in [date]."
 
 **Q4 — Not Urgent, Not Important → Stage it, then cut at weekly review**
-- Move the task to `## Q4 — Defer / Eliminate` (do NOT move to `## Completed` yet).
-- Add: `Deferred: [today's date] | Review on: [date 2 weeks out]`
-- At the weekly review, if the task still has no value: move to `## Completed` with `Eliminated — Q4 cut [date]`.
-- This two-step approach prevents hasty elimination and keeps Q4 visible as a deliberate decision.
-- If the user explicitly says "eliminate it now" during scheduling, you may move directly to Completed with the elimination note.
+- Leave the task in `## Active` with `Priority: Q4` and add: `Deferred: [today's date] | Review on: [date 2 weeks out]`
+- Do NOT move to `## Done` yet — the two-step approach prevents hasty elimination and keeps Q4 visible as a deliberate decision.
+- At the weekly review, if the task still has no value: move to `## Done` with `Done: [date] | Eliminated — Q4 cut`.
+- If the user explicitly says "eliminate it now" during scheduling, move directly to `## Done` with `Done: [today's date] | Eliminated — Q4 cut`.
 
 ## Step 3b: For each Q3 task — confirm or assign the delegate
 
@@ -116,8 +115,8 @@ For every Q3 task being scheduled:
 
 2. **After user confirms or names a delegate**:
    - If the user overrides the suggested delegate: update the task record and note: "Delegate changed from [original alias] to [new alias] at schedule"
-   - Update the task record: `Delegate to: [alias]`
-   - Set `Check-in date: [2–3 business days from today]`
+   - Update the task record: `Delegate to: [alias]`, `State: Delegated`
+   - Set `Check-by: [2–3 business days from today]`
 
 3. **Create a follow-up memory entry** via the memory-manager skill:
    `log-delegation — alias: [confirmed delegate alias], task: [task title], check_in_date: [date]`
@@ -142,8 +141,8 @@ Ask: "Does this look right? I'll save it once you confirm."
 After the user confirms:
 - Add `Scheduled: [date]` to each task record
 - Add `Action: [specific action]` to each task record
-- For Q3: add `Delegate to: [alias]` and `Check-in date: [date]`
-- For Q4: move to `## Q4 — Defer / Eliminate` with `Deferred: [date] | Review on: [2 weeks out]` (only move to `## Completed` if user explicitly confirms elimination this session)
+- For Q3: add `Delegate to: [alias]`, `State: Delegated`, and `Check-by: [date]`
+- For Q4: add `Deferred: [date] | Review on: [2 weeks out]` to the task record in `## Active` (only move to `## Done` with `Done: [date] | Eliminated — Q4 cut` if user explicitly confirms elimination this session)
 
 ## Step 6: Push to task output adapter
 
@@ -202,8 +201,11 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 If the user asks to block time or mentions Mac Calendar, check availability before locking in a Q2 date.
 
 Read `integrations/config/task-output-config.md` for:
-- `plugin_root` — the plugin installation path (required — run /setup if not configured)
+- `plugin_root` — the plugin installation path
 - The active adapter and list name used in Step 6
+
+If `plugin_root` is not present in the config, use `~/repos/claude-eisenhower` and note:
+`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update integrations/config/task-output-config.md if your installation is at a different location."`
 
 Read `calendar_name` from `integrations/config/calendar-config.md`, then run:
 

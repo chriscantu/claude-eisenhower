@@ -4,7 +4,7 @@
 **Date**: 2026-03-02
 **Author**: Cantu
 **Scope**: Full codebase review — v0.1.0 through v0.9.1
-**Status**: Accepted
+**Status**: Resolved — all 6 decisions implemented as of v1.1.3 (2026-03-05)
 
 ---
 
@@ -199,8 +199,27 @@ no, add `plugin_root` to a shared config file.
 |--------|----------|--------|
 | This ADR | `integrations/docs/architectural-review-2026-03-02.md` | ✅ Complete |
 | ROADMAP.md restructured | `ROADMAP.md` | ✅ Complete |
-| TASKS.md schema spec | `integrations/specs/tasks-schema-spec.md` | ✅ Complete |
-| Adapter contract spec | `integrations/specs/adapter-types-spec.md` | ✅ Complete |
-| Memory schema spec | `integrations/specs/memory-schema-spec.md` | ✅ Complete |
-| v0.9.2 consistency patch | `commands/delegate.md` et al. | 🔲 Pending |
-| Four-state test suite | `tests/four-state.test.ts` | 🔲 Pending |
+| TASKS.md schema spec | `integrations/specs/tasks-schema-spec.md` | ✅ Complete (v1.0) |
+| Adapter contract spec | `integrations/specs/adapter-types-spec.md` | ✅ Complete (v1.0) |
+| Memory schema spec | `integrations/specs/memory-schema-spec.md` | ✅ Complete (v1.0) |
+| v0.9.2 consistency patch — delegate.md, scan-email.md, hooks.json, SKILL.md | Various | ✅ Complete (v0.9.2) |
+| D5 remaining: schedule.md + execute.md four-state vocabulary | `commands/schedule.md`, `commands/execute.md` | ✅ Complete (v1.1.3) |
+| D4: dist/ removed from source control | `.gitignore` | ✅ Complete (v0.9.7/I1) |
+| D6: Plugin path resolution | `integrations/config/task-output-config.md`, command files | ✅ Complete (v0.9.3) |
+| Four-state test suite (Gherkin → Jest) | `tests/four-state.test.ts` | ⚠ Deferred — prompt-contracts.test.ts provides vocabulary enforcement; behavioral coverage ceiling is pure functions only (see Open Question 3) |
+
+### Resolution Notes (added 2026-03-05)
+
+All 6 decisions from this review have been implemented. The DRY/SOLID audit in v1.1.3
+completed D5 (four-state vocabulary in schedule.md and execute.md), confirmed D4 was
+already resolved in v0.9.7, and validated that the adapter contract (D2) and memory
+schema (D3) are formalized and operational.
+
+**Open Question 1** resolved: `$CLAUDE_PLUGIN_ROOT` is not available in the Bash/MCP
+tool context — Strategy B (config file `plugin_root`) implemented in v0.9.3.
+
+**Open Question 2** partially resolved: Memory system consolidated into
+`skills/memory-manager/SKILL.md` (v1.0.1). `productivity:memory-management` remains
+the primary backend; the plugin-owned fallback is `memory/stakeholders-log.md` →
+refactored to two-file schema (`memory/glossary.md` + `memory/people/`) in v1.0.2.
+Full consolidation (single backend) deferred pending platform decision.
