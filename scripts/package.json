@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "package": "node build-plugin.js",
     "package:dev": "node build-plugin.js --skip-dirty-check",
-    "release": "npm test && npm run package"
+    "release": "npm test && npm run package",
+    "install-hooks": "bash install-hooks.sh"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
