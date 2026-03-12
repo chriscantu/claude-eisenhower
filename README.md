@@ -78,9 +78,14 @@ Your stakeholder graph lives in `integrations/config/stakeholders.yaml` — a lo
 
 ## Getting started
 
-### 1. Install the plugin
+> **Where do the slash commands work?**
+> All commands (`/intake`, `/scan-email`, `/schedule`, etc.) are **Claude Code** slash commands. They appear in Claude Code's `/` command menu after the plugin is installed there. They are not available as Cowork slash commands — Cowork uses a separate skill system.
 
-Download the latest `.plugin` file from [GitHub Releases](https://github.com/chriscantu/claude-eisenhower/releases) and install it via Cowork plugin settings.
+### 1. Install the plugin in Claude Code
+
+Download the latest `.plugin` file from [GitHub Releases](https://github.com/chriscantu/claude-eisenhower/releases).
+
+Install it in **Claude Code**: open your Claude Code settings, go to **Plugins**, and add the `.plugin` file. Once installed, all commands will appear when you type `/` in any Claude Code session.
 
 ### 2. Run setup
 
