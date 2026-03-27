@@ -12,24 +12,25 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 Flattened directory layout for navigability and coherence. No feature changes,
 no behavior changes — purely structural. 196 tests passing.
 
-Design spec: `specs/2026-03-26-directory-restructure-design.md`
+Design spec: `docs/specs/2026-03-26-directory-restructure-design.md`
 
 **Directory moves:**
 
 - `skills/claude-eisenhower/` -> `skills/core/` — eliminated naming collision
-- `integrations/specs/` -> `specs/` — specs are first-class, one hop from root
+- `integrations/specs/` -> `docs/specs/` — specs organized under docs
 - `integrations/config/` -> `config/` — one hop from root
 - `integrations/adapters/` -> `adapters/` — one hop from root
 - `integrations/docs/*` -> `docs/` — consolidated with dev reference docs
+- ADR files -> `docs/adrs/` — architectural decisions grouped together
 - `PRINCIPLES.md`, `STRUCTURE.md`, `CONNECTORS.md` -> `docs/` — dev reference, not project identity
 - `integrations/` directory removed (empty after moves)
 
 **Reference updates:**
 
-- All path references updated across 61 files (commands, skills, agents, tests, scripts, docs, specs)
+- All path references updated across 60+ files (commands, skills, agents, tests, scripts, docs, specs)
 - `.gitignore` updated for new config paths; added `reports/`, `.claude/`, `.backup/` exclusions
 - `docs/STRUCTURE.md` fully rewritten to reflect actual tracked file inventory
-- `docs/PRINCIPLES.md` line 25 updated to `docs/memory-access-layer.md` (resolves deferred TODO R9)
+- `docs/PRINCIPLES.md` line 25 updated to `docs/adrs/memory-access-layer.md` (resolves deferred TODO R9)
 - CHANGELOG.md historical entries left unchanged with explanatory note added
 
 ---
