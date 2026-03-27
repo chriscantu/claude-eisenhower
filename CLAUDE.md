@@ -70,6 +70,11 @@ Every code review MUST validate against the following principles from
 - Pure functions take data as arguments, no filesystem or external service calls (DI)
 - Interfaces are narrow and purpose-specific
 
+**Platform Architecture:**
+- Core features (markdown-only) must not introduce platform dependencies
+- Platform-specific integrations (Calendar, Reminders, Mail) degrade gracefully when config is missing
+- Missing config = skip that data source, not an error
+
 **Reliability:**
 - Calendar queries MUST use `scripts/cal_query.swift` (EventKit), never AppleScript `whose`
 - PII files (`config/stakeholders.yaml`, `config/*-config.md`, `memory/`, `TASKS.md`) are gitignored — never committed
