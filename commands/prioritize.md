@@ -66,21 +66,21 @@ After classifying a task as Q3, before saving:
    do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
    ```
 
-   Note: the CLI reads `config/stakeholders.yaml` and `memory/glossary.md` relative
-   to the working directory. The `cd` ensures it runs from the scripts directory.
+   Note: the CLI resolves `config/stakeholders.yaml` and `memory/glossary.md`
+   relative to its own file location (the `scripts/` directory), not the working
+   directory. The `cd` ensures `npx ts-node` can find the local `node_modules`.
    If `memory/glossary.md` does not exist, pending counts default to 0 (no error).
 
-4. **Parse the JSON output**. The CLI returns a JSON object with:
-   - `candidates[]` — ranked by score, each with `alias`, `score`, `role`, and `reasons[]`
-   - `warnings[]` — advisory messages (e.g., high pending count)
+4. **Parse the JSON output**. The CLI returns a JSON object matching the `MatchResult` interface:
    - `status` — `match`, `no_match`, `empty_graph`, or `no_graph`
+   - `candidates[]` — ranked by score, each with: `alias`, `role`, `relationship`, `capacity_signal`, `score`, `matched_domains[]`, `capacity_warning` (boolean)
+   - `message` — a pre-formatted human-readable summary string
 
 5. **Surface results**:
-   - `status: match` with one clear top scorer → suggest by alias with reasoning from `reasons[]`
+   - `status: match` with one clear top scorer → suggest by alias with reasoning from `matched_domains` and `relationship`
    - `status: match` with tied scores → surface both, prefer `direct_report` on tiebreak, ask user to choose
    - `status: no_match` → say "No clear domain match in your stakeholder graph." Ask: "Who should own this?"
-   - If any `warnings[]` mention low capacity → add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
-   - If any `warnings[]` mention pending delegations → surface the count as advisory
+   - If a candidate has `capacity_warning: true` → add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
 
 6. **Ask for confirmation** before recording the delegate — never auto-assign:
    "Does [alias] make sense for this, or would you like to assign someone else?"

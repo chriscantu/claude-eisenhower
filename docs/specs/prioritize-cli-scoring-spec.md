@@ -68,13 +68,10 @@ This is a prose copy of the algorithm in `delegate-core.ts`. It does not include
 ### `/delegate` Step 4 (CLI invocation)
 
 ```applescript
-do shell script "cd {plugin_root}/scripts && npx ts-node match-delegate.ts
-  --task 'task title and description'
-  --stakeholders {plugin_root}/config/stakeholders.yaml
-  --glossary {plugin_root}/memory/glossary.md 2>&1"
+do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
 ```
 
-Returns structured JSON with ranked candidates, scores, reasoning, and warnings.
+Returns structured JSON matching the `MatchResult` interface: `{ status, candidates[], message }`.
 
 ---
 
@@ -109,19 +106,19 @@ After classifying a task as Q3, before saving:
 3. **Parse the JSON output**. The CLI returns:
    ```json
    {
+     "status": "match",
      "candidates": [
-       { "alias": "Alex R.", "score": 8, "reasons": ["domain:infrastructure +3", ...] }
+       { "alias": "Alex R.", "role": "Senior Engineer", "relationship": "direct_report", "capacity_signal": "medium", "score": 8, "matched_domains": ["infrastructure"], "capacity_warning": false }
      ],
-     "warnings": ["Alex R. has 3 pending delegations"],
-     "noMatch": false
+     "message": "Best match: Alex R. (Senior Engineer) — score 8"
    }
    ```
 
 4. **Surface results** using the same presentation format as today:
-   - One clear top scorer → suggest with reasoning
+   - One clear top scorer → suggest with reasoning from `matched_domains` and `relationship`
    - Tied → surface both, prefer direct_report on tiebreak
    - Score 0 or negative → "No clear domain match"
-   - Low capacity → advisory warning
+   - `capacity_warning: true` → advisory warning
 
 5. **Ask for confirmation** before recording (unchanged).
 ```
