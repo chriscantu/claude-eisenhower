@@ -2,7 +2,7 @@
  * adapter-types.ts
  *
  * Machine-checkable TypeScript interfaces for the task-output adapter contract.
- * Formalizes the prose spec in integrations/adapters/README.md.
+ * Formalizes the prose spec in adapters/README.md.
  *
  * Every adapter (reminders, asana, jira, linear, …) receives a TaskOutputRecord
  * and must return a PushResult. These types are the single source of truth for

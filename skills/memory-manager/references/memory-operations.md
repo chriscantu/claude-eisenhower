@@ -8,7 +8,7 @@ Covers local file formats, return shapes, and field semantics.
 ## Local Files: Two-File Fallback System
 
 Two-file fallback for all delegation memory when `productivity:memory-management`
-is unavailable. Column definitions are canonical — see `integrations/specs/memory-schema-spec.md`.
+is unavailable. Column definitions are canonical — see `specs/memory-schema-spec.md`.
 
 ### `memory/glossary.md` — Global Follow-up Table
 

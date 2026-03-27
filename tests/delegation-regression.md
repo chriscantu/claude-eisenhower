@@ -136,7 +136,7 @@ Tests are organized by phase. Run in order for full chain coverage.
 ### TEST-DEL-001: No stakeholder file — Q3 task still saves
 
 **Setup**:
-- Remove or rename `integrations/config/stakeholders.yaml` so it does not exist
+- Remove or rename `config/stakeholders.yaml` so it does not exist
 - Add a task to `## Unprocessed` in TASKS.md: `"Review on-call rotation coverage"`
 
 **Action**: Run `/prioritize`
@@ -155,7 +155,7 @@ Tests are organized by phase. Run in order for full chain coverage.
 ### TEST-DEL-002: Empty stakeholder file — graceful fallback
 
 **Setup**:
-- Create `integrations/config/stakeholders.yaml` with content:
+- Create `config/stakeholders.yaml` with content:
   ```yaml
   stakeholders: []
   ```
@@ -447,7 +447,7 @@ cd ~/repos/claude-eisenhower
 git status
 ```
 
-**Expected**: `integrations/config/stakeholders.yaml` does NOT appear in git status output — even if the file exists locally.
+**Expected**: `config/stakeholders.yaml` does NOT appear in git status output — even if the file exists locally.
 
 **Pass criteria**: File not tracked by git.
 
@@ -458,10 +458,10 @@ git status
 **Action**:
 ```bash
 cd ~/repos/claude-eisenhower
-git ls-files integrations/config/
+git ls-files config/
 ```
 
-**Expected**: `integrations/config/stakeholders.yaml.example` appears. `integrations/config/stakeholders.yaml` does NOT appear.
+**Expected**: `config/stakeholders.yaml.example` appears. `config/stakeholders.yaml` does NOT appear.
 
 **Pass criteria**: Example committed, real file absent from index.
 

@@ -17,12 +17,12 @@ copy appears in more than one place, it belongs in a shared module.
 **In this repo:**
 - Scoring logic lives in `scripts/delegate-core.ts`. Both the CLI (`match-delegate.ts`)
   and the test suite (`tests/delegation.test.ts`) import from it. Neither duplicates it.
-- Config values live in `integrations/config/`. Commands and skills read them; they
+- Config values live in `config/`. Commands and skills read them; they
   do not hardcode values.
 - Scoring weights (`WEIGHTS`, `REL_RANK`) are defined once and imported wherever needed.
 - Memory backend access (read and write) is abstracted via the Memory Access Layer pattern
   so commands never branch on which backend is active. See
-  `integrations/docs/memory-access-layer.md` for the full contract.
+  `docs/memory-access-layer.md` for the full contract.
 
 **Red flags:** copy-pasted functions, types defined in multiple files, the same
 constant appearing in both a script and a test.
@@ -57,7 +57,7 @@ call external services. File I/O is the CLI's job.
 Specs before code. Tests before shipping.
 
 **In this repo:**
-- Gherkin spec goes in `integrations/specs/` before implementation starts.
+- Gherkin spec goes in `specs/` before implementation starts.
 - Jest regression tests go in `tests/` and must pass before any feature is merged.
 - Run tests with: `cd scripts && npm test`
 - Tests import from `scripts/delegate-core.ts` � they test the algorithm directly,
@@ -84,10 +84,10 @@ Personal data stays local. It is never committed to source control.
   `.gitignore` immediately � before writing any content to it.
 
 **Gitignored personal files:**
-- `integrations/config/stakeholders.yaml`
-- `integrations/config/calendar-config.md`
-- `integrations/config/email-config.md`
-- `integrations/config/task-output-config.md`
+- `config/stakeholders.yaml`
+- `config/calendar-config.md`
+- `config/email-config.md`
+- `config/task-output-config.md`
 - `TASKS.md`
 - `memory/`
 
@@ -95,12 +95,12 @@ Personal data stays local. It is never committed to source control.
 
 ## Project Structure
 
-Files go where STRUCTURE.md says. When in doubt, check the decision tree there
+Files go where `docs/STRUCTURE.md` says. When in doubt, check the decision tree there
 before creating anything.
 
 **Never:**
 - Create files at the repo root unless they are top-level project documents
-  (README, CLAUDE, STRUCTURE, CONNECTORS, PRINCIPLES, .gitignore).
+  (README, CLAUDE, .gitignore). Project docs (STRUCTURE, CONNECTORS, PRINCIPLES) live in `docs/`.
 - Duplicate a file to work around a path issue � fix the path.
 - Commit build artifacts (`node_modules/`, `dist/`, `package-lock.json` in some cases).
 

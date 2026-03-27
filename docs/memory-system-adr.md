@@ -32,7 +32,7 @@ removed from all command files:
 3. If skill unavailable → write to the two local fallback files:
    - `memory/glossary.md` — global follow-up table (one row per delegation)
    - `memory/people/{alias-filename}.md` — per-delegate delegation log
-   See `integrations/specs/memory-schema-spec.md` for the canonical schema of
+   See `specs/memory-schema-spec.md` for the canonical schema of
    both files, including column definitions and filename derivation rules.
 4. If both fail → surface non-blocking warning, instruct manual tracking
 
@@ -43,7 +43,7 @@ removed from all command files:
 - `commands/execute.md` (Mark Done → resolve-delegation; Log Progress → update-checkin; Delegate → log-delegation)
 - `commands/delegate.md` (Step 8 — log-delegation)
 - `commands/review-week.md` (Step 3 — query-pending)
-- `skills/claude-eisenhower/SKILL.md` (Stakeholder Memory — references memory-manager)
+- `skills/core/SKILL.md` (Stakeholder Memory — references memory-manager)
 
 ## Read Paths
 

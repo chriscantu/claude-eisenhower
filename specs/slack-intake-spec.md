@@ -170,7 +170,7 @@ State:       Inbox
 If the sender is not in `stakeholders.yaml`, attempt to read their Slack display title or role from their profile. Use this to populate the `Requester:` field with more context than display name alone.
 
 **10. `/setup` Slack step**
-Add a Step 6 to the existing `/setup` command that asks: "Do you want to connect Slack for message scanning?" and writes `integrations/config/slack-config.md` with the workspace name and authenticated connection status.
+Add a Step 6 to the existing `/setup` command that asks: "Do you want to connect Slack for message scanning?" and writes `config/slack-config.md` with the workspace name and authenticated connection status.
 
 ---
 
@@ -189,7 +189,7 @@ When a DM or mention is part of a thread, include the last 3 messages of the thr
 
 ## Configuration
 
-A new config file `integrations/config/slack-config.md` is added, following the existing pattern. It is gitignored.
+A new config file `config/slack-config.md` is added, following the existing pattern. It is gitignored.
 
 **Template (`slack-config.md.example`)**:
 ```markdown
@@ -245,10 +245,10 @@ This spec was tracked as a "Later" item in ROADMAP.md under "Slack / Chat Captur
 | File | Action | Purpose |
 |------|--------|---------|
 | `commands/scan-slack.md` | Create | New `/scan-slack` command definition |
-| `integrations/config/slack-config.md.example` | Create | Config template (gitignored at runtime) |
-| `integrations/config/slack-config.md` | Create at setup | Written by `/setup` Step 6 or manually |
-| `integrations/specs/slack-intake-spec.md` | Create | This document |
-| `CONNECTORS.md` | Update | Mark Slack as Active once shipped |
+| `config/slack-config.md.example` | Create | Config template (gitignored at runtime) |
+| `config/slack-config.md` | Create at setup | Written by `/setup` Step 6 or manually |
+| `specs/slack-intake-spec.md` | Create | This document |
+| `docs/CONNECTORS.md` | Update | Mark Slack as Active once shipped |
 | `ROADMAP.md` | Update | Move "Slack / Chat Capture" from Later → Next |
 | `commands/setup.md` | Update (P1) | Add Step 6: optional Slack config |
 | `README.md` | Update | Document the new command |

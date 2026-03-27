@@ -2,16 +2,16 @@
 
 # User-specific config files � copy from *.example and fill in your values
 # These contain account names, calendar names, and list names � never commit them
-integrations/config/calendar-config.md
-integrations/config/email-config.md
-integrations/config/task-output-config.md
+config/calendar-config.md
+config/email-config.md
+config/task-output-config.md
 
 # Local task board and memory � personal data, not shared
 TASKS.md
 memory/
 
 # Stakeholder graph � contains PII (real names, roles, contact info)
-integrations/config/stakeholders.yaml
+config/stakeholders.yaml
 
 # Node.js � build artifacts and dependencies, never committed
 scripts/node_modules/
@@ -23,3 +23,12 @@ dist/
 *.plugin
 # Git worktrees - isolated development workspaces
 .worktrees/
+
+# Local backups — not committed
+.backup/
+
+# Personal reports — weekly reviews, feature requests
+reports/
+
+# Claude Code local settings
+.claude/

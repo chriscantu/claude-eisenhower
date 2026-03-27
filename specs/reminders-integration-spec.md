@@ -131,7 +131,7 @@ Feature: Push scheduled tasks to Mac Reminders
 
 ### Why a connector pattern?
 
-The existing plugin already uses `~~category` placeholders in `CONNECTORS.md` and `references/intake-sources.md` for future swappable integrations. This spec follows that exact convention and formalizes it for output (push) integrations.
+The existing plugin already uses `~~category` placeholders in `docs/CONNECTORS.md` and `references/intake-sources.md` for future swappable integrations. This spec follows that exact convention and formalizes it for output (push) integrations.
 
 The key design principle: **command files describe what to push; adapters describe how to push it.**
 
@@ -188,7 +188,7 @@ Mac Reminders is accessible via AppleScript (osascript) — no auth, no network,
 
 ### Target list configuration
 
-A single list name is configured in a new file: `integrations/config/task-output-config.md`
+A single list name is configured in a new file: `config/task-output-config.md`
 
 Default: `"Eisenhower List"` (created automatically if it doesn't exist).
 
@@ -262,10 +262,10 @@ If `~~task_output` is still a placeholder (no adapter installed), skip Step 6b s
 
 | File | Purpose |
 |------|---------|
-| `integrations/specs/reminders-integration-spec.md` | This spec |
-| `integrations/config/task-output-config.md` | User-editable config for target list name and active adapter |
-| `integrations/adapters/reminders.md` | v1 adapter: AppleScript logic for Mac Reminders |
-| `integrations/adapters/README.md` | Adapter interface contract + swap instructions |
+| `specs/reminders-integration-spec.md` | This spec |
+| `config/task-output-config.md` | User-editable config for target list name and active adapter |
+| `adapters/reminders.md` | v1 adapter: AppleScript logic for Mac Reminders |
+| `adapters/README.md` | Adapter interface contract + swap instructions |
 | `scripts/push_reminder.applescript` | Reusable AppleScript for creating a reminder (called from adapter) |
 
 ### Files to Update
@@ -273,9 +273,9 @@ If `~~task_output` is still a placeholder (no adapter installed), skip Step 6b s
 | File | Change |
 |------|--------|
 | `commands/schedule.md` | Add Step 6b (task output push) after Step 5 |
-| `CONNECTORS.md` | Add `~~task_output` row; mark Mac Reminders as Active (v1) |
+| `docs/CONNECTORS.md` | Add `~~task_output` row; mark Mac Reminders as Active (v1) |
 | `README.md` | Document new capability under Active Integrations |
-| `skills/claude-eisenhower/references/intake-sources.md` | Update `~~Project Tracker` section to reference adapter pattern |
+| `skills/core/references/intake-sources.md` | Update `~~Project Tracker` section to reference adapter pattern |
 
 ---
 
@@ -308,7 +308,7 @@ project_key: ~~jira_project
 When a future connector (e.g., Asana MCP, Jira MCP) becomes available:
 
 1. Install the MCP connector via Cowork plugin settings
-2. Create `integrations/adapters/asana.md` following the same interface contract as `reminders.md`
+2. Create `adapters/asana.md` following the same interface contract as `reminders.md`
 3. In `task-output-config.md`, change `active adapter:` from `reminders` to `asana`
 4. Fill in the Asana-specific settings under `### asana`
 5. No changes needed to `commands/schedule.md` or any skill files

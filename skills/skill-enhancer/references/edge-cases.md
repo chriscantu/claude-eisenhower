@@ -134,18 +134,18 @@ with Quick Win score.
 
 ---
 
-## EC-9: No Matching Spec in integrations/specs/
+## EC-9: No Matching Spec in specs/
 
-**Trigger**: Phase 1 finds no file in `integrations/specs/` whose name
+**Trigger**: Phase 1 finds no file in `specs/` whose name
 matches the target artifact.
 
 **Handling**: Warn but do not block enhancement.
 
-"No spec found in integrations/specs/ for [artifact].
+"No spec found in specs/ for [artifact].
 Per PRINCIPLES.md, specs should precede implementation. Enhancement can
 proceed but proposals cannot be verified against stated requirements.
 
-Recommend: write a spec in integrations/specs/ before or alongside this
+Recommend: write a spec in specs/ before or alongside this
 enhancement session. Should I include a spec-writing proposal in Phase 4? [y/n]"
 
 If yes: add one NEW proposal to write the spec — Big Bet classification

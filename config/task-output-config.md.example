@@ -48,9 +48,9 @@ project_id:  ~~linear_project
 ## How to Switch Adapters
 
 1. Install the MCP connector for the new system via Cowork plugin settings
-2. Create `integrations/adapters/[system].md` following the interface in `adapters/README.md`
+2. Create `adapters/[system].md` following the interface in `adapters/README.md`
 3. Change `Active Adapter` above to the new adapter name (e.g., `asana`)
 4. Fill in the adapter-specific settings under the matching `### [system]` block
 5. No changes needed to `commands/schedule.md` or any skill files
 
-See `integrations/adapters/README.md` for the full adapter contract.
+See `adapters/README.md` for the full adapter contract.

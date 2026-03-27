@@ -138,10 +138,10 @@ claude-eisenhower-0.3.0.plugin (zip)
 │       ├── mac-calendar-planner-override.md
 │       └── scripts-reference.md
 ├── CLAUDE.md
-├── CONNECTORS.md
-├── PRINCIPLES.md
+├── docs/CONNECTORS.md
+├── docs/PRINCIPLES.md
 ├── README.md
-└── STRUCTURE.md
+└── docs/STRUCTURE.md
 ```
 
 ### Contents — excluded
@@ -150,17 +150,17 @@ These are never included in the artifact, even if present in the repo:
 
 | Path | Reason |
 |------|--------|
-| `integrations/config/calendar-config.md` | Personal — gitignored |
-| `integrations/config/email-config.md` | Personal — gitignored |
-| `integrations/config/task-output-config.md` | Personal — gitignored |
-| `integrations/config/stakeholders.yaml` | PII — gitignored |
+| `config/calendar-config.md` | Personal — gitignored |
+| `config/email-config.md` | Personal — gitignored |
+| `config/task-output-config.md` | Personal — gitignored |
+| `config/stakeholders.yaml` | PII — gitignored |
 | `TASKS.md` | Personal runtime data — gitignored |
 | `memory/` | Personal runtime data — gitignored |
 | `scripts/node_modules/` | Build artifact — gitignored |
 | `tests/node_modules/` | Build artifact — gitignored |
 | `dist/` | Build artifact — gitignored |
 | `tests/` | Dev-only — not needed at runtime |
-| `integrations/specs/` | Dev-only design docs |
+| `specs/` | Dev-only design docs |
 | `.git/` | Version control internals |
 | `.DS_Store` | macOS metadata |
 | `*.plugin` | Output artifact — not recursive |
@@ -193,7 +193,7 @@ No new npm dependencies. macOS ships with `zip`. The build script stays self-con
 |------|--------|
 | `scripts/build-plugin.js` | New — build script |
 | `scripts/package.json` | Add `"package": "node build-plugin.js"` to `scripts` |
-| `STRUCTURE.md` | Document `scripts/build-plugin.js` and the `.plugin` artifact |
+| `docs/STRUCTURE.md` | Document `scripts/build-plugin.js` and the `.plugin` artifact |
 | `.gitignore` | Add `*.plugin` to exclude build artifact from version control |
 
 ---

@@ -201,7 +201,7 @@ Existing tasks in Q1/Q2/Q3/Q4 sections map as follows:
 | `commands/schedule.md` | Update overdue scan to target State: Delegated + Check-by |
 | `commands/execute.md` | Update Done close-out to write State: Done |
 | `commands/delegate.md` | Update to write State: Delegated with mandatory Check-by |
-| `skills/claude-eisenhower/references/eisenhower.md` | Clarify Eisenhower as Priority field, not state |
+| `skills/core/references/eisenhower.md` | Clarify Eisenhower as Priority field, not state |
 | `TASKS.md` | Migrate existing tasks to new sections (runtime file — not committed) |
 | `ROADMAP.md` | Add v0.9.0 entry |
 

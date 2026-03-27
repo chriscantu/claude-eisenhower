@@ -51,28 +51,28 @@ after routine wording changes. When in doubt, leave the floor as-is.
 - guardrails: 1
 - edge cases: 2
 
-## skills/claude-eisenhower/SKILL.md
+## skills/core/SKILL.md
 - phases: 4
 - steps: 22
 - guardrails: 1
 - examples: 1
 
-## skills/claude-eisenhower/references/eisenhower.md
+## skills/core/references/eisenhower.md
 - rules: 8
 - tables: 0
 - examples: 1
 
-## skills/claude-eisenhower/references/intake-sources.md
+## skills/core/references/intake-sources.md
 - rules: 12
 - tables: 1
 - examples: 0
 
-## skills/claude-eisenhower/references/delegation-guide.md
+## skills/core/references/delegation-guide.md
 - rules: 12
 - tables: 1
 - examples: 0
 
-## skills/claude-eisenhower/references/email-patterns.md
+## skills/core/references/email-patterns.md
 - rules: 17
 - tables: 1
 - examples: 0

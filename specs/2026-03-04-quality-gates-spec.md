@@ -57,12 +57,12 @@ commands with the user's privileges.
 [ ] For each (a) classification, the audit confirms `quoted form of` is applied
     to the value before concatenation, not after.
 
-[ ] The audit result is documented in integrations/docs/security-audit-applescript.md
+[ ] The audit result is documented in docs/security-audit-applescript.md
     listing each call site, its classification, and the user-controlled inputs involved.
 ```
 
 **Files affected**: `scripts/complete_reminder.applescript`, `scripts/push_reminder.applescript`,
-any other `*.applescript` files in `scripts/`, `integrations/docs/` (new audit doc)
+any other `*.applescript` files in `scripts/`, `docs/` (new audit doc)
 
 ---
 
@@ -82,7 +82,7 @@ these scripts before a release.
 **Acceptance criteria**:
 
 ```
-[ ] integrations/docs/applescript-test-protocol.md is created documenting manual
+[ ] docs/applescript-test-protocol.md is created documenting manual
     test procedures for each script.
 
 [ ] The protocol covers at least these test cases for complete_reminder.applescript:
@@ -99,11 +99,11 @@ these scripts before a release.
 
 [ ] Each test case specifies the exact osascript invocation and expected stdout.
 
-[ ] The protocol is referenced from STRUCTURE.md in the scripts/ section.
+[ ] The protocol is referenced from docs/STRUCTURE.md in the scripts/ section.
 ```
 
-**Files affected**: `integrations/docs/applescript-test-protocol.md` (new),
-`STRUCTURE.md` (cross-reference)
+**Files affected**: `docs/applescript-test-protocol.md` (new),
+`docs/STRUCTURE.md` (cross-reference)
 
 ---
 
@@ -175,7 +175,7 @@ re-introducing a removed section name.
 |------|-------------------|
 | `scripts/complete_reminder.applescript` (audit only — no change expected) | S1 |
 | `scripts/push_reminder.applescript` (audit only — no change expected) | S1 |
-| `integrations/docs/security-audit-applescript.md` | S1 |
-| `integrations/docs/applescript-test-protocol.md` | Q1 |
-| `STRUCTURE.md` | Q1 |
+| `docs/security-audit-applescript.md` | S1 |
+| `docs/applescript-test-protocol.md` | Q1 |
+| `docs/STRUCTURE.md` | Q1 |
 | `tests/prompt-contracts.test.ts` | Q2 |

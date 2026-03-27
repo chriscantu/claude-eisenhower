@@ -45,7 +45,7 @@ Feature: Auto-detect missing config and run setup
 
   Scenario: New user runs /scan-email before setup
     Given the plugin is installed
-    And integrations/config/email-config.md does not exist
+    And config/email-config.md does not exist
     When the user runs /scan-email
     Then Claude detects the missing config
     And Claude says "Looks like this is your first time using claude-eisenhower. Let me walk you through a quick setup — it takes about 2 minutes."
@@ -73,8 +73,8 @@ Feature: /setup as a manual reconfiguration command
 Feature: Partial config detection
 
   Scenario: User has calendar config but not email config
-    Given integrations/config/calendar-config.md exists
-    And integrations/config/email-config.md does not exist
+    Given config/calendar-config.md exists
+    And config/email-config.md does not exist
     When the user runs /scan-email
     Then Claude detects that email-config.md is missing
     And Claude runs setup for only the missing config files
@@ -105,12 +105,12 @@ Before executing any command that reads a config file, check whether the require
 
 ```
 Required for all commands:     (none — TASKS.md is created on first write)
-Required for /scan-email:      integrations/config/email-config.md
-Required for /schedule:        integrations/config/calendar-config.md
-                               integrations/config/task-output-config.md
+Required for /scan-email:      config/email-config.md
+Required for /schedule:        config/calendar-config.md
+                               config/task-output-config.md
 Required for /intake:          (none)
 Required for /prioritize:      (none)
-Required for /delegate:        integrations/config/stakeholders.yaml (handled separately)
+Required for /delegate:        config/stakeholders.yaml (handled separately)
 ```
 
 If any required file is missing → pause the command, run setup for the missing files only, then resume the command.
@@ -156,7 +156,7 @@ end tell
 If the name matches exactly → proceed.
 If no match → show the list and ask the user to pick one or confirm spelling.
 
-**Write** `integrations/config/calendar-config.md` from `calendar-config.md.example`, replacing `YOUR_CALENDAR_NAME` with the validated value.
+**Write** `config/calendar-config.md` from `calendar-config.md.example`, replacing `YOUR_CALENDAR_NAME` with the validated value.
 
 ---
 
@@ -180,7 +180,7 @@ end tell
 If the name matches (contains) → proceed. Auto-detect the inbox name (INBOX vs Inbox).
 If no match → show the list and ask the user to pick.
 
-**Write** `integrations/config/email-config.md` from `email-config.md.example`, replacing `YOUR_MAIL_ACCOUNT_NAME` with the validated value and `INBOX` with the detected inbox name.
+**Write** `config/email-config.md` from `email-config.md.example`, replacing `YOUR_MAIL_ACCOUNT_NAME` with the validated value and `INBOX` with the detected inbox name.
 
 ---
 
@@ -191,7 +191,7 @@ If no match → show the list and ask the user to pick.
 
 No osascript validation needed — Reminders list is created automatically if it doesn't exist.
 
-**Write** `integrations/config/task-output-config.md` from `task-output-config.md.example`, replacing `YOUR_REMINDERS_LIST_NAME` with the user's value.
+**Write** `config/task-output-config.md` from `task-output-config.md.example`, replacing `YOUR_REMINDERS_LIST_NAME` with the user's value.
 
 ---
 
@@ -200,10 +200,10 @@ No osascript validation needed — Reminders list is created automatically if it
 **Ask:**
 > "Do you want me to create a starter stakeholders file for `/delegate`? It'll have placeholder entries you can fill in with your team. (You can skip this and do it later.)"
 
-If yes → write `integrations/config/stakeholders.yaml` from the content of `integrations/config/stakeholders.yaml.example`, replacing nothing (user edits it manually after setup).
+If yes → write `config/stakeholders.yaml` from the content of `config/stakeholders.yaml.example`, replacing nothing (user edits it manually after setup).
 
 Tell the user:
-> "Created integrations/config/stakeholders.yaml with placeholder entries. Edit it to add your team before using /delegate."
+> "Created config/stakeholders.yaml with placeholder entries. Edit it to add your team before using /delegate."
 
 If no → skip silently.
 
@@ -221,7 +221,7 @@ Show a summary of what was written:
   Reminders:      [list_name]
   Stakeholders:   [created / skipped]
 
-Config files written to integrations/config/ (gitignored — not committed).
+Config files written to config/ (gitignored — not committed).
 ```
 
 If setup was triggered by a command, resume it automatically:

@@ -52,7 +52,7 @@ You are a strategic task prioritization specialist for a Director of Engineering
 
 1. Read TASKS.md from the root of the user's mounted workspace folder
 2. For each task, score it on two axes using the rules in
-   `skills/claude-eisenhower/references/eisenhower.md` (load that file now).
+   `skills/core/references/eisenhower.md` (load that file now).
    Key thresholds as defined there:
    - **Urgency**: action needed within 1–3 days = High; this week = Medium; anytime = Low
    - **Importance**: advances engineering goals, team health, or Director core responsibilities = High

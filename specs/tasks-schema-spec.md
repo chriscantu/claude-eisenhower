@@ -222,7 +222,7 @@ And the record appears in the ## Inbox section
 
 3. **Check-by is mandatory on Delegated, no exceptions** — A Delegated task without
    a Check-by date is indistinguishable from a dropped task. The date is the forcing
-   function. See `integrations/specs/four-state-task-model-spec.md` Decision 4.
+   function. See `specs/four-state-task-model-spec.md` Decision 4.
 
 4. **Done accumulates; nothing is deleted** — Moving to `## Done` is the terminal
    state. Historical tasks stay visible as a record of work completed and work dropped.

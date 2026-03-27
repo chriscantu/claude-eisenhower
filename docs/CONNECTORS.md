@@ -25,11 +25,11 @@ directly from that source rather than requiring manual intake.
 | Tool | Status | How it works |
 |------|--------|-------------|
 | productivity:memory-management | Optional (external) | See External Skill Dependencies below |
-| Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `integrations/config/email-config.md`. |
-| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `integrations/config/calendar-config.md`. |
-| Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `integrations/config/task-output-config.md` and `integrations/adapters/`. |
+| Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `config/email-config.md`. |
+| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `config/calendar-config.md`. |
+| Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `config/task-output-config.md` and `adapters/`. |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
-| Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `integrations/config/stakeholders.yaml.example` for schema. |
+| Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `config/stakeholders.yaml.example` for schema. |
 
 ## How to Enable Future Integrations
 
@@ -48,7 +48,7 @@ Install them separately from the Claude plugins marketplace.
 ### productivity:memory-management
 
 **Used by**: `/schedule` (Step 7), `/execute` (stakeholder wrap-up), `/delegate` (Step 8),
-`skills/claude-eisenhower/SKILL.md` (Stakeholder Memory section)
+`skills/core/SKILL.md` (Stakeholder Memory section)
 
 **Purpose**: Persists stakeholder follow-up entries across sessions — who owns what,
 check-in dates, status.

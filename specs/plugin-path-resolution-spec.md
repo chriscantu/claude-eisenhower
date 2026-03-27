@@ -74,7 +74,7 @@ do shell script "cd " & quoted form of pluginRoot & "/scripts && npx ts-node mat
 
 ### Strategy B: Config File Fallback
 
-If no env var is available, add to `integrations/config/task-output-config.md`:
+If no env var is available, add to `config/task-output-config.md`:
 
 ```
 plugin_root: /Users/{username}/repos/claude-eisenhower
@@ -82,7 +82,7 @@ plugin_root: /Users/{username}/repos/claude-eisenhower
 
 Then at each call site, read this value before constructing the path:
 ```
-Read `plugin_root` from `integrations/config/task-output-config.md`.
+Read `plugin_root` from `config/task-output-config.md`.
 If not present, fall back to `~/repos/claude-eisenhower` with a warning:
 "plugin_root not set in task-output-config.md — using default path.
 Update the config if your repository is at a different location."

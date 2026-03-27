@@ -4,7 +4,7 @@
  * Jest coverage for the Four-State Task Model (Inbox → Active → Delegated → Done).
  * Covers all 10 FOUR-STATE-xxx Gherkin scenarios from the spec.
  *
- * Spec: integrations/specs/four-state-task-model-spec.md
+ * Spec: specs/four-state-task-model-spec.md
  *
  * Pure functions are defined here alongside their tests, following the pattern
  * established in phase2-3.test.ts. No LLM layer required.
@@ -40,7 +40,7 @@ export function getIntakeState(): FourState {
  *   Q3 → Delegated (urgent, not important — delegate it, retain accountability)
  *   Q4 → Done      (eliminate — dropped, not scheduled)
  *
- * Defined in: integrations/specs/four-state-task-model-spec.md §Four-State Model
+ * Defined in: specs/four-state-task-model-spec.md §Four-State Model
  */
 export function quadrantToState(quadrant: Quadrant): FourState {
   if (quadrant === "Q1" || quadrant === "Q2") return "Active";

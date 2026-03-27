@@ -111,7 +111,7 @@ Action:          Delegated — check in [check-in date]
 If TASKS.md does not exist, create it with the standard section headers before appending.
 
 **DEL-008 — Pushes check-in to Reminders adapter**
-After TASKS.md is saved, reads `integrations/config/task-output-config.md` for the active adapter. If configured, pushes:
+After TASKS.md is saved, reads `config/task-output-config.md` for the active adapter. If configured, pushes:
 - Title: `"Check in: [alias] re: [task title]"`
 - Due date: check-in date
 - Priority: medium
@@ -127,7 +127,7 @@ After TASKS.md is saved, creates a follow-up memory entry via `productivity:memo
 - Status: pending
 
 **DEL-010 — Handles missing or empty stakeholder graph**
-If `stakeholders.yaml` does not exist: "No stakeholder graph found. Copy `integrations/config/stakeholders.yaml.example` to `stakeholders.yaml` to enable scoring." Then: "Who should own this?" and accept a manual name to proceed.
+If `stakeholders.yaml` does not exist: "No stakeholder graph found. Copy `config/stakeholders.yaml.example` to `stakeholders.yaml` to enable scoring." Then: "Who should own this?" and accept a manual name to proceed.
 
 If `stakeholders.yaml` exists but is empty: "Stakeholder graph is empty. Who should own this?" Same fallback.
 
@@ -237,7 +237,7 @@ If the top delegate has `capacity_signal: low`, propose a longer check-in window
 | File | Purpose |
 |------|---------|
 | `commands/delegate.md` | New command — the primary deliverable of this spec |
-| `integrations/specs/delegate-entry-point-spec.md` | This spec |
+| `specs/delegate-entry-point-spec.md` | This spec |
 | `tests/delegate-entry.test.ts` | Jest regression tests for all P0 requirements |
 
 ## Files to Update
@@ -247,7 +247,7 @@ If the top delegate has `capacity_signal: low`, propose a longer check-in window
 | `README.md` | Add `/delegate` to the command reference table |
 | `STRUCTURE.md` | Add `commands/delegate.md` to the commands table |
 | `ROADMAP.md` | Mark item #2 as in-progress; add version target v0.5.1 |
-| `skills/claude-eisenhower/SKILL.md` | Add `/delegate` trigger pattern to the skill description |
+| `skills/core/SKILL.md` | Add `/delegate` trigger pattern to the skill description |
 
 ---
 
@@ -278,6 +278,6 @@ If the top delegate has `capacity_signal: low`, propose a longer check-in window
 
 - No hard deadline.
 - Natural sequencing: ship after v0.5.0 alias resolution (already shipped) stabilizes.
-- Regression test suite (`delegate-entry.test.ts`) should be written before `commands/delegate.md` — consistent with TDD principle in `PRINCIPLES.md`.
+- Regression test suite (`delegate-entry.test.ts`) should be written before `commands/delegate.md` — consistent with TDD principle in `docs/PRINCIPLES.md`.
 - Suggested version target: **v0.5.1**.
 - Estimated scope: 1 command file + 1 test file + README/STRUCTURE updates. No algorithm changes. Small lift.

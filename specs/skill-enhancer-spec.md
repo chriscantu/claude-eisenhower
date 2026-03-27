@@ -40,7 +40,7 @@ identifies concrete enhancement use cases.
 |---|---|
 | `scripts/*.ts` | TypeScript — TDD model, not enhancement model |
 | `tests/*.test.ts` | Test-first; never enhance after the fact |
-| `integrations/config/` | User config, PII-safe, gitignored |
+| `config/` | User config, PII-safe, gitignored |
 | `TASKS.md`, `memory/` | Runtime data, not plugin artifacts |
 
 ---
@@ -134,7 +134,7 @@ command, or before a major release.
 | `skills/*/SKILL.md` | phases, steps per phase, guardrails, examples |
 | `skills/*/references/*.md` | rules, tables, examples, cross-references |
 
-4. Check for matching spec in `integrations/specs/`. Note last-modified delta.
+4. Check for matching spec in `specs/`. Note last-modified delta.
    - Artifact newer than spec → flag: "Spec may be stale — enhancements should
      include a spec sync proposal"
    - No spec exists → flag as EC-9
@@ -152,7 +152,7 @@ command, or before a major release.
 | Target | Siblings mined |
 |---|---|
 | `commands/intake.md` | other `commands/*.md` files |
-| `skills/claude-eisenhower/SKILL.md` | `commands/*.md` + `skills/*/references/*.md` |
+| `skills/core/SKILL.md` | `commands/*.md` + `skills/*/references/*.md` |
 | `skills/*/references/X.md` | sibling reference files + parent SKILL.md |
 
 2. Scan for 6 pattern types: checklist patterns, guardrail wording, example format,
@@ -184,7 +184,7 @@ Note limitation in session summary.
 
 1. Collect all candidates from: sibling patterns (Phase 2), research (Phase 3),
    user artifacts (if provided).
-2. Run PRINCIPLES.md alignment check on each candidate:
+2. Run docs/PRINCIPLES.md alignment check on each candidate:
    - DRY: duplicates logic in another artifact?
    - SOLID SRP: adds a second responsibility?
    - PII safety: surfaces real names, emails, roles?
@@ -259,7 +259,7 @@ Result:   Delegation failures surface to Inbox rather than vanishing.
    npm test: PASS (N/N)
    ```
 
-**Exit**: Enhancement session complete. Await user commit confirmation per PRINCIPLES.md.
+**Exit**: Enhancement session complete. Await user commit confirmation per docs/PRINCIPLES.md.
 
 ---
 
@@ -355,7 +355,7 @@ Handled by skill description field trigger phrases. No hook needed.
 | EC-6 | npm test fails before enhancement starts — halt, do not proceed until baseline green |
 | EC-7 | Web search unavailable — proceed with sibling patterns + simulated scenarios, note limitation |
 | EC-8 | Reference file has broken cross-references to parent SKILL.md — flag before enhancing |
-| EC-9 | No matching spec in integrations/specs/ — warn, recommend writing spec before enhancing |
+| EC-9 | No matching spec in specs/ — warn, recommend writing spec before enhancing |
 
 ---
 
@@ -381,15 +381,15 @@ Scenario: Deployed install is rejected
   And no artifact files are read or modified
 
 Scenario: Targeted Enhancement on a specific section
-  Given the target is "Phase 3 of skills/claude-eisenhower/SKILL.md"
+  Given the target is "Phase 3 of skills/core/SKILL.md"
   When the skill-enhancer is invoked with a targeted request
   Then only Phase 3 content is loaded and scoped
   And proposals are limited to the scoped section
   And no sibling mining occurs
 
-Scenario: PRINCIPLES.md violation blocks a proposal
+Scenario: docs/PRINCIPLES.md violation blocks a proposal
   Given a candidate proposal would duplicate logic from another command
-  When Phase 4 runs the PRINCIPLES.md alignment check
+  When Phase 4 runs the docs/PRINCIPLES.md alignment check
   Then the proposal is downgraded to Money Pit
   And the reason is noted in the session summary
 
@@ -409,7 +409,7 @@ Scenario: Session nudge hook fires once per file
 ### Layer 2: Artifact Construct Baselines
 
 Before shipping v0.9.5, record baseline construct counts for all plugin artifacts in
-`integrations/specs/artifact-baselines.md`. Phase 6's regression check uses this
+`specs/artifact-baselines.md`. Phase 6's regression check uses this
 as the floor.
 
 ### Layer 3: Smoke Test
@@ -434,10 +434,10 @@ After implementation, run skill-enhancer against `commands/intake.md` in Mode 4
 6. Never present Money Pit proposals as recommendations.
 7. Never exceed 2 enhancement passes per session.
 8. Never inject raw research content into skill files — synthesize first.
-9. Never commit without engineer sign-off per PRINCIPLES.md.
+9. Never commit without engineer sign-off per docs/PRINCIPLES.md.
 10. Never run if environment gate fails — halt immediately, no partial execution.
 11. Always compare construct counts against the original baseline, not the previous pass.
-12. Always check PRINCIPLES.md alignment before classifying a proposal.
+12. Always check docs/PRINCIPLES.md alignment before classifying a proposal.
 
 ---
 
@@ -450,7 +450,7 @@ After implementation, run skill-enhancer against `commands/intake.md` in Mode 4
 | 6-phase WF1 (not 9) | Plugin-scoped artifacts are well-known; domain detection and persona loading phases collapse |
 | 1–2 research agents (not 3) | Domain is constrained; 3 agents is over-served for known Director productivity domain |
 | Soft 300-line guideline (not hard 450) | No enforced limit in Claude Code; 300 lines is a scannability threshold, not a hard cap |
-| PRINCIPLES.md check in Phase 4 | Project-specific gate not present in reference; DRY/SRP/PII violations must not reach disk |
+| docs/PRINCIPLES.md check in Phase 4 | Project-specific gate not present in reference; DRY/SRP/PII violations must not reach disk |
 | Cross-artifact consistency check in Phase 5 | Commands form a pipeline; isolated enhancement risks format drift across intake→prioritize→schedule→execute |
 | PostToolUse hook is async | Prevents hook from blocking the Write/Edit tool call that triggered it |
 | Session dedup via /tmp lock file | One nudge per file per session; /tmp cleanup is automatic on session end |

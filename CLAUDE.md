@@ -1,8 +1,8 @@
-# Claude Eisenhower Ñ Plugin Instructions
+# Claude Eisenhower ï¿½ Plugin Instructions
 
 ## Engineering Principles (Read First)
 
-Before writing any code or creating any files, read `PRINCIPLES.md`.
+Before writing any code or creating any files, read `docs/PRINCIPLES.md`.
 It defines the DRY, SOLID, TDD, PII safety, and structure rules that govern
 all work in this repository. These apply to every session, every feature.
 
@@ -11,13 +11,13 @@ all work in this repository. These apply to every session, every feature.
 ## Configuration Files
 
 Before running any command that touches calendar or email, read the relevant
-config file from `integrations/config/`:
+config file from `config/`:
 
 | Config file | Controls | Used by |
 |-------------|----------|---------|
-| `integrations/config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email` |
-| `integrations/config/email-config.md` | Apple Mail account + inbox | `/scan-email` |
-| `integrations/config/task-output-config.md` | Reminders list + active adapter | `/schedule` |
+| `config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email` |
+| `config/email-config.md` | Apple Mail account + inbox | `/scan-email` |
+| `config/task-output-config.md` | Reminders list + active adapter | `/schedule` |
 
 ---
 
@@ -26,7 +26,7 @@ config file from `integrations/config/`:
 **NEVER use AppleScript's `whose` clause to query any calendar.** It is O(n)
 on total event count and will time out on large calendars.
 
-Instead, always read `calendar_name` from `integrations/config/calendar-config.md`
+Instead, always read `calendar_name` from `config/calendar-config.md`
 and use the EventKit-based Swift script:
 
 ```applescript
@@ -34,7 +34,7 @@ do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '{calen
 ```
 
 Where:
-- `{calendar_name}` = value of `calendar_name` from `integrations/config/calendar-config.md`
+- `{calendar_name}` = value of `calendar_name` from `config/calendar-config.md`
 - `{DAYS}` = number of days ahead to query (e.g., 7, 14, 90)
 - `{FORMAT}` = `full` (event list) or `summary` (business day availability)
 
@@ -44,5 +44,5 @@ This applies to ALL calendar queries across all commands and skills, including:
 - `/plan-week` from mac-calendar-planner
 - Any ad-hoc calendar lookups
 
-See `integrations/docs/calendar-performance-fix.md` for the full diagnosis and
-`integrations/docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.
+See `docs/calendar-performance-fix.md` for the full diagnosis and
+`docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.

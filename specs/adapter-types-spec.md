@@ -9,7 +9,7 @@
 ## Problem Statement
 
 The `task_output_record` and `push_result` contracts that govern all task output
-adapters are documented in `integrations/adapters/README.md` as prose. No TypeScript
+adapters are documented in `adapters/README.md` as prose. No TypeScript
 interfaces exist. When new adapters are built (Jira, Linear, Asana), they have no
 compiler-enforced contract to implement against — a developer building a new adapter
 must read documentation and hope their implementation matches what `/schedule` expects.
@@ -41,10 +41,10 @@ codebase and can be imported by `delegate-core.ts`, future adapter scripts, and 
  * adapter-types.ts
  *
  * TypeScript interfaces for the task output adapter contract.
- * These are the authoritative definitions — integrations/adapters/README.md
+ * These are the authoritative definitions — adapters/README.md
  * references this file.
  *
- * Contract defined in: integrations/specs/adapter-types-spec.md
+ * Contract defined in: specs/adapter-types-spec.md
  */
 
 /**
@@ -74,7 +74,7 @@ export interface PushResult {
 }
 ```
 
-### Update: `integrations/adapters/README.md`
+### Update: `adapters/README.md`
 
 Add a reference to `scripts/adapter-types.ts` as the authoritative interface source.
 The prose descriptions in the README remain for human readability; the TypeScript

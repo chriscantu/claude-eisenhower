@@ -9,8 +9,8 @@ You are running the SCHEDULE phase of the Engineering Task Flow.
 ## Config check
 
 Before doing anything else, check that both config files exist:
-- `integrations/config/calendar-config.md`
-- `integrations/config/task-output-config.md`
+- `config/calendar-config.md`
+- `config/task-output-config.md`
 
 If either is missing → stop and say:
 > "I need to configure your calendar and Reminders list before scheduling. Let me run setup first."
@@ -55,7 +55,7 @@ If any delegates are flagged, surface a single grouped prompt **after** the over
 
 Then ask: "Consider reviewing [alias]'s capacity signal in stakeholders.yaml before delegating more to them. Update it now, or continue scheduling?"
 
-- If the user wants to update: remind them to edit `integrations/config/stakeholders.yaml` and set `capacity_signal` to `low`, `medium`, or `high`. Do NOT edit the file — the user owns it.
+- If the user wants to update: remind them to edit `config/stakeholders.yaml` and set `capacity_signal` to `low`, `medium`, or `high`. Do NOT edit the file — the user owns it.
 - If the user says continue: note it and proceed to the main schedule flow.
 
 **Do not block scheduling** — this is an advisory prompt, not a gate. If the user ignores it or says continue, proceed normally.
@@ -148,7 +148,7 @@ After the user confirms:
 
 After TASKS.md is saved, push confirmed tasks to the active external task manager.
 
-**Read the active adapter** from `integrations/config/task-output-config.md`. If the adapter is still set to `~~task_output` (not configured), skip this step silently — the schedule is complete.
+**Read the active adapter** from `config/task-output-config.md`. If the adapter is still set to `~~task_output` (not configured), skip this step silently — the schedule is complete.
 
 **For each confirmed task (Q1, Q2, Q3 only — never Q4):**
 
@@ -162,7 +162,7 @@ Prepare a `task_output_record`:
 - `requester` — from the task record (null if not known)
 - `list_name` — value of `list_name` from the adapter's settings block
 
-Call `scripts/push_reminder.applescript` via osascript for the reminders adapter (see `integrations/adapters/reminders.md` for full field mapping and error handling).
+Call `scripts/push_reminder.applescript` via osascript for the reminders adapter (see `adapters/reminders.md` for full field mapping and error handling).
 
 **Collect all results** — do not surface errors mid-flow. Process all tasks first.
 
@@ -178,7 +178,7 @@ Task output: [N] pushed to Reminders (Eisenhower List)
 **If any push failed**, append all errors after the summary:
 ```
 ⚠ 1 task could not be pushed:
-  • "Fix deploy pipeline issue" — list not found. Check integrations/config/task-output-config.md.
+  • "Fix deploy pipeline issue" — list not found. Check config/task-output-config.md.
 ```
 
 **Update each task record in TASKS.md** with a `Synced:` field:
@@ -200,14 +200,14 @@ Confirm to the user: "Schedule saved. Run /execute as you complete work — or /
 
 If the user asks to block time or mentions Mac Calendar, check availability before locking in a Q2 date.
 
-Read `integrations/config/task-output-config.md` for:
+Read `config/task-output-config.md` for:
 - `plugin_root` — the plugin installation path
 - The active adapter and list name used in Step 6
 
 If `plugin_root` is not present in the config, use `~/repos/claude-eisenhower` and note:
-`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update integrations/config/task-output-config.md if your installation is at a different location."`
+`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update config/task-output-config.md if your installation is at a different location."`
 
-Read `calendar_name` from `integrations/config/calendar-config.md`, then run:
+Read `calendar_name` from `config/calendar-config.md`, then run:
 
 ```applescript
 do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"

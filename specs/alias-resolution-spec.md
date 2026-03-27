@@ -110,7 +110,7 @@ export function getDisplayAlias(s: Stakeholder): string {
 |------|--------|
 | `scripts/delegate-core.ts` | `alias: string → string \| string[]`; add `resolveAlias()`, `getDisplayAlias()` |
 | `scripts/match-delegate.ts` | Use `getDisplayAlias()` for all output display |
-| `integrations/config/stakeholders.yaml.example` | Update all entries to array alias format; add comments |
+| `config/stakeholders.yaml.example` | Update all entries to array alias format; add comments |
 | `commands/intake.md` | Add alias resolution step before writing Requester field |
 | `tests/delegation.test.ts` | Add TEST-DEL-203 series: alias resolution tests |
 

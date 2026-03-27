@@ -130,7 +130,7 @@ Note: For Q3 tasks, the title used for lookup must be the prefixed form:
 
 To replace Mac Reminders with a different system:
 
-1. Create `integrations/adapters/[system].md` following this file's structure
-2. In `integrations/config/task-output-config.md`, change `Active Adapter` to the new name
+1. Create `adapters/[system].md` following this file's structure
+2. In `config/task-output-config.md`, change `Active Adapter` to the new name
 3. Fill in the new adapter's settings block
 4. No changes to `commands/schedule.md` or any skill files required

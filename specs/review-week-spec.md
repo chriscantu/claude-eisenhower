@@ -191,8 +191,8 @@ If count is 0: omit this section entirely.
 
 **5. Calendar load for coming week**
 
-Read `calendar_name` from `integrations/config/calendar-config.md`.
-Read `plugin_root` from `integrations/config/task-output-config.md`.
+Read `calendar_name` from `config/calendar-config.md`.
+Read `plugin_root` from `config/task-output-config.md`.
 Run the EventKit Swift script in summary mode:
 
 ```applescript
@@ -265,8 +265,8 @@ This write is silent — no confirmation, no output to the user.
 **8. Config guard**
 
 Before running, check:
-- `integrations/config/calendar-config.md` — if missing, note in calendar section and continue
-- `integrations/config/task-output-config.md` — required for `plugin_root` path to Swift script
+- `config/calendar-config.md` — if missing, note in calendar section and continue
+- `config/task-output-config.md` — required for `plugin_root` path to Swift script
 
 If `task-output-config.md` is missing, prompt setup and resume:
 > "I need your plugin path configured before running the calendar check. Let me run setup."
@@ -331,8 +331,8 @@ only write to it. Writing the read path as a branch (`if skill available → que
 else → parse local file`) would create a third duplication of the try/fallback logic already
 in `schedule.md`, `execute.md`, and `delegate.md`.
 
-**Proposed abstraction**: document a "Memory Access Layer" pattern in `PRINCIPLES.md` or
-a new `integrations/docs/memory-access-layer.md`:
+**Proposed abstraction**: document a "Memory Access Layer" pattern in `docs/PRINCIPLES.md` or
+a new `docs/memory-access-layer.md`:
 
 ```
 interface MemoryEntry {
@@ -368,8 +368,8 @@ No new config file. Uses existing config files:
 
 | Config file | Field used | Purpose |
 |-------------|-----------|---------|
-| `integrations/config/calendar-config.md` | `calendar_name` | Calendar availability query |
-| `integrations/config/task-output-config.md` | `plugin_root` | Path to `cal_query.swift` |
+| `config/calendar-config.md` | `calendar_name` | Calendar availability query |
+| `config/task-output-config.md` | `plugin_root` | Path to `cal_query.swift` |
 
 Analytics log (created by the command, gitignored):
 
@@ -410,10 +410,10 @@ making the delegation follow-up recommendation more directive.
    Current spec: always on. The data is local, contains no PII, and is append-only.
    *(Decision: always on for v1; add opt-out flag if user raises privacy concern.)*
 
-3. **Memory Access Layer documentation location** — `PRINCIPLES.md` (extends existing
-   engineering principles) vs. new `integrations/docs/memory-access-layer.md` (dedicated
-   reference). *(Recommendation: new dedicated doc; link from PRINCIPLES.md. Keeps
-   PRINCIPLES.md focused on DRY/SOLID/TDD rules and avoids mixing architectural patterns
+3. **Memory Access Layer documentation location** — `docs/PRINCIPLES.md` (extends existing
+   engineering principles) vs. new `docs/memory-access-layer.md` (dedicated
+   reference). *(Recommendation: new dedicated doc; link from docs/PRINCIPLES.md. Keeps
+   docs/PRINCIPLES.md focused on DRY/SOLID/TDD rules and avoids mixing architectural patterns
    with engineering principles.)*
 
 4. **"Coming calendar week" boundary on non-Fridays** — Spec assumes Friday use. If the
@@ -433,9 +433,9 @@ making the delegation follow-up recommendation more directive.
 |------|--------|---------|
 | `commands/review-week.md` | Create | New `/review-week` command prompt |
 | `memory/review-log.md` | Created at runtime | Analytics log (gitignored) |
-| `integrations/docs/memory-access-layer.md` | Create | Memory Access Layer pattern doc |
-| `integrations/specs/review-week-spec.md` | Create | This document |
-| `PRINCIPLES.md` | Update | Link to `memory-access-layer.md` under DRY section |
+| `docs/memory-access-layer.md` | Create | Memory Access Layer pattern doc |
+| `specs/review-week-spec.md` | Create | This document |
+| `docs/PRINCIPLES.md` | Update | Link to `memory-access-layer.md` under DRY section |
 | `.gitignore` | Update | Add `memory/review-log.md` |
 | `ROADMAP.md` | Update | Move `/review-week` from Near-Term → Shipped on completion |
 
@@ -503,7 +503,7 @@ Then "Jordan V." appears once in the check-ins section, not twice
 ### REVIEW-WEEK-007: Missing calendar config — graceful fallback
 
 ```gherkin
-Given integrations/config/calendar-config.md does not exist
+Given config/calendar-config.md does not exist
 When the user runs /review-week
 Then all non-calendar sections render normally
 And the 📆 Calendar section shows "Calendar unavailable — run /setup to configure"

@@ -7,10 +7,10 @@ allowed-tools: Read, Write, Edit, mcp__Control_your_Mac__osascript
 You are running the SETUP command for the claude-eisenhower plugin.
 
 This command configures the four integration config files that the plugin needs to operate:
-- `integrations/config/calendar-config.md` — Mac Calendar name
-- `integrations/config/email-config.md` — Apple Mail account and inbox
-- `integrations/config/task-output-config.md` — Mac Reminders list name
-- `integrations/config/stakeholders.yaml` — Stakeholder graph for /delegate (optional)
+- `config/calendar-config.md` — Mac Calendar name
+- `config/email-config.md` — Apple Mail account and inbox
+- `config/task-output-config.md` — Mac Reminders list name
+- `config/stakeholders.yaml` — Stakeholder graph for /delegate (optional)
 
 All config files are gitignored. Setup writes them from `.example` templates using values you provide. Nothing is committed.
 
@@ -21,10 +21,10 @@ All config files are gitignored. Setup writes them from `.example` templates usi
 Check which config files already exist:
 
 ```
-integrations/config/calendar-config.md
-integrations/config/email-config.md
-integrations/config/task-output-config.md
-integrations/config/stakeholders.yaml
+config/calendar-config.md
+config/email-config.md
+config/task-output-config.md
+config/stakeholders.yaml
 ```
 
 **If all four exist** (manual `/setup` invocation):
@@ -67,10 +67,10 @@ end tell
 - If no match → show the list and say: "I didn't find a calendar with that name. Here are the calendars on your Mac: [list]. Which one should I use?"
 - Wait for a valid selection before proceeding.
 
-**Write** `integrations/config/calendar-config.md`:
-- Read `integrations/config/calendar-config.md.example`
+**Write** `config/calendar-config.md`:
+- Read `config/calendar-config.md.example`
 - Replace `YOUR_CALENDAR_NAME` with the validated calendar name
-- Write to `integrations/config/calendar-config.md`
+- Write to `config/calendar-config.md`
 
 ---
 
@@ -109,11 +109,11 @@ end tell
 
 Use `INBOX` if present, otherwise `Inbox`. If neither exists, ask the user.
 
-**Write** `integrations/config/email-config.md`:
-- Read `integrations/config/email-config.md.example`
+**Write** `config/email-config.md`:
+- Read `config/email-config.md.example`
 - Replace `YOUR_MAIL_ACCOUNT_NAME` with the validated account name
 - Replace `INBOX` with the detected inbox name
-- Write to `integrations/config/email-config.md`
+- Write to `config/email-config.md`
 
 ---
 
@@ -143,17 +143,17 @@ After the user provides a path:
    Substitute `<user's expanded path>` with the literal path the user provided, with `~` replaced by their home directory.
 3. If the shell command returns an error (not `exists` or `missing`): say "Could not verify the path due to a system error. Enter the path manually and I'll trust your input, or type 'skip'."
 4. If result is `missing`: say "That path doesn't look right — I can't find a scripts/ folder there. Double-check the path and try again." Re-ask (up to 3 total attempts).
-5. After 3 failed attempts: say "I wasn't able to verify the path. You can type 'skip' to configure `plugin_root` manually in `integrations/config/task-output-config.md` later."
+5. After 3 failed attempts: say "I wasn't able to verify the path. You can type 'skip' to configure `plugin_root` manually in `config/task-output-config.md` later."
 6. If result is `exists`: proceed with the verified path.
 
 **Do not fall back to a hardcoded default.** The path must be confirmed before writing config.
 
-**Write** `integrations/config/task-output-config.md`:
-- Read `integrations/config/task-output-config.md.example`
+**Write** `config/task-output-config.md`:
+- Read `config/task-output-config.md.example`
 - Replace `~/repos/claude-eisenhower` in the `plugin_root:` line with the user's value
 - Replace `YOUR_REMINDERS_LIST_NAME` with the user's value (under the `### reminders` block)
 - Leave the `Active Adapter` line, all other adapter sections, and all comments unchanged
-- Write to `integrations/config/task-output-config.md`
+- Write to `config/task-output-config.md`
 
 ---
 
@@ -166,9 +166,9 @@ After the user provides a path:
 > 2. No, skip for now"
 
 **If yes:**
-- Read `integrations/config/stakeholders.yaml.example`
-- Write its full contents as-is to `integrations/config/stakeholders.yaml`
-- Say: "Created integrations/config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
+- Read `config/stakeholders.yaml.example`
+- Write its full contents as-is to `config/stakeholders.yaml`
+- Say: "Created config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
 
 **If no:** skip silently.
 
@@ -187,7 +187,7 @@ Show a completion summary of everything that was written this session:
   Reminders:    [list_name]
   Stakeholders: [created with placeholders / skipped]
 
-Config files are saved to integrations/config/ (gitignored — never committed).
+Config files are saved to config/ (gitignored — never committed).
 ```
 
 If setup was triggered automatically by a command that was interrupted, resume it now:

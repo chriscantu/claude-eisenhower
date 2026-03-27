@@ -79,6 +79,6 @@ Adapters receive the already-modified title and due_date. They do not need to re
 2. Replace the AppleScript section with the system-specific push mechanism (MCP call, REST API via bash, etc.)
 3. Implement the same deduplication check before writing
 4. Return a `push_result` in the standard format
-5. Register the adapter name in `integrations/config/task-output-config.md` under `## Active Adapter`
+5. Register the adapter name in `config/task-output-config.md` under `## Active Adapter`
 
 The adapter name in `task-output-config.md` must exactly match the filename (without `.md`).

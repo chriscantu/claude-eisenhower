@@ -32,7 +32,7 @@ The Eisenhower workflow correctly classifies Q3 tasks as "Delegate," but the del
 
 ---
 
-## New File: `integrations/config/stakeholders.yaml`
+## New File: `config/stakeholders.yaml`
 
 User-maintained file, **gitignored**. Only `stakeholders.yaml.example` is committed.
 
@@ -61,16 +61,16 @@ stakeholders:
 Feature: Stakeholder graph initialization
 
   Scenario: First-time setup with no stakeholder file
-    Given the stakeholder graph file does not exist at integrations/config/stakeholders.yaml
+    Given the stakeholder graph file does not exist at config/stakeholders.yaml
     When I run /prioritize
     And a task is classified as Q3
     Then Claude should notify me: "No stakeholder graph found."
-    And Claude should say: "Copy integrations/config/stakeholders.yaml.example to stakeholders.yaml and fill in your delegates to enable delegation suggestions."
+    And Claude should say: "Copy config/stakeholders.yaml.example to stakeholders.yaml and fill in your delegates to enable delegation suggestions."
     And the Q3 task should still be saved without a delegate assigned
     And the task record should include: "Delegate to: [not yet assigned — see stakeholders.yaml]"
 
   Scenario: Stakeholder graph exists but is empty
-    Given integrations/config/stakeholders.yaml exists
+    Given config/stakeholders.yaml exists
     And the stakeholders list is empty
     When I run /prioritize
     And a task is classified as Q3
@@ -84,7 +84,7 @@ Feature: Stakeholder graph initialization
 Feature: Suggest delegate when task is classified Q3
 
   Scenario: Single best match found
-    Given integrations/config/stakeholders.yaml has 5 configured delegates
+    Given config/stakeholders.yaml has 5 configured delegates
     And I have an unprocessed task "Review infrastructure alerting thresholds"
     When I run /prioritize
     And the task is classified as Q3
@@ -208,7 +208,7 @@ Feature: Surface and close out delegated task follow-ups
 
 ## Matching Algorithm
 
-When a task is classified Q3, read `integrations/config/stakeholders.yaml` and score each delegate:
+When a task is classified Q3, read `config/stakeholders.yaml` and score each delegate:
 
 | Signal | Points |
 |--------|--------|
@@ -230,21 +230,21 @@ When a task is classified Q3, read `integrations/config/stakeholders.yaml` and s
 
 | File | Purpose |
 |------|---------|
-| `integrations/specs/delegation-spec.md` | This spec |
-| `integrations/config/stakeholders.yaml.example` | Committed template with anonymized placeholder values |
-| `integrations/config/stakeholders.yaml` | Gitignored — user fills in real delegates |
+| `specs/delegation-spec.md` | This spec |
+| `config/stakeholders.yaml.example` | Committed template with anonymized placeholder values |
+| `config/stakeholders.yaml` | Gitignored — user fills in real delegates |
 | `tests/delegation-regression.md` | Regression test suite covering the full delegation chain |
 
 ## Files to Update
 
 | File | Change |
 |------|--------|
-| `.gitignore` | Add `integrations/config/stakeholders.yaml` |
+| `.gitignore` | Add `config/stakeholders.yaml` |
 | `commands/prioritize.md` | Add Steps 4b–4c: read stakeholder graph, suggest delegate for Q3 |
 | `commands/schedule.md` | Add Step 3b: confirm/override delegate; add dedup guard to Step 7 |
 | `README.md` | Document delegation validation under workflow and active integrations |
 | `STRUCTURE.md` | Add stakeholders files to config table; bump version to v0.4.0 |
-| `CONNECTORS.md` | Add stakeholder graph as a local data source |
+| `docs/CONNECTORS.md` | Add stakeholder graph as a local data source |
 
 ---
 
@@ -252,7 +252,7 @@ When a task is classified Q3, read `integrations/config/stakeholders.yaml` and s
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | Where does the stakeholder graph live? | `integrations/config/stakeholders.yaml` — follows existing config pattern |
+| 1 | Where does the stakeholder graph live? | `config/stakeholders.yaml` — follows existing config pattern |
 | 2 | Format: YAML or Markdown? | YAML — structured, parseable, avoids markdown table fragility |
 | 3 | PII protection method | Gitignore actual file; commit only `.example` with placeholder values |
 | 4 | When does suggestion happen? | At Q3 classification (prioritize) and confirmed at schedule |

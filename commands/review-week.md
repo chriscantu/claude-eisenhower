@@ -13,17 +13,17 @@ snapshot for the coming week — no scheduling, no task creation, no writes to t
 
 ## Step 1: Config check
 
-Read `integrations/config/task-output-config.md`.
+Read `config/task-output-config.md`.
 If missing → stop and say:
 > "I need your plugin path configured before running the calendar check. Let me run setup first."
 Then run `/setup` and resume `/review-week` when complete.
 
-Read `integrations/config/calendar-config.md`.
+Read `config/calendar-config.md`.
 If missing → note it. Calendar section will show a graceful fallback. Continue.
 
 Read `plugin_root` from task-output-config.md.
 If `plugin_root` is not present, use `~/repos/claude-eisenhower` and note:
-`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update integrations/config/task-output-config.md if your installation is at a different location."`
+`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update config/task-output-config.md if your installation is at a different location."`
 Read `calendar_name` from calendar-config.md (if available).
 
 ---

@@ -186,8 +186,8 @@ Uses the existing calendar integration already referenced in `commands/schedule.
 | File | Purpose |
 |------|---------|
 | `commands/scan-email.md` | New `/scan-email` command definition |
-| `skills/claude-eisenhower/references/email-patterns.md` | Sender/subject pattern library for the three categories |
-| Updates to `CONNECTORS.md` | Mark Apple Mail as Active |
+| `skills/core/references/email-patterns.md` | Sender/subject pattern library for the three categories |
+| Updates to `docs/CONNECTORS.md` | Mark Apple Mail as Active |
 | Updates to `README.md` | Document the new command |
 
 ---

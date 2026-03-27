@@ -6,7 +6,7 @@ How to handle tasks arriving from different sources. The goal is consistent capt
 
 ### Email — Apple Mail (configured account/inbox)
 **Integration**: Active via Apple Mail using osascript. Scanned with `/scan-email`. Read-only — never affects read status or moves messages.
-**Mailbox**: Configured account and inbox only — see `integrations/config/email-config.md`. No other mailboxes are read.
+**Mailbox**: Configured account and inbox only — see `config/email-config.md`. No other mailboxes are read.
 
 Extract:
 - Sender name and role (from signature or context)
@@ -73,7 +73,7 @@ Future integration: ~~project tracker (intake direction — read tickets into TA
 ### Mac Reminders / Task Output (`~~task_output`) — Output
 **Integration**: Active via AppleScript (osascript). Write-only — triggered at end of `/schedule`. Never reads, modifies, or deletes existing reminders.
 **Target**: "Eisenhower List" in Mac Reminders (auto-created if missing)
-**Adapter pattern**: Swappable — see `integrations/adapters/` to replace with Asana, Jira, or Linear without changing command logic.
+**Adapter pattern**: Swappable — see `adapters/` to replace with Asana, Jira, or Linear without changing command logic.
 
 Pushes:
 - Q1 tasks → due date today, priority High
@@ -85,7 +85,7 @@ Does not push back into TASKS.md — TASKS.md is always the source of truth. Add
 
 ### Mac Calendar
 **Integration**: Active via osascript (macOS Calendar app). Read-only — used for availability checks during `/schedule` and `/scan-email`. Never creates, modifies, or deletes calendar events.
-**Calendar name**: Configured in `integrations/config/calendar-config.md`.
+**Calendar name**: Configured in `config/calendar-config.md`.
 
 Extract:
 - Meeting title and attendees (who to follow up with)

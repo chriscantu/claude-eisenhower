@@ -2,7 +2,7 @@
  * adapter-types.test.ts
  *
  * Compile-time + runtime contract tests for the adapter interface types.
- * Spec: integrations/adapters/README.md
+ * Spec: adapters/README.md
  *
  * These tests serve dual purpose:
  *   1. Fail immediately if scripts/adapter-types.ts doesn't exist (RED phase)
