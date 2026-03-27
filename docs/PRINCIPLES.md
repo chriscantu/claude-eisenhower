@@ -9,6 +9,35 @@ a checklist � not a suggestion list.
 
 ---
 
+## Claude Code Plugin Best Practices
+
+All code and structure in this repository MUST adhere to Claude Code plugin
+conventions. This is the foundational principle — everything else builds on it.
+
+**Required conventions:**
+- Plugin manifest lives at `.claude-plugin/plugin.json`
+- Commands, agents, skills, and hooks directories are at plugin root level
+- Commands are `.md` files with YAML frontmatter in `commands/`
+- Skills are subdirectories under `skills/`, each with a `SKILL.md`
+- Agents are `.md` files with YAML frontmatter in `agents/`
+- Hooks are configured via `hooks/hooks.json`
+- Use `${CLAUDE_PLUGIN_ROOT}` for all intra-plugin path references in hooks and scripts
+- Use kebab-case for file and directory names
+- Auto-discovery drives component loading — rely on conventional directory layout
+
+**In this repo:**
+- `.claude-plugin/plugin.json` defines the plugin manifest
+- `commands/` holds 8 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup)
+- `skills/` holds 3 skills (core, memory-manager, skill-enhancer), each with `SKILL.md` and `references/`
+- `agents/` holds 1 agent (task-prioritizer)
+- `hooks/hooks.json` registers SessionStart and PostToolUse hooks
+- Config files use `.example` templates (committed) + gitignored actuals
+
+**Red flags:** hardcoded absolute paths in hooks, components nested inside `.claude-plugin/`,
+manifest fields that duplicate auto-discoverable structure, non-kebab-case naming.
+
+---
+
 ## DRY � Don't Repeat Yourself
 
 Single source of truth for every concept. If the same logic, type, constant, or
