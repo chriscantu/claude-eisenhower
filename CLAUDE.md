@@ -46,3 +46,36 @@ This applies to ALL calendar queries across all commands and skills, including:
 
 See `docs/adrs/calendar-performance-fix.md` for the full diagnosis and
 `docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.
+
+---
+
+## Code Review Requirements
+
+Every code review MUST validate against the following principles from
+`docs/PRINCIPLES.md`. These are not suggestions — flag violations as issues.
+
+**Claude Code Plugin Best Practices:**
+- Components use conventional directory layout (commands/, skills/, agents/, hooks/)
+- Hooks and scripts reference paths via `${CLAUDE_PLUGIN_ROOT}`, not hardcoded paths
+- File and directory names use kebab-case
+- No components nested inside `.claude-plugin/`
+
+**DRY — Don't Repeat Yourself:**
+- No duplicated logic, types, constants, or config values across files
+- Scoring logic lives in `scripts/delegate-core.ts` only — imported, never copied
+- Config values are read from `config/`, never hardcoded in commands or skills
+
+**SOLID:**
+- Each file owns one concern (SRP)
+- Pure functions take data as arguments, no filesystem or external service calls (DI)
+- Interfaces are narrow and purpose-specific
+
+**Reliability:**
+- Calendar queries MUST use `scripts/cal_query.swift` (EventKit), never AppleScript `whose`
+- PII files (`config/stakeholders.yaml`, `config/*-config.md`, `memory/`, `TASKS.md`) are gitignored — never committed
+- All file path references must resolve to existing files on disk
+- No feature ships without a corresponding test in `tests/`
+
+**Structure:**
+- New files go where `docs/STRUCTURE.md` says — check the decision tree before creating anything
+- Project docs (PRINCIPLES, STRUCTURE, CONNECTORS) live in `docs/`, not repo root
