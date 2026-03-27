@@ -62,8 +62,9 @@ commands/
   delegate.md
   scan-email.md
   review-week.md
-  today.md
   setup.md
+  status.md
+  today.md
 ```
 
 **What belongs here**: Command prompt text, step-by-step behavior, allowed tools.

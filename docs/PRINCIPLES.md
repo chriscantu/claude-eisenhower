@@ -27,7 +27,7 @@ conventions. This is the foundational principle — everything else builds on it
 
 **In this repo:**
 - `.claude-plugin/plugin.json` defines the plugin manifest
-- `commands/` holds 8 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup)
+- `commands/` holds 10 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup, status, today)
 - `skills/` holds 3 skills (core, memory-manager, skill-enhancer), each with `SKILL.md` and `references/`
 - `agents/` holds 1 agent (task-prioritizer)
 - `hooks/hooks.json` registers SessionStart and PostToolUse hooks
