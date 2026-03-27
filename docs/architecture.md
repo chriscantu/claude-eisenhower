@@ -247,5 +247,5 @@ flowchart TD
 | Four-state model (Inbox/Active/Delegated/Done) | Separates action state from Eisenhower priority classification | `four-state-task-model-spec.md` |
 | Single write target for memory | Eliminates dual-write split-state problem | `memory-system-adr.md` |
 | Memory Access Layer (read abstraction) | Commands read memory without knowing backend; same return shape from skill or local file | `memory-access-layer.md` |
-| `delegate-core.ts` as shared module | DRY: scoring logic, types, and constants imported by CLI and tests; never duplicated | `PRINCIPLES.md` |
+| `delegate-core.ts` as shared module | DRY: scoring logic, types, and constants imported by CLI and tests; never duplicated | `docs/PRINCIPLES.md` |
 | No Blocked state | Anti-pattern — creates a holding area with no forcing function; every stuck task needs an action | `four-state-task-model-spec.md` |
