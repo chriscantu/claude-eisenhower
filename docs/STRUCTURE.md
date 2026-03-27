@@ -39,6 +39,7 @@ claude-eisenhower/
 +-- docs/                  # All written reference: specs, ADRs, dev reference
 |   +-- specs/             # Feature specs + design specs (pre-implementation)
 |   +-- adrs/              # Architectural decision records
+|   +-- superpowers/plans/ # Implementation plans for multi-step features (date-prefixed)
 |
 +-- scripts/               # Executable scripts (Swift, AppleScript, shell, TypeScript)
 +-- tests/                 # Regression test suites -- runnable via `npm test` in scripts/
@@ -196,6 +197,10 @@ docs/
     2026-03-04-quality-gates-spec.md      -- (design spec, date-prefixed)
     2026-03-26-directory-restructure-design.md -- (design spec, date-prefixed)
 
+  superpowers/plans/                 -- implementation plans (date-prefixed, produced by writing-plans skill)
+    2026-03-26-v1.3.0-scoring-unification-and-plugin-root-dry.md
+    2026-03-27-status-command.md
+
   adrs/                              -- architectural decision records
     calendar-performance-fix.md      -- ADR: why Swift EventKit instead of AppleScript
     memory-system-adr.md             -- ADR: single write target for delegation memory (Option B)
@@ -205,6 +210,7 @@ docs/
 ```
 
 **What belongs in `docs/specs/`**: Feature specs (problem statement, Gherkin, goals, architecture, decisions log) and design specs (date-prefixed).
+**What belongs in `docs/superpowers/plans/`**: Implementation plans produced by the writing-plans skill. Date-prefixed, one per feature.
 **What belongs in `docs/adrs/`**: Post-decision records explaining *why* a choice was made.
 **What belongs in `docs/` root**: Governance docs, system diagrams, reference material.
 

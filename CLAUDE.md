@@ -15,9 +15,9 @@ config file from `config/`:
 
 | Config file | Controls | Used by |
 |-------------|----------|---------|
-| `config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email` |
+| `config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email`, `/today` |
 | `config/email-config.md` | Apple Mail account + inbox | `/scan-email` |
-| `config/task-output-config.md` | Reminders list + active adapter | `/schedule` |
+| `config/task-output-config.md` | Reminders list + active adapter + plugin_root | `/schedule`, `/today` |
 
 ---
 

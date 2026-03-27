@@ -233,4 +233,4 @@ Rules:
 ## Step 7: Done
 
 The command is complete. Do not prompt for further action beyond the closing line
-in Section 6 of the briefing. The user drives any follow-on commands.
+in the Recommended Next section. The user drives any follow-on commands.

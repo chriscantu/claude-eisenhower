@@ -21,7 +21,7 @@ The Director's scarcest resource (attention) is spent on assembly instead of act
 designed for Friday retrospectives, not daily action. All underlying data already
 exists — nothing assembles it for "right now."
 **Constraints**: Must work with existing TASKS.md, calendar, and memory data
-sources. Plugin is local-first, macOS only.
+sources. Plugin is local-first. Optional integrations (Calendar, Reminders, Mail) are macOS-specific; /today degrades gracefully when unavailable.
 
 ---
 
@@ -270,7 +270,7 @@ Create the file if it does not exist. Create the `memory/` directory if needed.
 
 ### KPI Trend Signals
 
-These daily metrics enable trend analysis in `/review-week` and future `/status`:
+These daily metrics enable trend analysis in `/review-week` and future features:
 
 | KPI | Healthy | Unhealthy |
 |-----|---------|-----------|

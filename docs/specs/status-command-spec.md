@@ -1,7 +1,7 @@
 # /status — Org Status Command
 
 **Plugin**: claude-eisenhower
-**Version target**: v1.5.0
+**Version target**: v1.5.0 (ships with /today v1.4.0 in same release)
 **Status**: Approved
 **Date**: 2026-03-27
 **Author**: Cantu

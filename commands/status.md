@@ -1,7 +1,7 @@
 ---
 description: Org status — project health, delegation portfolio, risk view
 argument-hint: [project-name] or [alias] (optional)
-allowed-tools: Read, Write
+allowed-tools: Read, Write, Edit
 ---
 
 You are running the STATUS command of the Engineering Task Flow.
@@ -15,11 +15,14 @@ dates, or delegation fields.
 
 ## Step 1: Load the task board
 
+No config check needed — /status reads TASKS.md and delegation memory only.
+No scripts, adapters, or calendar integration involved.
+
 Read TASKS.md from the root of the workspace.
 If TASKS.md does not exist: show "No task board found. Run /intake to get started." and stop.
 
 Extract all task records across all sections (Inbox, Active, Delegated, Done).
-For each task, read: title, State, Quadrant, Due date, Scheduled, Delegated-to (alias),
+For each task, read: title, State, Priority, Due date, Scheduled, Owner,
 Check-by, Done date, and Project (if present).
 
 ---
@@ -39,29 +42,14 @@ TASKS.md is the authoritative source for that entry.
 
 ---
 
-## Step 3: Resolve argument (if provided)
+## Step 3: Triage untagged tasks
 
-If the user provided an argument (e.g., `/status auth-migration` or `/status alex`):
-
-1. Collect all unique `Project:` values from TASKS.md task records
-2. Collect all delegate aliases from Delegated tasks and memory-manager results
-3. Check the argument against project names (case-insensitive partial match)
-4. Check the argument against delegate aliases (case-insensitive partial match)
-5. Resolution:
-   - **Matches a project only** → proceed to Step 5 (Project Detail View)
-   - **Matches an alias only** → proceed to Step 6 (Alias View)
-   - **Matches both** → ask the user: "'{arg}' matches both project '{project}' and delegate '{alias}'. Which did you mean?"
-   - **Matches neither** → "No project or delegate found matching '{arg}'."
-
-If no argument was provided, proceed to Step 4 (Triage → Default View).
-
----
-
-## Step 4: Triage untagged tasks
+Triage runs on every invocation (any query mode) when untagged non-Done tasks exist.
+This ensures project/alias views always reflect correctly tagged data.
 
 Scan all non-Done tasks for a missing `Project:` field.
 
-**If no untagged tasks exist:** skip triage entirely — proceed to rendering the default view (Step 4b).
+**If no untagged tasks exist:** skip triage entirely — proceed to Step 4 (Resolve argument).
 
 **If untagged tasks exist:**
 
@@ -97,7 +85,27 @@ Confirm, adjust, or skip for now?
 - New project names introduced by the user are valid
 - Skipping is always an option — never block the report
 
-### Step 4b: Build the default view
+---
+
+## Step 4: Resolve argument (if provided)
+
+If the user provided an argument (e.g., `/status auth-migration` or `/status alex`):
+
+1. Collect all unique `Project:` values from TASKS.md task records
+2. Collect all delegate aliases from Delegated tasks and memory-manager results
+3. Check the argument against project names (case-insensitive partial match)
+4. Check the argument against delegate aliases (case-insensitive partial match)
+5. Resolution:
+   - **Matches a project only** → proceed to Step 6 (Project Detail View)
+   - **Matches an alias only** → proceed to Step 7 (Alias View)
+   - **Matches both** → ask the user: "'{arg}' matches both project '{project}' and delegate '{alias}'. Which did you mean?"
+   - **Matches neither** → "No project or delegate found matching '{arg}'."
+
+If no argument was provided, proceed to Step 5 (Default View).
+
+---
+
+## Step 5: Build the default view
 
 Compute the following from all task records:
 
@@ -113,7 +121,7 @@ Tasks without a `Project:` value go into an "Untagged" group.
 |--------|-----------|
 | 🔴 | Any delegation in this project is overdue (Check-by date has passed) |
 | 🟡 | No overdue, but a Check-by date in this project is within 2 business days |
-| 🟢 | All delegations in this project are on track |
+| 🟢 | All delegations in this project are on track (includes projects with no delegations) |
 
 **Task count summary per project:** Count of overdue, active, and delegated tasks.
 Only include non-zero counts in the summary.
@@ -162,11 +170,11 @@ Within each project:
 Run /status [project] for detail, or /status [alias] for a person view.
 ```
 
-Proceed to Step 7 (Done).
+Proceed to Step 8 (Done).
 
 ---
 
-## Step 5: Project detail view
+## Step 6: Project detail view
 
 Render a deep dive for a single project.
 
@@ -219,11 +227,11 @@ Run /status for full org view, or /status {alias} for delegate view.
 
 Use an actual alias from the project's delegated tasks in the closing prompt example.
 
-Proceed to Step 7 (Done).
+Proceed to Step 8 (Done).
 
 ---
 
-## Step 6: Alias view
+## Step 7: Alias view
 
 Render everything delegated to a single person, grouped by project.
 
@@ -262,11 +270,11 @@ Run /status for full org view, or /status {project} for project view.
 
 Use an actual project name from the alias's delegated tasks in the closing prompt example.
 
-Proceed to Step 7 (Done).
+Proceed to Step 8 (Done).
 
 ---
 
-## Step 7: Done
+## Step 8: Done
 
 The command is complete. Do not prompt for further action beyond the closing line
 in the rendered view. The user drives any follow-on commands.
