@@ -57,7 +57,7 @@ Ask: "Confirm delegation, or should this be reclassified as Q1 instead?"
 
 ## Step 3: Load the stakeholder graph and score
 
-Read `plugin_root` from `config/task-output-config.md` (required — run /setup if not configured).
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
 
 Read `config/stakeholders.yaml` from `{plugin_root}/`.
 

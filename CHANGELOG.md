@@ -7,6 +7,30 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v1.3.0] — 2026-03-26 — Scoring Unification + Plugin Root DRY
+
+Two architectural improvements from codebase review. No user-visible behavior change
+beyond more accurate Q3 scoring in `/prioritize`. 196 tests passing.
+
+**Q3 scoring unification:**
+- `/prioritize` Step 4b now invokes `match-delegate.ts` CLI instead of inline scoring
+- Eliminates untested LLM-arithmetic code path
+- Enables anti-domain veto in `/prioritize` (was missing)
+- Enables pending-count penalty in `/prioritize` (was missing)
+- One scoring algorithm, one code path, one test suite
+
+Spec: `docs/specs/prioritize-cli-scoring-spec.md`
+
+**Plugin root DRY fix:**
+- New: `skills/core/references/plugin-root-resolution.md` — canonical resolution logic
+- 5 commands (schedule, execute, delegate, scan-email, review-week) now reference
+  the shared file instead of duplicating inline resolution + fallback
+- Hardcoded `~/repos/claude-eisenhower` default now exists in exactly one place
+
+Spec: `docs/specs/plugin-root-resolution-dry-spec.md`
+
+---
+
 ## [v1.2.0] — 2026-03-26 — Directory Restructure
 
 Flattened directory layout for navigability and coherence. No feature changes,

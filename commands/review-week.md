@@ -21,9 +21,7 @@ Then run `/setup` and resume `/review-week` when complete.
 Read `config/calendar-config.md`.
 If missing → note it. Calendar section will show a graceful fallback. Continue.
 
-Read `plugin_root` from task-output-config.md.
-If `plugin_root` is not present, use `~/repos/claude-eisenhower` and note:
-`"plugin_root not configured — using default path ~/repos/claude-eisenhower. Update config/task-output-config.md if your installation is at a different location."`
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
 Read `calendar_name` from calendar-config.md (if available).
 
 ---

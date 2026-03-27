@@ -82,6 +82,7 @@ skills/
       intake-sources.md
       delegation-guide.md
       email-patterns.md
+      plugin-root-resolution.md
   skill-enhancer/
     SKILL.md
     references/
@@ -187,8 +188,10 @@ docs/
     skill-enhancer-spec.md           -- skill-enhancer implementation plan (v0.9.5)
     artifact-baselines.md            -- floor construct counts for skill-enhancer Phase 6 regression check
     review-week-spec.md              -- /review-week PRD
-    plugin-path-resolution-spec.md   -- plugin root path resolution
-    2026-03-04-quality-gates-spec.md         -- (design spec, date-prefixed)
+    plugin-path-resolution-spec.md       -- plugin root path resolution
+    prioritize-cli-scoring-spec.md        -- /prioritize CLI scoring unification (v1.3.0)
+    plugin-root-resolution-dry-spec.md    -- plugin_root DRY extraction (v1.3.0)
+    2026-03-04-quality-gates-spec.md      -- (design spec, date-prefixed)
     2026-03-26-directory-restructure-design.md -- (design spec, date-prefixed)
 
   adrs/                              -- architectural decision records

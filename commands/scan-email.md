@@ -146,9 +146,7 @@ One call per matched email. Extract: any deadline language, due dates, urgency s
 
 For each Admin/Compliance match that has a detectable due date, run a fast calendar query using the EventKit-based Swift script. This avoids AppleScript's slow `whose` clause which times out on large calendars (7000+ events).
 
-Before calling the script, resolve the plugin root:
-- Read `plugin_root` from `config/task-output-config.md`
-- If not present, use `~/repos/claude-eisenhower` and note: "plugin_root not configured — using default."
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
 
 Calculate the number of days from today to the due date, then run:
 

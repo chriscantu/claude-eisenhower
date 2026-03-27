@@ -49,34 +49,43 @@ Recommended action: [Do now / Schedule for [timeframe] / Delegate to [alias] / E
 
 Then ask: "Does this look right? I'll save it once you confirm — or tell me if any should be reclassified."
 
-## Step 4b: For each Q3 task — load the stakeholder graph and suggest a delegate
+## Step 4b: For each Q3 task — score delegates via CLI
 
 After classifying a task as Q3, before saving:
 
-1. **Check for stakeholder graph**: Read `plugin_root` from `config/task-output-config.md` (required — run /setup if not configured), then read `{plugin_root}/config/stakeholders.yaml`.
+1. **Resolve plugin_root** following `skills/core/references/plugin-root-resolution.md`.
+
+2. **Check for stakeholder graph**: Read `{plugin_root}/config/stakeholders.yaml`.
 
    - If the file does not exist: say "No stakeholder graph found. Copy `config/stakeholders.yaml.example` to `stakeholders.yaml` and fill in your delegates to enable delegation suggestions." Save the task with `Delegate to: [not yet assigned — see stakeholders.yaml]` and continue.
    - If the file exists but the `stakeholders` list is empty: say "Stakeholder graph is empty — no delegates configured." Save with the same placeholder and continue.
 
-2. **Score each delegate** using the matching algorithm:
-   - For each keyword in the delegate's `domains` list: if the keyword appears in the task title or description, add +3 to their score
-   - `relationship: direct_report` → +2
-   - `relationship: peer` → +1
-   - `relationship: vendor` or `partner` → 0
-   - `capacity_signal: high` → +2
-   - `capacity_signal: medium` → +1
-   - `capacity_signal: low` → −1
+3. **Invoke the scoring CLI**:
 
-3. **Surface results**:
-   - If one clear top scorer: suggest them by alias with reasoning (domain match, relationship, capacity)
-   - If two or more tied: surface both ranked, prefer `direct_report` on tiebreak, ask user to choose
-   - If highest score is 0 or negative: say "No clear domain match in your stakeholder graph." Ask: "Who should own this?"
-   - If the only match has `capacity_signal: low`: still suggest them, but add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
+   ```
+   do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
+   ```
 
-4. **Ask for confirmation** before recording the delegate — never auto-assign:
+   Note: the CLI resolves `config/stakeholders.yaml` and `memory/glossary.md`
+   relative to its own file location (the `scripts/` directory), not the working
+   directory. The `cd` ensures `npx ts-node` can find the local `node_modules`.
+   If `memory/glossary.md` does not exist, pending counts default to 0 (no error).
+
+4. **Parse the JSON output**. The CLI returns a JSON object matching the `MatchResult` interface:
+   - `status` — `match`, `no_match`, `empty_graph`, or `no_graph`
+   - `candidates[]` — ranked by score, each with: `alias`, `role`, `relationship`, `capacity_signal`, `score`, `matched_domains[]`, `capacity_warning` (boolean)
+   - `message` — a pre-formatted human-readable summary string
+
+5. **Surface results**:
+   - `status: match` with one clear top scorer → suggest by alias with reasoning from `matched_domains` and `relationship`
+   - `status: match` with tied scores → surface both, prefer `direct_report` on tiebreak, ask user to choose
+   - `status: no_match` → say "No clear domain match in your stakeholder graph." Ask: "Who should own this?"
+   - If a candidate has `capacity_warning: true` → add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
+
+6. **Ask for confirmation** before recording the delegate — never auto-assign:
    "Does [alias] make sense for this, or would you like to assign someone else?"
 
-5. **Record the result** in the task entry as `Suggested delegate: [alias]` (confirmed at schedule time).
+7. **Record the result** in the task entry as `Suggested delegate: [alias]` (confirmed at schedule time).
 
 ## Step 5: Save confirmed assignments
 
