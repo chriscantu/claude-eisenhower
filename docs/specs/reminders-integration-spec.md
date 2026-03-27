@@ -262,7 +262,7 @@ If `~~task_output` is still a placeholder (no adapter installed), skip Step 6b s
 
 | File | Purpose |
 |------|---------|
-| `specs/reminders-integration-spec.md` | This spec |
+| `docs/specs/reminders-integration-spec.md` | This spec |
 | `config/task-output-config.md` | User-editable config for target list name and active adapter |
 | `adapters/reminders.md` | v1 adapter: AppleScript logic for Mac Reminders |
 | `adapters/README.md` | Adapter interface contract + swap instructions |

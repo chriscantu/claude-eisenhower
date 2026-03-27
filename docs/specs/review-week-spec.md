@@ -332,7 +332,7 @@ else → parse local file`) would create a third duplication of the try/fallback
 in `schedule.md`, `execute.md`, and `delegate.md`.
 
 **Proposed abstraction**: document a "Memory Access Layer" pattern in `docs/PRINCIPLES.md` or
-a new `docs/memory-access-layer.md`:
+a new `docs/adrs/memory-access-layer.md`:
 
 ```
 interface MemoryEntry {
@@ -411,7 +411,7 @@ making the delegation follow-up recommendation more directive.
    *(Decision: always on for v1; add opt-out flag if user raises privacy concern.)*
 
 3. **Memory Access Layer documentation location** — `docs/PRINCIPLES.md` (extends existing
-   engineering principles) vs. new `docs/memory-access-layer.md` (dedicated
+   engineering principles) vs. new `docs/adrs/memory-access-layer.md` (dedicated
    reference). *(Recommendation: new dedicated doc; link from docs/PRINCIPLES.md. Keeps
    docs/PRINCIPLES.md focused on DRY/SOLID/TDD rules and avoids mixing architectural patterns
    with engineering principles.)*
@@ -433,8 +433,8 @@ making the delegation follow-up recommendation more directive.
 |------|--------|---------|
 | `commands/review-week.md` | Create | New `/review-week` command prompt |
 | `memory/review-log.md` | Created at runtime | Analytics log (gitignored) |
-| `docs/memory-access-layer.md` | Create | Memory Access Layer pattern doc |
-| `specs/review-week-spec.md` | Create | This document |
+| `docs/adrs/memory-access-layer.md` | Create | Memory Access Layer pattern doc |
+| `docs/specs/review-week-spec.md` | Create | This document |
 | `docs/PRINCIPLES.md` | Update | Link to `memory-access-layer.md` under DRY section |
 | `.gitignore` | Update | Add `memory/review-log.md` |
 | `ROADMAP.md` | Update | Move `/review-week` from Near-Term → Shipped on completion |

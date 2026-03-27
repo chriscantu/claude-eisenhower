@@ -3,7 +3,7 @@
  *
  * Regression suite for the /delegate direct entry point (v0.5.1).
  * Covers all P0 requirements (DEL-001 through DEL-010) from:
- *   specs/delegate-entry-point-spec.md
+ *   docs/specs/delegate-entry-point-spec.md
  *
  * Imports all scoring logic from scripts/delegate-core.ts — no duplication.
  * Tests are pure-function level: algorithm behavior, TASKS.md record shape,

@@ -4,7 +4,7 @@
  * Shared types and pure scoring functions for the delegation matching algorithm.
  * Imported by both match-delegate.ts (CLI) and tests/delegation.test.ts (tests).
  *
- * Algorithm defined in: specs/delegation-spec.md
+ * Algorithm defined in: docs/specs/delegation-spec.md
  *
  * Also re-exports adapter contract types so consumers have a single import point.
  */
@@ -100,7 +100,7 @@ export const REL_RANK: Record<Relationship, number> = {
 
 // ── Memory schema constants — single source of truth ─────────────────────────
 //
-// These mirror specs/memory-schema-spec.md.
+// These mirror docs/specs/memory-schema-spec.md.
 // loadPendingCounts() validates the glossary header against GLOSSARY_COLUMNS.
 // Commands that write memory rows must use these column names verbatim.
 // Changing a column name here is the ONLY place it needs to change.

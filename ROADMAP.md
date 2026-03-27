@@ -12,7 +12,7 @@ For a full history of what has shipped, see [CHANGELOG.md](CHANGELOG.md).
 
 ### 1. Slack Intake (`/scan-slack`)
 
-Spec complete: `specs/slack-intake-spec.md`.
+Spec complete: `docs/specs/slack-intake-spec.md`.
 
 Ship immediately upon Slack MCP connector availability in Cowork. No architectural
 work required — the feature plugs directly into the existing intake pipeline using
@@ -105,7 +105,7 @@ Each has an explicit reason for deferral and should be picked up before a major 
 | Item | Description | Why Deferred |
 |------|-------------|--------------|
 | **R8** — ts-jest `globals` deprecation | `scripts/package.json` uses `globals.ts-jest.tsconfig` which is deprecated in ts-jest v29. Migrate to the `transform` key format. Functional today; will become an error in a future ts-jest major version. | Not broken; migration is mechanical but noisy. Address before next ts-jest major upgrade. |
-| **R9** — Stale PRINCIPLES.md reference | `PRINCIPLES.md` line 25 references `docs/memory-access-layer.md` which is superseded. Should point to `skills/memory-manager/SKILL.md`. | Low risk; the superseded doc still exists with a deprecation notice. Fix in next PRINCIPLES.md edit session. |
+| **R9** — Stale PRINCIPLES.md reference | `PRINCIPLES.md` line 25 references `docs/adrs/memory-access-layer.md` which is superseded. Should point to `skills/memory-manager/SKILL.md`. | Low risk; the superseded doc still exists with a deprecation notice. Fix in next PRINCIPLES.md edit session. |
 
 ---
 

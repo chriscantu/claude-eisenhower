@@ -230,7 +230,7 @@ When a task is classified Q3, read `config/stakeholders.yaml` and score each del
 
 | File | Purpose |
 |------|---------|
-| `specs/delegation-spec.md` | This spec |
+| `docs/specs/delegation-spec.md` | This spec |
 | `config/stakeholders.yaml.example` | Committed template with anonymized placeholder values |
 | `config/stakeholders.yaml` | Gitignored — user fills in real delegates |
 | `tests/delegation-regression.md` | Regression test suite covering the full delegation chain |

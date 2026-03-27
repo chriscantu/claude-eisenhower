@@ -44,5 +44,5 @@ This applies to ALL calendar queries across all commands and skills, including:
 - `/plan-week` from mac-calendar-planner
 - Any ad-hoc calendar lookups
 
-See `docs/calendar-performance-fix.md` for the full diagnosis and
+See `docs/adrs/calendar-performance-fix.md` for the full diagnosis and
 `docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.

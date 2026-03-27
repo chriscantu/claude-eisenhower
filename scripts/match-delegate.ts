@@ -6,7 +6,7 @@
  * each delegate against a task title + description.
  *
  * Scoring logic lives in delegate-core.ts (shared with tests).
- * Algorithm defined in: specs/delegation-spec.md
+ * Algorithm defined in: docs/specs/delegation-spec.md
  *
  * Usage:
  *   npx ts-node scripts/match-delegate.ts "<task title>" "<task description>"

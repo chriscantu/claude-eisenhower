@@ -44,7 +44,7 @@ codebase and can be imported by `delegate-core.ts`, future adapter scripts, and 
  * These are the authoritative definitions — adapters/README.md
  * references this file.
  *
- * Contract defined in: specs/adapter-types-spec.md
+ * Contract defined in: docs/specs/adapter-types-spec.md
  */
 
 /**

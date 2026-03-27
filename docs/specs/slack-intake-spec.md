@@ -247,7 +247,7 @@ This spec was tracked as a "Later" item in ROADMAP.md under "Slack / Chat Captur
 | `commands/scan-slack.md` | Create | New `/scan-slack` command definition |
 | `config/slack-config.md.example` | Create | Config template (gitignored at runtime) |
 | `config/slack-config.md` | Create at setup | Written by `/setup` Step 6 or manually |
-| `specs/slack-intake-spec.md` | Create | This document |
+| `docs/specs/slack-intake-spec.md` | Create | This document |
 | `docs/CONNECTORS.md` | Update | Mark Slack as Active once shipped |
 | `ROADMAP.md` | Update | Move "Slack / Chat Capture" from Later → Next |
 | `commands/setup.md` | Update (P1) | Add Step 6: optional Slack config |

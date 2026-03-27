@@ -409,7 +409,7 @@ Scenario: Session nudge hook fires once per file
 ### Layer 2: Artifact Construct Baselines
 
 Before shipping v0.9.5, record baseline construct counts for all plugin artifacts in
-`specs/artifact-baselines.md`. Phase 6's regression check uses this
+`docs/specs/artifact-baselines.md`. Phase 6's regression check uses this
 as the floor.
 
 ### Layer 3: Smoke Test

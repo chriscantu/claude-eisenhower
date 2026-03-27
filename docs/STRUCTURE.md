@@ -36,8 +36,9 @@ claude-eisenhower/
 |
 +-- config/                # User-specific config (gitignored) + .example templates
 +-- adapters/              # Output adapter definitions (one file per target system)
-+-- specs/                 # Feature specs + design specs (pre-implementation docs)
-+-- docs/                  # Dev reference, ADRs, implementation notes
++-- docs/                  # All written reference: specs, ADRs, dev reference
+|   +-- specs/             # Feature specs + design specs (pre-implementation)
+|   +-- adrs/              # Architectural decision records
 |
 +-- scripts/               # Executable scripts (Swift, AppleScript, shell, TypeScript)
 +-- tests/                 # Regression test suites -- runnable via `npm test` in scripts/
@@ -155,44 +156,9 @@ adapters/
 
 ---
 
-### `specs/`
-Specification documents — written before implementation, kept as a record of
-decisions. Feature specs and design specs coexist here. Date-prefixed filenames
-(`2026-03-*`) distinguish design specs from feature specs.
-
-```
-specs/
-  # Feature specs
-  email-integration-spec.md
-  reminders-integration-spec.md
-  delegation-spec.md                  -- delegation validation: Gherkin spec for match algorithm
-  alias-resolution-spec.md            -- alias array schema and resolveAlias() behavior
-  delegate-entry-point-spec.md        -- /delegate direct entry point: PRD for v0.5.1
-  build-spec.md                       -- plugin packaging: npm run package / .plugin artifact
-  setup-spec.md                       -- first-run setup and /setup reconfiguration
-  github-release-spec.md              -- GitHub Actions release automation on v* tags
-  four-state-task-model-spec.md       -- Inbox->Active->Delegated->Done state model (v0.9.0)
-  slack-intake-spec.md                -- /scan-slack Slack DM + mention capture (planned v1.1)
-  tasks-schema-spec.md                -- canonical TASKS.md field schema + section structure
-  adapter-types-spec.md               -- TypeScript interfaces for TaskOutputRecord + PushResult
-  memory-schema-spec.md               -- glossary.md + people/*.md schema and write rules
-  skill-enhancer-spec.md              -- skill-enhancer implementation plan (v0.9.5)
-  artifact-baselines.md               -- floor construct counts for skill-enhancer Phase 6 regression check
-  review-week-spec.md                 -- /review-week PRD
-  plugin-path-resolution-spec.md      -- plugin root path resolution
-  # Design specs (date-prefixed)
-  2026-03-04-quality-gates-spec.md
-  2026-03-26-directory-restructure-design.md
-```
-
-Format: problem statement, Gherkin user stories, goals, architecture, decisions log.
-
----
-
 ### `docs/`
-Developer reference, architectural decision records (ADRs), and implementation
-notes. Explains *how* something works or *why* a choice was made. Also houses
-project-governance documents (`PRINCIPLES.md`, `CONNECTORS.md`) and this file.
+All written reference material: specs, ADRs, developer reference, and project
+governance. Organized into subdirectories by purpose.
 
 ```
 docs/
@@ -200,15 +166,42 @@ docs/
   STRUCTURE.md                       -- this file -- canonical directory structure and file placement rules
   CONNECTORS.md                      -- registry of all active and planned integrations
   architecture.md                    -- Mermaid diagrams: system overview, task state machine, memory access layer
-  calendar-performance-fix.md        -- ADR: why Swift EventKit instead of AppleScript
   mac-calendar-planner-override.md   -- override instructions for external plugin
-  memory-system-adr.md               -- ADR: single write target for delegation memory (Option B)
-  memory-access-layer.md             -- Superseded -- see skills/memory-manager/SKILL.md (v1.0.1)
   scripts-reference.md               -- script documentation (moved from scripts/README.md)
-  architectural-review-2026-03-02.md -- ADR: full codebase review at v0.9.1; shaped v1.0 roadmap
   applescript-test-protocol.md       -- manual test protocol: 8 test cases for complete_reminder and push_reminder
-  security-audit-applescript.md      -- AppleScript shell injection audit (v0.9.7)
+
+  specs/                             -- pre-implementation specs (feature + design)
+    email-integration-spec.md
+    reminders-integration-spec.md
+    delegation-spec.md               -- delegation validation: Gherkin spec for match algorithm
+    alias-resolution-spec.md         -- alias array schema and resolveAlias() behavior
+    delegate-entry-point-spec.md     -- /delegate direct entry point: PRD for v0.5.1
+    build-spec.md                    -- plugin packaging: npm run package / .plugin artifact
+    setup-spec.md                    -- first-run setup and /setup reconfiguration
+    github-release-spec.md           -- GitHub Actions release automation on v* tags
+    four-state-task-model-spec.md    -- Inbox->Active->Delegated->Done state model (v0.9.0)
+    slack-intake-spec.md             -- /scan-slack Slack DM + mention capture (planned v1.1)
+    tasks-schema-spec.md             -- canonical TASKS.md field schema + section structure
+    adapter-types-spec.md            -- TypeScript interfaces for TaskOutputRecord + PushResult
+    memory-schema-spec.md            -- glossary.md + people/*.md schema and write rules
+    skill-enhancer-spec.md           -- skill-enhancer implementation plan (v0.9.5)
+    artifact-baselines.md            -- floor construct counts for skill-enhancer Phase 6 regression check
+    review-week-spec.md              -- /review-week PRD
+    plugin-path-resolution-spec.md   -- plugin root path resolution
+    2026-03-04-quality-gates-spec.md         -- (design spec, date-prefixed)
+    2026-03-26-directory-restructure-design.md -- (design spec, date-prefixed)
+
+  adrs/                              -- architectural decision records
+    calendar-performance-fix.md      -- ADR: why Swift EventKit instead of AppleScript
+    memory-system-adr.md             -- ADR: single write target for delegation memory (Option B)
+    memory-access-layer.md           -- Superseded -- see skills/memory-manager/SKILL.md (v1.0.1)
+    architectural-review-2026-03-02.md -- ADR: full codebase review at v0.9.1; shaped v1.0 roadmap
+    security-audit-applescript.md    -- AppleScript shell injection audit (v0.9.7)
 ```
+
+**What belongs in `docs/specs/`**: Feature specs (problem statement, Gherkin, goals, architecture, decisions log) and design specs (date-prefixed).
+**What belongs in `docs/adrs/`**: Post-decision records explaining *why* a choice was made.
+**What belongs in `docs/` root**: Governance docs, system diagrams, reference material.
 
 ---
 
@@ -285,7 +278,7 @@ tests/
 ```
 
 **What belongs here**: Regression tests for scripts/ algorithms.
-**What does not belong here**: Spec docs (`specs/`), fixtures with real names (PII).
+**What does not belong here**: Spec docs (`docs/specs/`), fixtures with real names (PII).
 
 ---
 
@@ -297,11 +290,12 @@ When adding a new file, ask:
 2. **Is it skill domain knowledge or reference material?** -> `skills/{skill-name}/references/`
 3. **Is it a user-specific value (account name, list name)?** -> `config/` as `.example` + gitignored actual
 4. **Is it an output adapter (how to push to a system)?** -> `adapters/`
-5. **Is it a feature or design spec written before implementation?** -> `specs/`
-6. **Is it an implementation note, ADR, or dev reference doc?** -> `docs/`
-7. **Is it an executable script?** -> `scripts/`
-8. **Is it runtime/personal data?** -> `memory/` or `TASKS.md` (both gitignored)
-9. **None of the above?** -> Ask before creating. Do not default to repo root.
+5. **Is it a feature or design spec written before implementation?** -> `docs/specs/`
+6. **Is it an architectural decision record?** -> `docs/adrs/`
+7. **Is it an implementation note or dev reference doc?** -> `docs/`
+8. **Is it an executable script?** -> `scripts/`
+9. **Is it runtime/personal data?** -> `memory/` or `TASKS.md` (both gitignored)
+10. **None of the above?** -> Ask before creating. Do not default to repo root.
 
 ---
 

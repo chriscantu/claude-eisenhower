@@ -93,7 +93,7 @@ Key fields: `Title`, `Description`, `Source`, `Requester`, `Urgency`, `Due date`
 `Priority` (Q1/Q2/Q3/Q4), `State` (Inbox/Active/Delegated/Done), `Owner`,
 `Check-by` (required when State: Delegated), `Scheduled`, `Action`, `Done`.
 
-See `specs/tasks-schema-spec.md` for the complete field reference.
+See `docs/specs/tasks-schema-spec.md` for the complete field reference.
 
 ## Stakeholder Memory
 

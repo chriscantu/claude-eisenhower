@@ -106,7 +106,7 @@ Any HALT above is terminal. Do not read the Exit line below.
 2. Read target artifact. Detect type using Section 1 of enhancement-protocol.md.
 3. Count baseline constructs per type (Section 1 construct counting rules).
 4. Detect domain using Section 2.
-5. Check for matching spec in `specs/`:
+5. Check for matching spec in `docs/specs/`:
    - Found, artifact newer than spec → "Spec may be stale — include spec sync proposal"
    - Not found → flag as EC-9 (load `references/edge-cases.md`)
 6. Run `cd scripts && npm test`. If failing → halt (EC-6).

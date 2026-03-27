@@ -140,7 +140,7 @@ The workflow extracts the ROADMAP.md row for the current version and uses it as 
 | File | Change |
 |------|--------|
 | `.github/workflows/release.yml` | New — release workflow |
-| `specs/github-release-spec.md` | New — this spec |
+| `docs/specs/github-release-spec.md` | New — this spec |
 | `STRUCTURE.md` | Add `.github/workflows/` to directory listing |
 | `ROADMAP.md` | Add v0.7.0 entry when implemented |
 

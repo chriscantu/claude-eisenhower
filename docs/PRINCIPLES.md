@@ -22,7 +22,7 @@ copy appears in more than one place, it belongs in a shared module.
 - Scoring weights (`WEIGHTS`, `REL_RANK`) are defined once and imported wherever needed.
 - Memory backend access (read and write) is abstracted via the Memory Access Layer pattern
   so commands never branch on which backend is active. See
-  `docs/memory-access-layer.md` for the full contract.
+  `docs/adrs/memory-access-layer.md` for the full contract.
 
 **Red flags:** copy-pasted functions, types defined in multiple files, the same
 constant appearing in both a script and a test.
@@ -57,7 +57,7 @@ call external services. File I/O is the CLI's job.
 Specs before code. Tests before shipping.
 
 **In this repo:**
-- Gherkin spec goes in `specs/` before implementation starts.
+- Gherkin spec goes in `docs/specs/` before implementation starts.
 - Jest regression tests go in `tests/` and must pass before any feature is merged.
 - Run tests with: `cd scripts && npm test`
 - Tests import from `scripts/delegate-core.ts` � they test the algorithm directly,

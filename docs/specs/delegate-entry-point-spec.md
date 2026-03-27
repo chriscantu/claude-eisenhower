@@ -237,7 +237,7 @@ If the top delegate has `capacity_signal: low`, propose a longer check-in window
 | File | Purpose |
 |------|---------|
 | `commands/delegate.md` | New command — the primary deliverable of this spec |
-| `specs/delegate-entry-point-spec.md` | This spec |
+| `docs/specs/delegate-entry-point-spec.md` | This spec |
 | `tests/delegate-entry.test.ts` | Jest regression tests for all P0 requirements |
 
 ## Files to Update

@@ -57,7 +57,7 @@ commands with the user's privileges.
 [ ] For each (a) classification, the audit confirms `quoted form of` is applied
     to the value before concatenation, not after.
 
-[ ] The audit result is documented in docs/security-audit-applescript.md
+[ ] The audit result is documented in docs/adrs/security-audit-applescript.md
     listing each call site, its classification, and the user-controlled inputs involved.
 ```
 
@@ -175,7 +175,7 @@ re-introducing a removed section name.
 |------|-------------------|
 | `scripts/complete_reminder.applescript` (audit only — no change expected) | S1 |
 | `scripts/push_reminder.applescript` (audit only — no change expected) | S1 |
-| `docs/security-audit-applescript.md` | S1 |
+| `docs/adrs/security-audit-applescript.md` | S1 |
 | `docs/applescript-test-protocol.md` | Q1 |
 | `docs/STRUCTURE.md` | Q1 |
 | `tests/prompt-contracts.test.ts` | Q2 |

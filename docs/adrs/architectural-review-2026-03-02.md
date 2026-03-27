@@ -14,7 +14,7 @@ A full codebase review was conducted at v0.9.1 to assess structural health,
 identify consistency gaps introduced during rapid feature delivery, and set the
 architectural direction for v1.0 and beyond. This document records what was found
 and the decisions made as a result. Forward-looking work items spawned by this
-review each have their own spec in `specs/`.
+review each have their own spec in `docs/specs/`.
 
 ---
 
@@ -31,7 +31,7 @@ These decisions were validated and should be preserved and extended:
   adapter proves the pattern. Future adapters slot in without touching any command.
 
 - **Spec-before-code discipline** — every major feature has a spec in
-  `specs/` before implementation. Gherkin scenarios act as acceptance
+  `docs/specs/` before implementation. Gherkin scenarios act as acceptance
   criteria. This must continue for every domain in the roadmap below.
 
 - **PII safety** — aliases everywhere, full names only in gitignored files,
@@ -68,7 +68,7 @@ TASKS.md is a flat Markdown file with no schema enforcement. Record format is
 described independently in each command file — not in a single source of truth.
 The v0.9.x drift above is a direct consequence.
 
-The four-state model spec (`specs/four-state-task-model-spec.md`)
+The four-state model spec (`docs/specs/four-state-task-model-spec.md`)
 defines the state transitions but not the full per-field schema, valid values, or
 required-vs-optional rules per state.
 
@@ -78,7 +78,7 @@ Pure functions in `delegate-core.ts` and `date-helpers.ts` are extremely well te
 (113 tests, all passing). The test-per-feature discipline is strong.
 
 **Gap**: The four-state model (v0.9.0) has a complete 10-scenario Gherkin spec in
-`specs/four-state-task-model-spec.md` but zero Jest coverage. Pure
+`docs/specs/four-state-task-model-spec.md` but zero Jest coverage. Pure
 functions need to be extracted from the command layer (state transition routing,
 Check-by enforcement, section-to-state mapping) and covered before v1.0.
 
@@ -114,7 +114,7 @@ problem: no single source of truth means format drifts as commands evolve.
 
 ### Decision 1: Create a canonical TASKS.md schema spec
 
-**Decision**: Write `specs/tasks-schema-spec.md` defining every field,
+**Decision**: Write `docs/specs/tasks-schema-spec.md` defining every field,
 valid values, required vs. optional per state, and section structure. All commands
 reference this spec instead of duplicating format inline.
 
@@ -122,7 +122,7 @@ reference this spec instead of duplicating format inline.
 exactly what caused the v0.9.x drift). Enforce via TypeScript validation at runtime
 (deferred — adds complexity before the schema is stable).
 
-**Spec**: `specs/tasks-schema-spec.md`
+**Spec**: `docs/specs/tasks-schema-spec.md`
 
 ### Decision 2: Formalize the adapter contract as TypeScript interfaces
 
@@ -135,11 +135,11 @@ by pointing to the code.
 as adapter count grows). Derive from a JSON Schema (deferred — unnecessary complexity
 for the current scale).
 
-**Spec**: `specs/adapter-types-spec.md`
+**Spec**: `docs/specs/adapter-types-spec.md`
 
 ### Decision 3: Write a memory schema spec
 
-**Decision**: Write `specs/memory-schema-spec.md` defining the
+**Decision**: Write `docs/specs/memory-schema-spec.md` defining the
 canonical structure for `memory/glossary.md` and `memory/people/*.md`, who writes
 them, when, and how alias filenames are derived.
 
@@ -147,7 +147,7 @@ them, when, and how alias filenames are derived.
 format drift). Consolidate with `productivity:memory-management` skill (deferred —
 open question on memory system ownership, see below).
 
-**Spec**: `specs/memory-schema-spec.md`
+**Spec**: `docs/specs/memory-schema-spec.md`
 
 ### Decision 4: Remove dist/ from source control
 
@@ -197,11 +197,11 @@ no, add `plugin_root` to a shared config file.
 
 | Output | Location | Status |
 |--------|----------|--------|
-| This ADR | `docs/architectural-review-2026-03-02.md` | ✅ Complete |
+| This ADR | `docs/adrs/architectural-review-2026-03-02.md` | ✅ Complete |
 | ROADMAP.md restructured | `ROADMAP.md` | ✅ Complete |
-| TASKS.md schema spec | `specs/tasks-schema-spec.md` | ✅ Complete (v1.0) |
-| Adapter contract spec | `specs/adapter-types-spec.md` | ✅ Complete (v1.0) |
-| Memory schema spec | `specs/memory-schema-spec.md` | ✅ Complete (v1.0) |
+| TASKS.md schema spec | `docs/specs/tasks-schema-spec.md` | ✅ Complete (v1.0) |
+| Adapter contract spec | `docs/specs/adapter-types-spec.md` | ✅ Complete (v1.0) |
+| Memory schema spec | `docs/specs/memory-schema-spec.md` | ✅ Complete (v1.0) |
 | v0.9.2 consistency patch — delegate.md, scan-email.md, hooks.json, SKILL.md | Various | ✅ Complete (v0.9.2) |
 | D5 remaining: schedule.md + execute.md four-state vocabulary | `commands/schedule.md`, `commands/execute.md` | ✅ Complete (v1.1.3) |
 | D4: dist/ removed from source control | `.gitignore` | ✅ Complete (v0.9.7/I1) |
