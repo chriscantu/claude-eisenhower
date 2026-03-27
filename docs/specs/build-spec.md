@@ -98,7 +98,7 @@ Standard zip archive. The `.plugin` extension signals to Cowork that this is an 
 ### Contents — included
 
 ```
-claude-eisenhower-0.3.0.plugin (zip)
+claude-eisenhower-{version}.plugin (zip)
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
@@ -108,40 +108,51 @@ claude-eisenhower-0.3.0.plugin (zip)
 │   ├── prioritize.md
 │   ├── scan-email.md
 │   ├── schedule.md
-│   └── setup.md              ← added by setup feature (future)
+│   └── setup.md
 ├── skills/
-│   └── claude-eisenhower/
+│   ├── core/
+│   │   ├── SKILL.md
+│   │   └── references/
+│   │       ├── delegation-guide.md
+│   │       ├── eisenhower.md
+│   │       ├── email-patterns.md
+│   │       └── intake-sources.md
+│   ├── memory-manager/
+│   │   ├── SKILL.md
+│   │   └── references/
+│   │       └── memory-operations.md
+│   └── skill-enhancer/
 │       ├── SKILL.md
 │       └── references/
-│           ├── delegation-guide.md
-│           ├── eisenhower.md
-│           ├── email-patterns.md
-│           └── intake-sources.md
+│           ├── edge-cases.md
+│           ├── enhancement-protocol.md
+│           └── regression-safeguards.md
 ├── agents/
 │   └── task-prioritizer.md
 ├── hooks/
-│   └── hooks.json
+│   ├── hooks.json
+│   └── enhance-nudge.sh
 ├── scripts/
 │   ├── cal_query.swift
+│   ├── complete_reminder.applescript
 │   └── push_reminder.applescript
-├── integrations/
-│   ├── config/
-│   │   ├── calendar-config.md.example
-│   │   ├── email-config.md.example
-│   │   ├── task-output-config.md.example
-│   │   └── stakeholders.yaml.example
-│   ├── adapters/
-│   │   ├── README.md
-│   │   └── reminders.md
-│   └── docs/
-│       ├── calendar-performance-fix.md
-│       ├── mac-calendar-planner-override.md
-│       └── scripts-reference.md
+├── config/
+│   ├── calendar-config.md.example
+│   ├── email-config.md.example
+│   ├── task-output-config.md.example
+│   └── stakeholders.yaml.example
+├── adapters/
+│   ├── README.md
+│   └── reminders.md
+├── docs/
+│   ├── CONNECTORS.md
+│   ├── PRINCIPLES.md
+│   ├── STRUCTURE.md
+│   └── ...
 ├── CLAUDE.md
-├── docs/CONNECTORS.md
-├── docs/PRINCIPLES.md
-├── README.md
-└── docs/STRUCTURE.md
+├── CHANGELOG.md
+├── ROADMAP.md
+└── README.md
 ```
 
 ### Contents — excluded
@@ -160,7 +171,7 @@ These are never included in the artifact, even if present in the repo:
 | `tests/node_modules/` | Build artifact — gitignored |
 | `dist/` | Build artifact — gitignored |
 | `tests/` | Dev-only — not needed at runtime |
-| `specs/` | Dev-only design docs |
+| `docs/specs/` | Dev-only design docs |
 | `.git/` | Version control internals |
 | `.DS_Store` | macOS metadata |
 | `*.plugin` | Output artifact — not recursive |

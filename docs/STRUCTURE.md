@@ -268,8 +268,6 @@ tests/
   phase2-3.test.ts             -- 32-test suite for /schedule + /execute pure logic (DEL-7xx)
   agent-contracts.test.ts      -- structural checks: plugin schema, hook registration, file presence
   prompt-contracts.test.ts     -- vocabulary contract tests: prohibited headers, memory guard lines
-  anti-domain.test.ts          -- anti_domains veto logic (TEST-ANTI-001-004)
-  business-days.test.ts        -- addBusinessDays boundary cases (TEST-ABD-001-006)
   adapter-types.test.ts        -- adapter type interface checks
   four-state.test.ts           -- four-state task model checks
   pending-counts.test.ts       -- pending task count logic
@@ -308,7 +306,8 @@ When adding a new file, ask:
 | Adapters | lowercase system name | `reminders.md`, `asana.md` |
 | Feature specs | `{feature}-spec.md` | `delegation-spec.md` |
 | Design specs | `{date}-{name}-spec.md` or `{date}-{name}-design.md` | `2026-03-26-directory-restructure-design.md` |
-| Scripts | kebab-case with extension | `cal_query.swift`, `push_reminder.applescript` |
+| Scripts (TypeScript) | kebab-case with extension | `delegate-core.ts`, `match-delegate.ts` |
+| Scripts (Swift/AppleScript) | snake_case with extension | `cal_query.swift`, `push_reminder.applescript` |
 | People memory | `{first}-{last}.md` | `alex-rivera.md` |
 
 ---
