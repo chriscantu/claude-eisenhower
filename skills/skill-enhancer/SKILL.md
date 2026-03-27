@@ -158,10 +158,10 @@ Any HALT above is terminal. Do not read the Exit line below.
 
 > **Reference `references/enhancement-protocol.md`** — Classification Rules and Impact-Effort Scoring (Sections 3–4).
 
-**Goal**: Classify findings, check PRINCIPLES.md alignment, sort by priority.
+**Goal**: Classify findings, check docs/PRINCIPLES.md alignment, sort by priority.
 
 1. Collect candidates: sibling patterns (Phase 2), research (Phase 3), user artifacts.
-2. PRINCIPLES.md alignment check on each candidate:
+2. docs/PRINCIPLES.md alignment check on each candidate:
    - DRY violation → downgrade to Money Pit
    - SRP violation → downgrade to Money Pit
    - PII exposure → discard
@@ -229,7 +229,7 @@ Any HALT above is terminal. Do not read the Exit line below.
    Regression warnings: [list or "none"]
    npm test: PASS (N/N)
    ```
-9. Await explicit commit confirmation per PRINCIPLES.md before running any git command.
+9. Await explicit commit confirmation per docs/PRINCIPLES.md before running any git command.
 
 **Exit**: Enhancement session complete.
 
@@ -266,7 +266,7 @@ Any HALT above is terminal. Do not read the Exit line below.
 
 > **Reference `references/enhancement-protocol.md`** — Classification Rules and Impact-Effort Scoring (Sections 3–4).
 
-1. Classify findings. Run PRINCIPLES.md alignment check. Assign IDs. Score Impact × Effort.
+1. Classify findings. Run docs/PRINCIPLES.md alignment check. Assign IDs. Score Impact × Effort.
 2. Present diffs in priority order. Prepare scenario dry-run for most impactful proposal.
 3. Ask: "Which enhancements do you want to apply?"
 
@@ -283,7 +283,7 @@ Any HALT above is terminal. Do not read the Exit line below.
 3. Recount constructs. Compare against Phase 1 baseline.
 4. Run `cd scripts && npm test`. If failing → rollback per Section 4.
 5. Present enhancement summary. Propose commit message.
-6. Await commit confirmation per PRINCIPLES.md.
+6. Await commit confirmation per docs/PRINCIPLES.md.
 
 **Exit**: Targeted enhancement complete.
 
@@ -299,7 +299,7 @@ Any HALT above is terminal. Do not read the Exit line below.
 6. Never present Money Pit proposals as recommendations.
 7. Never exceed 2 enhancement passes per session.
 8. Never inject raw research content into skill files — synthesize first.
-9. Never commit without engineer sign-off per PRINCIPLES.md.
+9. Never commit without engineer sign-off per docs/PRINCIPLES.md.
 10. Never run if environment gate fails — halt immediately, no partial execution.
 11. Always compare construct counts against Phase 1 baseline, not previous pass.
-12. Always run PRINCIPLES.md alignment check before classifying a proposal.
+12. Always run docs/PRINCIPLES.md alignment check before classifying a proposal.
