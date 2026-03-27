@@ -27,7 +27,7 @@ conventions. This is the foundational principle — everything else builds on it
 
 **In this repo:**
 - `.claude-plugin/plugin.json` defines the plugin manifest
-- `commands/` holds 8 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup)
+- `commands/` holds 10 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup, status, today)
 - `skills/` holds 3 skills (core, memory-manager, skill-enhancer), each with `SKILL.md` and `references/`
 - `agents/` holds 1 agent (task-prioritizer)
 - `hooks/hooks.json` registers SessionStart and PostToolUse hooks
@@ -132,6 +132,25 @@ before creating anything.
   (README, CLAUDE, .gitignore). Project docs (STRUCTURE, CONNECTORS, PRINCIPLES) live in `docs/`.
 - Duplicate a file to work around a path issue � fix the path.
 - Commit build artifacts (`node_modules/`, `dist/`, `package-lock.json` in some cases).
+
+---
+
+## Platform Architecture
+
+The plugin core is platform-agnostic: flat markdown files (TASKS.md, memory/, config/)
+and pure prompt logic. Platform-specific integrations (Calendar via EventKit, Reminders
+via AppleScript, Mail via AppleScript) are optional layers — commands and skills that
+depend on them degrade gracefully when unavailable.
+
+**Rules:**
+- New features that only read/write markdown files must not introduce platform dependencies
+- Platform-specific integrations belong in `scripts/` with graceful fallback when unavailable
+- Config files gate optional integrations — missing config = skip that data source, not an error
+
+**In this repo:**
+- Core (platform-agnostic): `/intake`, `/prioritize`, `/execute`, `/delegate`, `/today`, `/review-week`, `/status`
+- Optional macOS integrations: `/schedule` (Calendar + Reminders), `/scan-email` (Apple Mail)
+- Graceful degradation: `/today` skips the calendar section if `calendar-config.md` is missing
 
 ---
 

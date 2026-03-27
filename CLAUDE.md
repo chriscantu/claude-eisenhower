@@ -15,9 +15,9 @@ config file from `config/`:
 
 | Config file | Controls | Used by |
 |-------------|----------|---------|
-| `config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email` |
+| `config/calendar-config.md` | Mac Calendar name | `/schedule`, `/scan-email`, `/today` |
 | `config/email-config.md` | Apple Mail account + inbox | `/scan-email` |
-| `config/task-output-config.md` | Reminders list + active adapter | `/schedule` |
+| `config/task-output-config.md` | Reminders list + active adapter + plugin_root | `/schedule`, `/today` |
 
 ---
 
@@ -69,6 +69,11 @@ Every code review MUST validate against the following principles from
 - Each file owns one concern (SRP)
 - Pure functions take data as arguments, no filesystem or external service calls (DI)
 - Interfaces are narrow and purpose-specific
+
+**Platform Architecture:**
+- Core features (markdown-only) must not introduce platform dependencies
+- Platform-specific integrations (Calendar, Reminders, Mail) degrade gracefully when config is missing
+- Missing config = skip that data source, not an error
 
 **Reliability:**
 - Calendar queries MUST use `scripts/cal_query.swift` (EventKit), never AppleScript `whose`
