@@ -82,6 +82,7 @@ skills/
       intake-sources.md
       delegation-guide.md
       email-patterns.md
+      plugin-root-resolution.md
   skill-enhancer/
     SKILL.md
     references/
