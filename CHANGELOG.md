@@ -7,6 +7,38 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v1.5.0] — 2026-03-27 — /today + /status Commands
+
+Two new commands for daily workflow and supervisor reporting. 200 tests passing.
+
+**/today — Daily briefing (v1.4.0 spec):**
+- Consolidated view of what needs attention right now
+- Surfaces overdue delegations, tasks on plate, inbox backlog, calendar shape
+- Read-only with daily analytics log (`memory/today-log.md`)
+- Calendar integration optional — degrades gracefully when unavailable
+
+Spec: `docs/specs/today-command-spec.md`
+
+**/status — Org status (v1.5.0 spec):**
+- On-demand org-wide status grouped by project/initiative
+- Three query modes: `/status`, `/status [project]`, `/status [alias]`
+- Health signals per project (🔴 overdue, 🟡 approaching, 🟢 on track)
+- Progressive `Project:` tagging via confidence-split triage
+- Risk summary leads the default view
+
+Spec: `docs/specs/status-command-spec.md`
+
+**Platform Architecture principle:**
+- New principle in `docs/PRINCIPLES.md`: core is platform-agnostic (flat markdown),
+  macOS integrations (Calendar, Reminders, Mail) are optional layers
+- Added to `CLAUDE.md` code review checklist
+
+**Schema update:**
+- New optional `Project:` field in `docs/specs/tasks-schema-spec.md`
+- Populated progressively by `/status` triage, not required at intake
+
+---
+
 ## [v1.3.0] — 2026-03-26 — Scoring Unification + Plugin Root DRY
 
 Two architectural improvements from codebase review. No user-visible behavior change
