@@ -63,6 +63,7 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `Note` | string | Optional | Blocker context, escalation notes, or elimination record. Format: `Eliminated — Q4 cut {YYYY-MM-DD}` for dropped tasks. |
 | `Done` | date (YYYY-MM-DD) | Required if `State: Done` | The date the task was completed or eliminated |
 | `Synced` | string | After adapter push | Result of the adapter push. See values below. |
+| `Project` | string | Optional | Human-readable initiative name, title case (e.g., "Auth Migration"). Introduced by `/status` triage. Not written by other commands unless they opt in. |
 
 ### Synced field values
 
@@ -226,3 +227,8 @@ And the record appears in the ## Inbox section
 
 4. **Done accumulates; nothing is deleted** — Moving to `## Done` is the terminal
    state. Historical tasks stay visible as a record of work completed and work dropped.
+
+5. **`Project:` is optional and never required** — Unlike `Check-by` on Delegated tasks,
+   `Project:` has no enforcement gate. Tasks without it are valid and appear as "Untagged"
+   in `/status`. The field is populated progressively through `/status` triage, not at
+   intake time.
