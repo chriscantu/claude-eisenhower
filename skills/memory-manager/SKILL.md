@@ -42,7 +42,7 @@ failure mode details.
 2. If the skill is unavailable, fall back to local files:
    - Notify the caller: "Note: memory-management skill not found. Logging locally."
    - Ensure `memory/people/` directory exists (create if absent).
-   - Write using the canonical schema in `integrations/specs/memory-schema-spec.md`:
+   - Write using the canonical schema in `docs/specs/memory-schema-spec.md`:
      - Append a new row to the `## Stakeholder Follow-ups` table in `memory/glossary.md`:
        `| [alias] | [task_title] | [YYYY-MM-DD] | [check_in_date] | Pending |`
      - Create or append to `memory/people/[alias-filename].md` (filename derived per spec):

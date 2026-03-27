@@ -61,7 +61,7 @@ describe("Phase 0: Stakeholder Graph Initialization", () => {
     expect(result.candidates).toHaveLength(0);
   });
   test("TEST-DEL-002: stakeholders.yaml.example file exists and is valid YAML", () => {
-    const examplePath = path.resolve(__dirname, "../integrations/config/stakeholders.yaml.example");
+    const examplePath = path.resolve(__dirname, "../config/stakeholders.yaml.example");
     expect(fs.existsSync(examplePath)).toBe(true);
     const parsed = yaml.load(fs.readFileSync(examplePath, "utf8")) as { stakeholders: unknown[] };
     expect(parsed).toHaveProperty("stakeholders");
@@ -188,11 +188,11 @@ describe("Ranking stability", () => {
 describe("PII safety � source control checks", () => {
   test("TEST-DEL-200: stakeholders.yaml is listed in .gitignore", () => {
     const content = fs.readFileSync(path.resolve(__dirname, "../.gitignore"), "utf8");
-    expect(content).toContain("integrations/config/stakeholders.yaml");
+    expect(content).toContain("config/stakeholders.yaml");
     expect(content).not.toContain("stakeholders.yaml.example");
   });
   test("TEST-DEL-201: .example file contains no real names", () => {
-    const examplePath = path.resolve(__dirname, "../integrations/config/stakeholders.yaml.example");
+    const examplePath = path.resolve(__dirname, "../config/stakeholders.yaml.example");
     const parsed = yaml.load(fs.readFileSync(examplePath, "utf8")) as { stakeholders: Stakeholder[] };
     for (const s of parsed.stakeholders) {
       expect(s.name).toMatch(/^[A-Z_0-9]+$/);

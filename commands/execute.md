@@ -39,7 +39,7 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
 5. **Sync to task output adapter** (Reminders or configured system):
-   - Read `integrations/config/task-output-config.md` for: `plugin_root` (required — run /setup if not configured), the active adapter, and adapter settings
+   - Read `config/task-output-config.md` for: `plugin_root` (required — run /setup if not configured), the active adapter, and adapter settings
    - If the active adapter is still a placeholder (`~~task_output`) → skip silently
    - If the active adapter is `reminders`:
      - Read `list_name` from the `### reminders` block

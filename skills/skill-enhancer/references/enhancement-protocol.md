@@ -43,7 +43,7 @@ Agent B queries apply only to domains with known failure-mode literature; cells 
 | `commands/delegate.md` | delegation | authority matching, check-by dates, re-escalation, alias resolution | "delegation frameworks for engineering directors — check-in cadence and re-escalation 2025" | "delegation failure patterns — what causes delegated tasks to stall" |
 | `commands/scan-email.md` | email-intake | email parsing, signal vs. noise, action item extraction | "engineering manager email triage and action item extraction patterns 2025" | — |
 | `commands/setup.md` | onboarding | configuration, first-run, plugin setup | "first-run plugin setup and configuration UX patterns for developer tools 2025" | — |
-| `skills/claude-eisenhower/SKILL.md` | orchestration | workflow routing, phase coordination, all domains | "AI-assisted productivity workflow design for engineering leaders 2025" | — |
+| `skills/core/SKILL.md` | orchestration | workflow routing, phase coordination, all domains | "AI-assisted productivity workflow design for engineering leaders 2025" | — |
 | `skills/*/references/*.md` | varies | inherit domain from parent SKILL.md | — (use parent SKILL.md domain row) | — |
 
 ---
@@ -103,10 +103,10 @@ Score each NEW and ENHANCEMENT candidate.
 | Target artifact | Siblings to mine |
 |---|---|
 | `commands/intake.md` | all other `commands/*.md` |
-| `commands/prioritize.md` | all other `commands/*.md` + `skills/claude-eisenhower/references/eisenhower.md` |
+| `commands/prioritize.md` | all other `commands/*.md` + `skills/core/references/eisenhower.md` |
 | `commands/schedule.md` | all other `commands/*.md` |
-| `commands/delegate.md` | all other `commands/*.md` + `skills/claude-eisenhower/references/delegation-guide.md` |
-| `skills/claude-eisenhower/SKILL.md` | all `commands/*.md` + all `skills/*/references/*.md` |
+| `commands/delegate.md` | all other `commands/*.md` + `skills/core/references/delegation-guide.md` |
+| `skills/core/SKILL.md` | all `commands/*.md` + all `skills/*/references/*.md` |
 | `skills/*/references/*.md` | sibling reference files + parent SKILL.md |
 
 ### 6 pattern types to extract

@@ -16,7 +16,7 @@ Reminder, and logs a follow-up memory entry — no `/schedule` run needed.
 
 ## Config check
 
-Before doing anything else, check that `integrations/config/stakeholders.yaml` exists.
+Before doing anything else, check that `config/stakeholders.yaml` exists.
 
 If it does not exist → stop and say:
 > "I need a stakeholders file before I can score delegation candidates. Would you like me to create a starter file now? You'll fill in your team's details after setup."
@@ -57,12 +57,12 @@ Ask: "Confirm delegation, or should this be reclassified as Q1 instead?"
 
 ## Step 3: Load the stakeholder graph and score
 
-Read `plugin_root` from `integrations/config/task-output-config.md` (required — run /setup if not configured).
+Read `plugin_root` from `config/task-output-config.md` (required — run /setup if not configured).
 
-Read `integrations/config/stakeholders.yaml` from `{plugin_root}/`.
+Read `config/stakeholders.yaml` from `{plugin_root}/`.
 
 **If the file does not exist:**
-> No stakeholder graph found. Copy `integrations/config/stakeholders.yaml.example`
+> No stakeholder graph found. Copy `config/stakeholders.yaml.example`
 > to `stakeholders.yaml` and fill in your delegates to enable scoring.
 
 Ask: "Who should own this?" Accept a manually-entered alias and skip to Step 5.
@@ -181,7 +181,7 @@ Where `{TODAY}` and `{Scheduled}` are today's date in YYYY-MM-DD format.
 
 ## Step 7: Push to task output adapter
 
-Read `integrations/config/task-output-config.md` for the active adapter.
+Read `config/task-output-config.md` for the active adapter.
 
 If the adapter is not configured (`~~task_output` or missing), skip this step silently.
 

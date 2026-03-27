@@ -10,13 +10,13 @@ This command reads emails from a configured Apple Mail account and inbox using t
 
 ## Config check
 
-Check that `integrations/config/email-config.md` exists before proceeding.
+Check that `config/email-config.md` exists before proceeding.
 
 If it does not exist → stop and say:
 > "I need to configure your email account before scanning. Let me run setup first."
 Then run the `/setup` command (email step only), and resume `/scan-email` when complete.
 
-**Before doing anything else**, read `integrations/config/email-config.md` to get:
+**Before doing anything else**, read `config/email-config.md` to get:
 - `account_name` — the mail account to scan
 - `inbox_name` — the inbox within that account
 
@@ -38,7 +38,7 @@ If TASKS.md does not exist, proceed — it will be created when tasks are saved.
 
 ## Step 2: Verify the configured account and mailbox name
 
-Using the `account_name` from `integrations/config/email-config.md`, confirm the account exists and get the exact mailbox name:
+Using the `account_name` from `config/email-config.md`, confirm the account exists and get the exact mailbox name:
 
 ```applescript
 tell application "Mail"
@@ -65,7 +65,7 @@ tell application "Mail"
 end tell
 ```
 
-If no matching account is found, inform the user: "I couldn't find an account matching '{account_name}' in Apple Mail. Update `integrations/config/email-config.md` with the correct account name, or check that Apple Mail is open and the account is configured."
+If no matching account is found, inform the user: "I couldn't find an account matching '{account_name}' in Apple Mail. Update `config/email-config.md` with the correct account name, or check that Apple Mail is open and the account is configured."
 
 ## Step 3: Scan for subjects, senders, and dates — 10 messages at a time
 
@@ -102,7 +102,7 @@ Determine scope from $ARGUMENTS:
 - "surveys" → Company Surveys only
 - no argument or "all" → all three categories
 
-Apply detection rules from `skills/claude-eisenhower/references/email-patterns.md`. Match on subject and sender alone first — body fetch happens only for confirmed candidates. Skip any email matching an existing TASKS.md entry (same subject + received date).
+Apply detection rules from `skills/core/references/email-patterns.md`. Match on subject and sender alone first — body fetch happens only for confirmed candidates. Skip any email matching an existing TASKS.md entry (same subject + received date).
 
 ## Step 5: Fetch body preview for matched emails only
 
@@ -147,7 +147,7 @@ One call per matched email. Extract: any deadline language, due dates, urgency s
 For each Admin/Compliance match that has a detectable due date, run a fast calendar query using the EventKit-based Swift script. This avoids AppleScript's slow `whose` clause which times out on large calendars (7000+ events).
 
 Before calling the script, resolve the plugin root:
-- Read `plugin_root` from `integrations/config/task-output-config.md`
+- Read `plugin_root` from `config/task-output-config.md`
 - If not present, use `~/repos/claude-eisenhower` and note: "plugin_root not configured — using default."
 
 Calculate the number of days from today to the due date, then run:
@@ -156,7 +156,7 @@ Calculate the number of days from today to the due date, then run:
 do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
 ```
 
-Where `{calendar_name}` is read from `integrations/config/calendar-config.md`.
+Where `{calendar_name}` is read from `config/calendar-config.md`.
 
 Where `{DAYS_AHEAD}` is the integer number of days from today to the due date.
 
@@ -183,7 +183,7 @@ If no due date found → assign Q2 and note: "No deadline found — defaulting t
 
 ## Step 7: Assign quadrant for each matched email
 
-Apply classification rules from `skills/claude-eisenhower/references/intake-sources.md`:
+Apply classification rules from `skills/core/references/intake-sources.md`:
 - Admin/Compliance → Q2 by default; Q1 if calendar check triggers escalation OR compliance consequence language found in body
 - VP/Director Escalation → Q1 if urgency signal present; Q2 if future/planning tone
 - Company Survey → Q3 by default; Q2 if tied to a named upcoming meeting with close deadline

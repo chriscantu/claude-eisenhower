@@ -2,11 +2,11 @@
 /**
  * match-delegate.ts
  *
- * CLI entry point � reads integrations/config/stakeholders.yaml and scores
+ * CLI entry point � reads config/stakeholders.yaml and scores
  * each delegate against a task title + description.
  *
  * Scoring logic lives in delegate-core.ts (shared with tests).
- * Algorithm defined in: integrations/specs/delegation-spec.md
+ * Algorithm defined in: docs/specs/delegation-spec.md
  *
  * Usage:
  *   npx ts-node scripts/match-delegate.ts "<task title>" "<task description>"
@@ -107,7 +107,7 @@ export function loadPendingCounts(glossaryPath: string): Record<string, number> 
 function findGraphPath(): string {
   const scriptDir = path.dirname(__filename);
   const repoRoot = path.resolve(scriptDir, "..");
-  return path.join(repoRoot, "integrations", "config", "stakeholders.yaml");
+  return path.join(repoRoot, "config", "stakeholders.yaml");
 }
 
 function findGlossaryPath(): string {
@@ -133,7 +133,7 @@ export function loadStakeholders(graphPath: string): Stakeholder[] | null {
 function buildMessage(status: MatchResult["status"], candidates: ScoredCandidate[]): string {
   switch (status) {
     case "no_graph":
-      return "No stakeholder graph found. Copy integrations/config/stakeholders.yaml.example " +
+      return "No stakeholder graph found. Copy config/stakeholders.yaml.example " +
              "to stakeholders.yaml and fill in your delegates.";
     case "empty_graph":
       return "Stakeholder graph is empty � no delegates configured.";

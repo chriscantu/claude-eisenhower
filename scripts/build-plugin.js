@@ -13,7 +13,7 @@
  * Personal config files (calendar-config.md, email-config.md, etc.) are gitignored
  * and are therefore never included in the output.
  *
- * See integrations/specs/build-spec.md for full specification.
+ * See docs/specs/build-spec.md for full specification.
  */
 
 'use strict';
@@ -115,7 +115,7 @@ if (fs.existsSync(artifactPath)) {
 // excludes everything in .gitignore (personal config, TASKS.md, memory/,
 // node_modules/, dist/). No manual exclude patterns needed.
 //
-// Additionally exclude dev-only directories (tests/, integrations/specs/) that
+// Additionally exclude dev-only directories (tests/, docs/specs/) that
 // are committed but not needed at runtime, using pathspec excludes.
 
 const gitArchiveCmd = [
@@ -125,7 +125,7 @@ const gitArchiveCmd = [
   '--',          // start pathspecs
   '.',           // include everything...
   ':!tests',                  // ...except tests/
-  ':!integrations/specs',     // ...and dev specs
+  ':!docs/specs',             // ...and dev specs
 ].join(' ');
 
 try {
@@ -170,10 +170,10 @@ if (missing.length > 0) {
 // Use regex word-boundary matching so "calendar-config.md" doesn't
 // false-positive against "calendar-config.md.example".
 const mustExclude = [
-  'integrations/config/calendar-config.md',
-  'integrations/config/email-config.md',
-  'integrations/config/task-output-config.md',
-  'integrations/config/stakeholders.yaml',
+  'config/calendar-config.md',
+  'config/email-config.md',
+  'config/task-output-config.md',
+  'config/stakeholders.yaml',
   'TASKS.md',
   'memory/',
   'node_modules/',

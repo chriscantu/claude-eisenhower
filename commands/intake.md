@@ -39,7 +39,7 @@ State:        Inbox
 
 Before writing the task record, resolve the requester name against the stakeholder graph:
 
-1. Load `integrations/config/stakeholders.yaml` (if it exists).
+1. Load `config/stakeholders.yaml` (if it exists).
 2. For the extracted requester name, check each stakeholder's `alias` entries (all items, case-insensitive). The first item in `alias` is the display name; additional items are lookup terms (last name, nickname, shorthand).
 3. **If a match is found**: use the display alias (first item) as the `Requester:` value.
 4. **If no match is found**: write the extracted name verbatim. Do not block or error — not every requester is a known stakeholder.

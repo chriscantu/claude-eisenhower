@@ -70,7 +70,7 @@ When a task needs to go to someone else, claude-eisenhower scores your entire st
 
 The top candidate is shown with reasoning. If someone else is close, they're surfaced too. Low-capacity delegates get a warning. Tasks that require your sign-off get flagged before delegation is suggested.
 
-Your stakeholder graph lives in `integrations/config/stakeholders.yaml` — a local, gitignored file you fill in once and update as your team changes.
+Your stakeholder graph lives in `config/stakeholders.yaml` — a local, gitignored file you fill in once and update as your team changes.
 
 **Alias resolution** — you can reference teammates the way you actually talk about them. If your team calls someone by their last name, initials, or a nickname, add those as lookup terms in their alias list. `/intake` will automatically normalize requester names before writing to your task board.
 
@@ -103,7 +103,7 @@ A 2-minute conversational flow walks you through connecting your Mac Calendar, A
 
 Your task board (`TASKS.md`) is created automatically on first use. From there, the workflow guides itself.
 
-> **Want to configure manually?** Config templates are in `integrations/config/*.example`. Copy each one, remove the `.example` suffix, and fill in your values. Run `/setup` at any time to reconfigure conversationally.
+> **Want to configure manually?** Config templates are in `config/*.example`. Copy each one, remove the `.example` suffix, and fill in your values. Run `/setup` at any time to reconfigure conversationally.
 
 ---
 
@@ -152,7 +152,7 @@ Your task board (`TASKS.md`) is created automatically on first use. From there, 
 | **Apple Mail** | `/scan-email` reads your inbox and classifies emails into Q1–Q3. Read-only — never marks messages read or moves them | `email-config.md` |
 | **Mac Reminders** | After `/schedule` confirms a plan, tasks are pushed to Reminders automatically. Q3 tasks appear as check-in reminders with a delegate and due date | `task-output-config.md` |
 
-The Reminders integration uses a swappable adapter — when you're ready to move to Jira, Asana, or Linear, the adapter handles the switch without changing how the rest of the plugin works. See `integrations/adapters/`.
+The Reminders integration uses a swappable adapter — when you're ready to move to Jira, Asana, or Linear, the adapter handles the switch without changing how the rest of the plugin works. See `adapters/`.
 
 ---
 

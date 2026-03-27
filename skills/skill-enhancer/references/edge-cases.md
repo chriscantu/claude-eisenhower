@@ -34,7 +34,7 @@ Naming convention for the new file: `[artifact-slug]-extended-[N].md` where
 Example: enhancing `commands/intake.md` → create `references/intake-extended-1.md`.
 If a `[slug]-extended-1.md` already exists, use `-2`, `-3`, etc.
 
-After creating the file: update `STRUCTURE.md` to register it under the
+After creating the file: update `docs/STRUCTURE.md` to register it under the
 `skills/skill-enhancer/references/` listing so the directory stays current.
 
 ---
@@ -134,18 +134,18 @@ with Quick Win score.
 
 ---
 
-## EC-9: No Matching Spec in integrations/specs/
+## EC-9: No Matching Spec in docs/specs/
 
-**Trigger**: Phase 1 finds no file in `integrations/specs/` whose name
+**Trigger**: Phase 1 finds no file in `docs/specs/` whose name
 matches the target artifact.
 
 **Handling**: Warn but do not block enhancement.
 
-"No spec found in integrations/specs/ for [artifact].
-Per PRINCIPLES.md, specs should precede implementation. Enhancement can
+"No spec found in docs/specs/ for [artifact].
+Per docs/PRINCIPLES.md, specs should precede implementation. Enhancement can
 proceed but proposals cannot be verified against stated requirements.
 
-Recommend: write a spec in integrations/specs/ before or alongside this
+Recommend: write a spec in docs/specs/ before or alongside this
 enhancement session. Should I include a spec-writing proposal in Phase 4? [y/n]"
 
 If yes: add one NEW proposal to write the spec — Big Bet classification

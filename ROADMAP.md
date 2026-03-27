@@ -12,7 +12,7 @@ For a full history of what has shipped, see [CHANGELOG.md](CHANGELOG.md).
 
 ### 1. Slack Intake (`/scan-slack`)
 
-Spec complete: `integrations/specs/slack-intake-spec.md`.
+Spec complete: `docs/specs/slack-intake-spec.md`.
 
 Ship immediately upon Slack MCP connector availability in Cowork. No architectural
 work required — the feature plugs directly into the existing intake pipeline using
@@ -93,7 +93,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 | Building stakeholder graph from task history | Interesting v2 idea; requires enough history to be useful — premature now |
 | Automatic follow-up scheduling (no user prompt) | Follow-up cadence is a judgment call; always ask before creating |
 | Blocked state | Anti-pattern — creates a holding area with no forcing function. Every stuck task needs an action decision (escalate / re-delegate / drop). |
-| **R7** — Fix hardcoded `~/repos/claude-eisenhower/` paths in `integrations/docs/applescript-test-protocol.md` | Low impact: test protocol is a developer reference, not runtime code. Paths are illustrative; fixing them would require templating the doc at every install. Cost > benefit. |
+| **R7** — Fix hardcoded `~/repos/claude-eisenhower/` paths in `docs/applescript-test-protocol.md` | Low impact: test protocol is a developer reference, not runtime code. Paths are illustrative; fixing them would require templating the doc at every install. Cost > benefit. |
 
 ---
 
@@ -105,7 +105,7 @@ Each has an explicit reason for deferral and should be picked up before a major 
 | Item | Description | Why Deferred |
 |------|-------------|--------------|
 | **R8** — ts-jest `globals` deprecation | `scripts/package.json` uses `globals.ts-jest.tsconfig` which is deprecated in ts-jest v29. Migrate to the `transform` key format. Functional today; will become an error in a future ts-jest major version. | Not broken; migration is mechanical but noisy. Address before next ts-jest major upgrade. |
-| **R9** — Stale PRINCIPLES.md reference | `PRINCIPLES.md` line 25 references `integrations/docs/memory-access-layer.md` which is superseded. Should point to `skills/memory-manager/SKILL.md`. | Low risk; the superseded doc still exists with a deprecation notice. Fix in next PRINCIPLES.md edit session. |
+| **R9** — Stale PRINCIPLES.md reference | `PRINCIPLES.md` line 25 references `docs/adrs/memory-access-layer.md` which is superseded. Should point to `skills/memory-manager/SKILL.md`. | Low risk; the superseded doc still exists with a deprecation notice. Fix in next PRINCIPLES.md edit session. |
 
 ---
 
