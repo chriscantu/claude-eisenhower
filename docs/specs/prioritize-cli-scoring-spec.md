@@ -100,11 +100,11 @@ After classifying a task as Q3, before saving:
 2. **Invoke the scoring CLI**:
 
    ```applescript
-   do shell script "cd {plugin_root}/scripts && npx ts-node match-delegate.ts \
-     --task '{task_title}: {task_description}' \
-     --stakeholders {plugin_root}/config/stakeholders.yaml \
-     --glossary {plugin_root}/memory/glossary.md 2>&1"
+   do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
    ```
+
+   Note: the CLI takes two positional arguments (title, description) and discovers
+   `config/stakeholders.yaml` and `memory/glossary.md` relative to the working directory.
 
 3. **Parse the JSON output**. The CLI returns:
    ```json

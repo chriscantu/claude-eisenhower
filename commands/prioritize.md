@@ -63,7 +63,7 @@ After classifying a task as Q3, before saving:
 3. **Invoke the scoring CLI**:
 
    ```
-   do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of "{task_title}: {task_description}" & " " & quoted form of "" & " 2>&1"
+   do shell script "cd " & quoted form of "{plugin_root}/scripts" & " && npx ts-node match-delegate.ts " & quoted form of taskTitle & " " & quoted form of taskDescription & " 2>&1"
    ```
 
    Note: the CLI reads `config/stakeholders.yaml` and `memory/glossary.md` relative
