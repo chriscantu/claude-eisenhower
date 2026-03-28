@@ -12,16 +12,12 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { weekOfFriday, businessDaysOverdue, businessDaysElapsed } from "../scripts/date-helpers";
+import { weekOfFriday, businessDaysOverdue } from "../scripts/date-helpers";
 
 const ROOT = path.resolve(__dirname, "..");
 
 function readJSON(relPath: string): any {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relPath), "utf8"));
-}
-
-function readFile(relPath: string): string {
-  return fs.readFileSync(path.join(ROOT, relPath), "utf8");
 }
 
 function utcDate(dateStr: string): Date {
