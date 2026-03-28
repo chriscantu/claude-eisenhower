@@ -62,12 +62,15 @@ All tasks with `State: Active` where `Scheduled:` contains a past date or a
 Sort: Q1 first, then Q2.
 Note: Tasks with `Scheduled: week of {current_monday}` (same week) fall into bucket C,
 not bucket A. Bucket A captures tasks scheduled in prior weeks or with specific past dates.
+Tasks with a specific future `Scheduled:` date (e.g., `Scheduled: 2026-04-05` when today
+is March 30) are excluded from all buckets — they are already committed to a specific day
+via `/schedule`.
 
 **B — Unscheduled Active tasks**
 All tasks with `State: Active` that have no `Scheduled:` field.
 Exclude tasks in the `## Done` section.
-Exclude tasks with an existing `Scheduled:` field (they are already committed via a
-prior `/plan-week` or `/schedule` run and appear in bucket A or C instead).
+(Tasks with an existing `Scheduled:` field appear in bucket A, C, or are already
+committed to a specific future date via `/schedule` — they are not proposed here.)
 Sort: Q1 first, then Q2. Within same priority, tasks with `Due date:` before tasks
 without. Among tasks with due dates, sort ascending by date.
 
@@ -86,6 +89,8 @@ Sort: Check-by date ascending (soonest first, overdue first).
 **E — Inbox count**
 Count all tasks with `State: Inbox`.
 If count > 0, find the newest intake date among them (from `[ INTAKE — {date} ]` header).
+For output: use day name if within the past 7 days (e.g., "Saturday"), otherwise use
+the date (e.g., "Mar 18").
 
 **F — Recently completed**
 Read `memory/plan-log.md` for the most recent entry date. If it exists, collect tasks
@@ -154,13 +159,13 @@ Use this exact section order:
 
 ---
 
-### Section 1 — 🔗 Since Friday's Review
+### Section 1 — 🔗 Since Last Review
 
 Render only if the review log bridge from Step 4 Part A produced data (entry within 7 days).
 
 ```
-─── 🔗 Since Friday's Review ──────────────────────────────
-  Last review ({date}): {overdue} overdue, {inbox} inbox items, {calendar} calendar.
+─── 🔗 Since Last Review ──────────────────────────────────
+  Last review ({day name}, {date}): {overdue} overdue, {inbox} inbox items, {calendar} calendar.
   Since then: {delta summary}.
 ```
 
@@ -286,9 +291,9 @@ Rules:
 ```
 
 Guidance logic:
-- Total items (personal commitments + check-ins) <= focus days → "Looks manageable."
-- Total items > focus days but within 1.5x → "Consider deferring 1 Q2 item if meetings expand."
-- Total items > 1.5x focus days → "Heavy week — consider deferring Q2 items to next week."
+- Total (personal commitment count + check-in count) <= focus days → "Looks manageable."
+- Total > focus days but within 1.5x → "Consider deferring 1 Q2 item if meetings expand."
+- Total > 1.5x focus days → "Heavy week — consider deferring Q2 items to next week."
 - If calendar is unavailable → "{N} tasks + {M} check-ins this week. Calendar unavailable for capacity check."
 
 ---

@@ -1,7 +1,7 @@
 # Feature Spec: `/plan-week`
 
 **Plugin**: claude-eisenhower
-**Version**: v1.7.0 (planned)
+**Version**: v1.7.0
 **Status**: Draft
 **Last updated**: 2026-03-27
 **Author**: Cantu
@@ -153,7 +153,7 @@ with no data are omitted.
 ```
 ## 📋 Week Plan — Monday, March 30
 
-─── 🔗 Since Friday's Review ──────────────────────────────
+─── 🔗 Since Last Review ──────────────────────────────────
   Last review (Mar 28): 1 overdue, 5 inbox items, moderate calendar.
   Since then: overdue resolved, 3 new inbox items arrived.
 
@@ -599,7 +599,7 @@ And the deferred task has no Scheduled field added
 Given memory/review-log.md has an entry dated 2026-03-28 (last Friday)
 And today is Monday 2026-03-30
 When the user runs /plan-week
-Then the "Since Friday's Review" section is shown
+Then the "Since Last Review" section is shown
 And it includes the overdue count and inbox count from the review entry
 ```
 
@@ -608,7 +608,7 @@ And it includes the overdue count and inbox count from the review entry
 ```gherkin
 Given memory/review-log.md does not exist
 When the user runs /plan-week
-Then the "Since Friday's Review" section is not shown
+Then the "Since Last Review" section is not shown
 ```
 
 ### PW-012: Analytics log written after confirmation
