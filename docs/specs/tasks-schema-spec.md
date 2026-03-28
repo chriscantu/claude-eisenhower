@@ -58,7 +58,7 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `State` | enum | Always | `Inbox`, `Active`, `Delegated`, `Done` |
 | `Owner` | string | After `/prioritize` | `me` for Active tasks; delegate alias for Delegated tasks |
 | `Check-by` | date (YYYY-MM-DD) | Required if `State: Delegated` | The date to follow up on the delegation. No exceptions. |
-| `Scheduled` | date (YYYY-MM-DD) | After `/schedule` | The date the task was scheduled |
+| `Scheduled` | string | After `/plan-week` or `/schedule` | Either a specific date (`YYYY-MM-DD`) from `/schedule`, or `week of YYYY-MM-DD` from `/plan-week` (week-level commitment, refined to a specific date by `/schedule`). |
 | `Action` | string | After `/schedule` | The specific action assigned (e.g., `[CRITICAL] Start today`, `90-min focus block`, `Delegated — check in {date}`) |
 | `Note` | string | Optional | Blocker context, escalation notes, or elimination record. Format: `Eliminated — Q4 cut {YYYY-MM-DD}` for dropped tasks. |
 | `Done` | date (YYYY-MM-DD) | Required if `State: Done` | The date the task was completed or eliminated |

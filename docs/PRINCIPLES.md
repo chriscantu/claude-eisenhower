@@ -27,7 +27,7 @@ conventions. This is the foundational principle — everything else builds on it
 
 **In this repo:**
 - `.claude-plugin/plugin.json` defines the plugin manifest
-- `commands/` holds 10 slash commands (intake, prioritize, schedule, execute, delegate, scan-email, review-week, setup, status, today)
+- `commands/` holds 11 slash commands (intake, plan-week, prioritize, schedule, execute, delegate, scan-email, review-week, setup, status, today)
 - `skills/` holds 4 skills (core, memory-manager, skill-enhancer, sync-prep), each with `SKILL.md` and optional `references/`
 - `agents/` holds 1 agent (task-prioritizer)
 - `hooks/hooks.json` registers SessionStart and PostToolUse hooks
@@ -148,7 +148,7 @@ depend on them degrade gracefully when unavailable.
 - Config files gate optional integrations — missing config = skip that data source, not an error
 
 **In this repo:**
-- Core (platform-agnostic): `/intake`, `/prioritize`, `/execute`, `/delegate`, `/today`, `/review-week`, `/status`
+- Core (platform-agnostic): `/intake`, `/plan-week`, `/prioritize`, `/execute`, `/delegate`, `/today`, `/review-week`, `/status`
 - Optional macOS integrations: `/schedule` (Calendar + Reminders), `/scan-email` (Apple Mail)
 - Graceful degradation: `/today` skips the calendar section if `calendar-config.md` is missing
 

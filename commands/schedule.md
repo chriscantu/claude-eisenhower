@@ -66,7 +66,13 @@ Then ask: "Consider reviewing [alias]'s capacity signal in stakeholders.yaml bef
 
 If $ARGUMENTS specifies a quadrant (Q1, Q2, Q3, Q4), schedule only tasks in that quadrant.
 If $ARGUMENTS specifies a task title, schedule only that task.
-If no argument, schedule all prioritized tasks that don't yet have a date assigned.
+If no argument, schedule all prioritized tasks that either:
+- Have no `Scheduled:` field at all, OR
+- Have a `Scheduled:` field starting with `week of` (planned by `/plan-week` but not yet assigned a specific date)
+
+When scheduling a task with `Scheduled: week of YYYY-MM-DD`, overwrite the field with the
+specific date (e.g., `Scheduled: 2026-03-31`). The `week of` prefix is a planning marker,
+not a final schedule.
 
 ## Step 3: Apply scheduling rules — these are strict defaults, not suggestions
 
