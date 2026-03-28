@@ -60,10 +60,14 @@ All tasks with `State: Active` where `Scheduled:` contains a past date or a
 `week of YYYY-MM-DD` value where that Monday is before `current_monday`, and no
 `Done:` date is set. Exclude tasks in the `## Done` section.
 Sort: Q1 first, then Q2.
+Note: Tasks with `Scheduled: week of {current_monday}` (same week) fall into bucket C,
+not bucket A. Bucket A captures tasks scheduled in prior weeks or with specific past dates.
 
 **B — Unscheduled Active tasks**
 All tasks with `State: Active` that have no `Scheduled:` field.
 Exclude tasks in the `## Done` section.
+Exclude tasks with an existing `Scheduled:` field (they are already committed via a
+prior `/plan-week` or `/schedule` run and appear in bucket A or C instead).
 Sort: Q1 first, then Q2. Within same priority, tasks with `Due date:` before tasks
 without. Among tasks with due dates, sort ascending by date.
 

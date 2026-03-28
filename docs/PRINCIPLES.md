@@ -148,7 +148,7 @@ depend on them degrade gracefully when unavailable.
 - Config files gate optional integrations — missing config = skip that data source, not an error
 
 **In this repo:**
-- Core (platform-agnostic): `/intake`, `/prioritize`, `/execute`, `/delegate`, `/today`, `/review-week`, `/status`
+- Core (platform-agnostic): `/intake`, `/plan-week`, `/prioritize`, `/execute`, `/delegate`, `/today`, `/review-week`, `/status`
 - Optional macOS integrations: `/schedule` (Calendar + Reminders), `/scan-email` (Apple Mail)
 - Graceful degradation: `/today` skips the calendar section if `calendar-config.md` is missing
 
