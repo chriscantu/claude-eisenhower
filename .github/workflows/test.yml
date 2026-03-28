@@ -13,12 +13,12 @@ permissions:
 
 jobs:
   test:
-    name: Jest (Node ${{ matrix.node }})
+    name: Jest (Node 24)
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node: ['20', '22']
+        node: ['24']
 
     steps:
       - name: Checkout
