@@ -90,5 +90,12 @@ export function weekOfFriday(mondayStr: string): Date {
  * @returns Number of business days overdue (0 = not overdue)
  */
 export function businessDaysOverdue(scheduledDate: Date, today: Date): number {
-  return businessDaysElapsed(scheduledDate, today);
+  // Shift both dates forward by one day so the count is start-exclusive,
+  // end-inclusive: a task due on Friday is 0 days overdue on Friday,
+  // 1 business day overdue on Monday (the first business day after it passed).
+  const startNext = new Date(scheduledDate);
+  startNext.setUTCDate(scheduledDate.getUTCDate() + 1);
+  const todayNext = new Date(today);
+  todayNext.setUTCDate(today.getUTCDate() + 1);
+  return businessDaysElapsed(startNext, todayNext);
 }
