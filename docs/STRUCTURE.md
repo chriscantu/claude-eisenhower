@@ -57,6 +57,7 @@ One `.md` file per slash command. Filename matches the command name.
 ```
 commands/
   intake.md
+  plan-week.md
   prioritize.md
   schedule.md
   execute.md
@@ -187,6 +188,7 @@ docs/
     setup-spec.md                    -- first-run setup and /setup reconfiguration
     github-release-spec.md           -- GitHub Actions release automation on v* tags
     four-state-task-model-spec.md    -- Inbox->Active->Delegated->Done state model (v0.9.0)
+    plan-week-spec.md                -- /plan-week PRD: weekly planning command
     slack-intake-spec.md             -- /scan-slack Slack DM + mention capture (planned v1.1)
     tasks-schema-spec.md             -- canonical TASKS.md field schema + section structure
     adapter-types-spec.md            -- TypeScript interfaces for TaskOutputRecord + PushResult
@@ -202,6 +204,7 @@ docs/
 
   superpowers/plans/                 -- implementation plans (date-prefixed, produced by writing-plans skill)
     2026-03-26-v1.3.0-scoring-unification-and-plugin-root-dry.md
+    2026-03-27-plan-week-command.md
     2026-03-27-status-command.md
 
   adrs/                              -- architectural decision records
