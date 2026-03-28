@@ -10,6 +10,8 @@
  *   addBusinessDays(start, days)    → Date   (used by /delegate, delegate-entry.test.ts)
  *   addBusinessDaysStr(start, days) → string YYYY-MM-DD (used by /schedule, phase2-3.test.ts)
  *   businessDaysElapsed(start, end) → number (used by /schedule Step 1b, schedule-capacity.test.ts)
+ *   weekOfFriday(mondayStr)            → Date   (used by session-start hook, session-start.test.ts)
+ *   businessDaysOverdue(scheduledDate, today) → number (used by session-start hook, session-start.test.ts)
  */
 
 /**
@@ -57,4 +59,46 @@ export function businessDaysElapsed(start: Date, end: Date = new Date()): number
     cursor += 86_400_000; // advance exactly one day in ms
   }
   return count;
+}
+
+/**
+ * Given a "week of YYYY-MM-DD" Monday date string, returns the Friday of that
+ * week as a Date. A task scheduled with "week of" is overdue only after this
+ * Friday has passed.
+ *
+ * Precondition: `mondayStr` must be a Monday (no day-of-week validation is
+ * performed). Passing a non-Monday date will return an incorrect result.
+ *
+ * Example: weekOfFriday("2026-03-23") → Date for 2026-03-27 (Friday)
+ */
+export function weekOfFriday(mondayStr: string): Date {
+  const monday = new Date(mondayStr + "T00:00:00Z");
+  const friday = new Date(monday);
+  friday.setUTCDate(monday.getUTCDate() + 4);
+  return friday;
+}
+
+/**
+ * Returns the number of business days a task is overdue given its scheduled
+ * date and today's date. Returns 0 if the task is not overdue (scheduled date
+ * is today or in the future, or today is a weekend and the scheduled date was
+ * the preceding Friday).
+ *
+ * For "week of" dates: pass the Saturday after that week's Friday as the
+ * start date (use weekOfFriday() + 1 day), since the task is not overdue
+ * until the week has fully passed.
+ *
+ * @param scheduledDate - The date the task was due (or the day after the week ended)
+ * @param today - Today's date
+ * @returns Number of business days overdue (0 = not overdue)
+ */
+export function businessDaysOverdue(scheduledDate: Date, today: Date): number {
+  // Shift both dates forward by one day so the count is start-exclusive,
+  // end-inclusive: a task due on Friday is 0 days overdue on Friday,
+  // 1 business day overdue on Monday (the first business day after it passed).
+  const startNext = new Date(scheduledDate);
+  startNext.setUTCDate(scheduledDate.getUTCDate() + 1);
+  const todayNext = new Date(today);
+  todayNext.setUTCDate(today.getUTCDate() + 1);
+  return businessDaysElapsed(startNext, todayNext);
 }

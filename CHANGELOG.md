@@ -7,6 +7,29 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v1.8.0] — 2026-03-27 — SessionStart Structured Briefing (P5)
+
+Enhanced SessionStart hook with a structured briefing that surfaces specific
+items needing attention, replacing the generic count-only one-liner.
+
+**SessionStart briefing:**
+- 🔴 Overdue Active Tasks — lists titles with scheduled dates and business days overdue
+- 🟡 Delegation Check-ins Due — lists owner, title, and check-by dates
+- 📥 Inbox gate alert when ≥ 5 items in Inbox
+- 💤 Staleness signal when no tasks completed in 5 business days
+- 💡 Suggested next action (priority: check-ins > overdue > inbox > staleness)
+- Quiet mode — only counts line when nothing actionable
+- Business day math for all overdue calculations (excludes weekends)
+- Handles `Scheduled: week of YYYY-MM-DD` (overdue after Friday of that week)
+
+Spec: `docs/specs/session-start-enhancement-spec.md`
+
+**Other changes:**
+- `scripts/date-helpers.ts`: added `weekOfFriday()` and `businessDaysOverdue()` helpers
+- `tests/session-start.test.ts`: 30 new tests (hook contracts + overdue logic)
+
+---
+
 ## [v1.7.0] — 2026-03-27 — /plan-week Weekly Planning Command
 
 New `/plan-week` command for Monday morning weekly planning. 204 tests passing.
