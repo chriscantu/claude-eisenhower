@@ -74,7 +74,7 @@ commands/
 ---
 
 ### `skills/`
-One subdirectory per skill, each containing a `SKILL.md` and a `references/` folder.
+One subdirectory per skill, each containing a `SKILL.md` and optionally a `references/` folder.
 
 ```
 skills/
@@ -96,11 +96,14 @@ skills/
     SKILL.md
     references/
       memory-operations.md
+  sync-prep/
+    SKILL.md
 ```
 
 **`core/`** is the canonical end-user skill (Eisenhower matrix classification, intake routing, delegation logic).
 **`skill-enhancer/`** is a developer-only skill for improving plugin artifacts through sibling mining, research, and regression-safe editing.
 **`memory-manager/`** manages stakeholder memory reads and writes.
+**`sync-prep/`** generates per-person meeting preparation briefs (downward for delegates, upward for supervisor).
 
 **What belongs here**: Domain knowledge, classification rules, reference tables.
 **What does not belong here**: Config values, command step logic, specs.
