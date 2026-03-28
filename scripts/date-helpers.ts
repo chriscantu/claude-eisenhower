@@ -58,3 +58,35 @@ export function businessDaysElapsed(start: Date, end: Date = new Date()): number
   }
   return count;
 }
+
+/**
+ * Given a "week of YYYY-MM-DD" Monday date string, returns the Friday of that
+ * week as a Date. A task scheduled with "week of" is overdue only after this
+ * Friday has passed.
+ *
+ * Example: weekOfFriday("2026-03-23") → Date for 2026-03-27 (Friday)
+ */
+export function weekOfFriday(mondayStr: string): Date {
+  const monday = new Date(mondayStr + "T00:00:00Z");
+  const friday = new Date(monday);
+  friday.setUTCDate(monday.getUTCDate() + 4);
+  return friday;
+}
+
+/**
+ * Returns the number of business days a task is overdue given its scheduled
+ * date and today's date. Returns 0 if the task is not overdue (scheduled date
+ * is today or in the future, or today is a weekend and the scheduled date was
+ * the preceding Friday).
+ *
+ * For "week of" dates: pass the Saturday after that week's Friday as the
+ * start date (use weekOfFriday() + 1 day), since the task is not overdue
+ * until the week has fully passed.
+ *
+ * @param scheduledDate - The date the task was due (or the day after the week ended)
+ * @param today - Today's date
+ * @returns Number of business days overdue (0 = not overdue)
+ */
+export function businessDaysOverdue(scheduledDate: Date, today: Date): number {
+  return businessDaysElapsed(scheduledDate, today);
+}
