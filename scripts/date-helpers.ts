@@ -10,6 +10,8 @@
  *   addBusinessDays(start, days)    → Date   (used by /delegate, delegate-entry.test.ts)
  *   addBusinessDaysStr(start, days) → string YYYY-MM-DD (used by /schedule, phase2-3.test.ts)
  *   businessDaysElapsed(start, end) → number (used by /schedule Step 1b, schedule-capacity.test.ts)
+ *   weekOfFriday(mondayStr)            → Date   (used by session-start hook, session-start.test.ts)
+ *   businessDaysOverdue(start, today)  → number (used by session-start hook, session-start.test.ts)
  */
 
 /**
