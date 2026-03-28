@@ -7,6 +7,26 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v1.6.0] — 2026-03-27 — sync-prep Meeting Preparation Skill
+
+New auto-invocable skill for per-person meeting preparation. 202 tests passing.
+
+**sync-prep — Meeting prep skill:**
+- Auto-invokes on natural phrases ("prep for my 1:1 with Alex")
+- **Downward briefs** (delegates): active delegations with project tags, recently completed, talking points, memory notes
+- **Upward briefs** (supervisor): executive summary, portfolio with health signals, risks & mitigations, anticipated questions
+- Direction detection: automatic from stakeholders.yaml role tags, TASKS.md Owner fields, memory/people/ files, upward keywords
+- Read-only — no writes to any file
+
+Spec: `docs/specs/sync-prep-spec.md`
+
+**Housekeeping:**
+- Updated PRINCIPLES.md skill count (3 → 4), `references/` now optional
+- Updated memory-manager caller list to include sync-prep, /today, /status
+- Updated STRUCTURE.md to reflect optional references/ folders
+
+---
+
 ## [v1.5.0] — 2026-03-27 — /today + /status Commands
 
 Two new commands for daily workflow and supervisor reporting. 200 tests passing.
