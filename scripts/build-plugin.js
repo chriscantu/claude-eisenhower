@@ -20,7 +20,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
 
@@ -41,8 +41,12 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function run(cmd, opts = {}) {
-  return execSync(cmd, { cwd: REPO_ROOT, stdio: 'pipe', ...opts }).toString().trim();
+/**
+ * Run a command with args as an array, avoiding shell interpretation.
+ * Uses execFileSync to prevent command injection via environment-derived paths.
+ */
+function runArgs(file, args = [], opts = {}) {
+  return execFileSync(file, args, { cwd: REPO_ROOT, stdio: 'pipe', ...opts }).toString().trim();
 }
 
 // ─── Step 1: Read version from plugin.json ───────────────────────────────────
@@ -72,7 +76,7 @@ console.log(`\n📦 Building ${artifactName}...`);
 // ─── Step 2: Verify git is available and repo is valid ───────────────────────
 
 try {
-  run('git rev-parse --git-dir');
+  runArgs('git', ['rev-parse', '--git-dir']);
 } catch (e) {
   fail('not a git repository — build-plugin.js requires git');
 }
@@ -82,7 +86,7 @@ try {
 const skipDirtyCheck = process.argv.includes('--skip-dirty-check');
 
 if (!skipDirtyCheck) {
-  const status = run('git status --porcelain');
+  const status = runArgs('git', ['status', '--porcelain']);
   if (status !== '') {
     console.warn('\n⚠️  Warning: working tree has uncommitted changes.');
     console.warn('   The artifact may not correspond to a known git state.');
@@ -118,18 +122,18 @@ if (fs.existsSync(artifactPath)) {
 // Additionally exclude dev-only directories (tests/, docs/specs/) that
 // are committed but not needed at runtime, using pathspec excludes.
 
-const gitArchiveCmd = [
-  'git', 'archive', 'HEAD',
+const gitArchiveArgs = [
+  'archive', 'HEAD',
   '--format=zip',
   `--output=${artifactPath}`,
   '--',          // start pathspecs
   '.',           // include everything...
   ':!tests',                  // ...except tests/
   ':!docs/specs',             // ...and dev specs
-].join(' ');
+];
 
 try {
-  run(gitArchiveCmd);
+  runArgs('git', gitArchiveArgs);
 } catch (e) {
   fail(`git archive failed: ${e.message}`);
 }
@@ -145,7 +149,7 @@ const sizeBytes = fs.statSync(artifactPath).size;
 // Inspect archive contents
 let archiveContents;
 try {
-  archiveContents = run(`unzip -l "${artifactPath}"`);
+  archiveContents = runArgs('unzip', ['-l', artifactPath]);
 } catch (e) {
   fail(`could not inspect archive: ${e.message}`);
 }
