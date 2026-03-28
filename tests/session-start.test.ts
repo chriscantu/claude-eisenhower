@@ -103,6 +103,15 @@ describe("SessionStart hook contract (SS-CONT)", () => {
   test("SS-CONT-015: prompt contains suggested next action logic", () => {
     expect(prompt).toMatch(/[Ss]uggest/);
   });
+
+  test("SS-CONT-016: prompt contains delegation dedup instruction", () => {
+    expect(prompt).toMatch(/ONLY.*Delegation Check-ins/i);
+    expect(prompt).toMatch(/[Dd]o not duplicate/);
+  });
+
+  test("SS-CONT-017: prompt instructs silence when TASKS.md is absent", () => {
+    expect(prompt).toMatch(/does not exist.*say nothing/i);
+  });
 });
 
 // ── weekOfFriday tests ───────────────────────────────────────────────────────
@@ -126,6 +135,11 @@ describe("weekOfFriday (SS-WOF)", () => {
   test("SS-WOF-004: handles month boundary (Monday 2026-02-23 → Friday 2026-02-27)", () => {
     const friday = weekOfFriday("2026-02-23");
     expect(friday.toISOString().split("T")[0]).toBe("2026-02-27");
+  });
+
+  test("SS-WOF-005: handles year boundary (Monday 2025-12-29 → Friday 2026-01-02)", () => {
+    const friday = weekOfFriday("2025-12-29");
+    expect(friday.toISOString().split("T")[0]).toBe("2026-01-02");
   });
 });
 

@@ -11,7 +11,7 @@
  *   addBusinessDaysStr(start, days) → string YYYY-MM-DD (used by /schedule, phase2-3.test.ts)
  *   businessDaysElapsed(start, end) → number (used by /schedule Step 1b, schedule-capacity.test.ts)
  *   weekOfFriday(mondayStr)            → Date   (used by session-start hook, session-start.test.ts)
- *   businessDaysOverdue(start, today)  → number (used by session-start hook, session-start.test.ts)
+ *   businessDaysOverdue(scheduledDate, today) → number (used by session-start hook, session-start.test.ts)
  */
 
 /**
@@ -65,6 +65,9 @@ export function businessDaysElapsed(start: Date, end: Date = new Date()): number
  * Given a "week of YYYY-MM-DD" Monday date string, returns the Friday of that
  * week as a Date. A task scheduled with "week of" is overdue only after this
  * Friday has passed.
+ *
+ * Precondition: `mondayStr` must be a Monday (no day-of-week validation is
+ * performed). Passing a non-Monday date will return an incorrect result.
  *
  * Example: weekOfFriday("2026-03-23") → Date for 2026-03-27 (Friday)
  */
