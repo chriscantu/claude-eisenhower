@@ -7,6 +7,31 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v1.7.0] — 2026-03-27 — /plan-week Weekly Planning Command
+
+New `/plan-week` command for Monday morning weekly planning. 204 tests passing.
+
+**/plan-week — Weekly planning:**
+- Proposes commitments based on carryover, priorities, calendar capacity, and delegation follow-ups
+- Bridges `/review-week` (Friday retrospective) and `/schedule` (execution)
+- Surfaces open commitments from prior weeks with neutral framing
+- Shows delegation check-ins due this week in capacity math
+- Inbox alert gate before committing to plan
+- Interactive adjustment (add/remove/defer) before confirmation
+- Writes `Scheduled: week of YYYY-MM-DD` — refined by `/schedule` to specific dates
+- Analytics logged silently to `memory/plan-log.md`
+- Works any day — dynamically scopes to remaining days mid-week
+
+Spec: `docs/specs/plan-week-spec.md`
+
+**Updates to existing artifacts:**
+- `commands/schedule.md`: handles `Scheduled: week of ...` refinement to specific dates
+- `docs/specs/tasks-schema-spec.md`: Scheduled field updated to `string` type, documents both formats
+- PRINCIPLES.md: command count 10 → 11, `/plan-week` added to core platform-agnostic list
+- STRUCTURE.md: registered in commands, specs, and plans listings
+
+---
+
 ## [v1.6.0] — 2026-03-27 — sync-prep Meeting Preparation Skill
 
 New auto-invocable skill for per-person meeting preparation. 202 tests passing.
