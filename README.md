@@ -59,6 +59,30 @@ Everything stays local. Your task board, stakeholder graph, and calendar data ne
 
 ---
 
+## Planning & visibility
+
+Once the workflow is running, these commands help you stay on top of it.
+
+```
+  Monday            Daily              Friday
+┌──────────┐    ┌──────────┐    ┌──────────────┐
+│/plan-week│───▶│  /today  │───▶│ /review-week │
+│ commit   │    │ briefing │    │  retrospect  │
+└──────────┘    └──────────┘    └──────────────┘
+                 /status (any time)
+```
+
+| Command | What it does |
+|---------|-------------|
+| `/plan-week` | Propose commitments for the week based on carryover, priorities, and calendar capacity |
+| `/today` | Daily briefing — what's on your plate, what's overdue, delegation check-ins due |
+| `/review-week` | Friday retrospective — what shipped, what slipped, throughput trends |
+| `/status` | Org-wide status by project — health signals, risks, delegation state |
+
+The plugin also works in the background: every session starts with a structured briefing that surfaces overdue tasks and delegation check-ins automatically — no command needed.
+
+---
+
 ## Delegation that actually works
 
 When a task needs to go to someone else, claude-eisenhower scores your entire stakeholder graph and surfaces the best match — not just who's available, but who's right for the work.
@@ -140,6 +164,18 @@ Your task board (`TASKS.md`) is created automatically on first use. From there, 
 
 # Only pull compliance and training emails
 /scan-email admin
+
+# Monday morning — plan the week
+/plan-week
+
+# Quick pulse — what needs attention right now?
+/today
+
+# Friday — what shipped, what slipped?
+/review-week
+
+# Org status for your supervisor
+/status
 ```
 
 ---
@@ -161,7 +197,6 @@ The Reminders integration uses a swappable adapter — when you're ready to move
 - **Slack / Chat capture** — pull tasks directly from DMs and channel mentions instead of copy-pasting
 - **Jira / Asana / Linear** — replace Mac Reminders with your team's tracker
 - **GitHub integration** — capture PR review requests and assigned issues with full context
-- **Weekly review** — one command to start the week: overdue delegations, calendar load, unprocessed tasks, and upcoming check-ins in a single view
 
 See `ROADMAP.md` for the full plan.
 
