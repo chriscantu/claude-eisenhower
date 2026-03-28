@@ -74,7 +74,7 @@ commands/
 ---
 
 ### `skills/`
-One subdirectory per skill, each containing a `SKILL.md` and a `references/` folder.
+One subdirectory per skill, each containing a `SKILL.md` and optionally a `references/` folder.
 
 ```
 skills/

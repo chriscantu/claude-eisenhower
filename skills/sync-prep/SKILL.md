@@ -26,7 +26,7 @@ If TASKS.md does not exist: show "No task board found. Run /intake to get starte
 
 Extract all task records across all sections (Inbox, Active, Delegated, Done).
 For each task, read: title, State, Priority, Due date, Scheduled, Owner,
-Check-by, Done date, and Project (if present).
+Check-by, Done, and Project (if present).
 
 ---
 
