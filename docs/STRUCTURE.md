@@ -196,6 +196,7 @@ docs/
     skill-enhancer-spec.md           -- skill-enhancer implementation plan (v0.9.5)
     artifact-baselines.md            -- floor construct counts for skill-enhancer Phase 6 regression check
     review-week-spec.md              -- /review-week PRD
+    session-start-enhancement-spec.md  -- SessionStart structured briefing enhancement (P5)
     plugin-path-resolution-spec.md       -- plugin root path resolution
     prioritize-cli-scoring-spec.md        -- /prioritize CLI scoring unification (v1.3.0)
     plugin-root-resolution-dry-spec.md    -- plugin_root DRY extraction (v1.3.0)
@@ -206,6 +207,7 @@ docs/
     2026-03-26-v1.3.0-scoring-unification-and-plugin-root-dry.md
     2026-03-27-plan-week-command.md
     2026-03-27-status-command.md
+    2026-03-27-session-start-enhancement.md
 
   adrs/                              -- architectural decision records
     calendar-performance-fix.md      -- ADR: why Swift EventKit instead of AppleScript
