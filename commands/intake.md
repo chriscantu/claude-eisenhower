@@ -12,13 +12,20 @@ The user has described a new task: $ARGUMENTS
 
 Parse the user's natural language description and extract a structured task record. Be liberal in what you accept — the user may give you one sentence or a whole paragraph.
 
-Extract the following fields:
+Extract the following fields. Track for each whether the value was **stated**
+explicitly by the user or **inferred** from context — you'll surface this
+distinction in the confirmation block below.
+
 - **Title**: Short, action-oriented (verb + object). Max 10 words.
 - **Description**: What needs to happen and why. 1–3 sentences.
-- **Source**: Where this came from. Options: Email, Slack, Meeting, Conversation, Calendar, Jira, Asana, Linear, GitHub, Self, Other. Infer from context if not stated.
-- **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated. See alias resolution step below — resolve to display alias before writing.
+- **Source**: Where this came from. Options: Email, Slack, Meeting, Conversation, Calendar, Jira, Asana, Linear, GitHub, Self, Other. Infer from context if not stated — mark as `(inferred)`.
+- **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated. See alias resolution step below — resolve to display alias before writing. Mark `(stated)` or `(inferred)` based on whether the user named them.
 - **Urgency signal**: What was said about timing (quote or paraphrase). If nothing stated, write "Not specified."
-- **Raw due date**: Any date mentioned. If not mentioned, write "Not specified."
+- **Raw due date** (ISO format: `YYYY-MM-DD`): If any temporal phrase appears in the input ("by Thursday", "before EOW", "next Tuesday", "end of month"), **parse it to an ISO date** relative to today. Surface the parse origin as `(parsed from "<phrase>")`. Only write `Not specified` when no date or temporal phrase is mentioned in the user's text. Examples:
+  - Input "by Thursday" (today is Mon 2026-06-02) → `Due date: 2026-06-05 (parsed from "by Thursday")`
+  - Input "next week" → `Due date: 2026-06-09 (parsed from "next week")`
+  - Input "Friday" → `Due date: 2026-06-06 (parsed from "Friday")`
+  - No date mentioned → `Due date: Not specified`
 
 ## Format the task record as:
 
@@ -63,10 +70,33 @@ Example: source says "Vargas asked for this" → alias entries include "Vargas" 
 ## Done
 ```
 
-2. Append the formatted task record to the `## Inbox` section.
+2. **Show the confirmation block to the user BEFORE writing** to TASKS.md.
+   Render every extracted field with its `(stated)` or `(inferred)` marker
+   so the user can correct silent inferences. Use this confirmation block
+   shape:
 
-3. Confirm to the user what was captured in a brief, friendly summary. Example: "Got it — I've logged '[title]' as a new task from [source]. Run /prioritize when you're ready to assign it a state and owner."
+   ```
+   I've extracted:
+     Title:        [title]
+     Description:  [description]
+     Source:       [source]  (stated | inferred)
+     Requester:    [requester]  (stated | inferred)
+     Urgency:      [urgency signal]  (stated | not mentioned)
+     Due date:     [ISO date]  (parsed from "[phrase]" | stated | not mentioned)
 
-4. If the source or requester is unclear, ask ONE clarifying question before saving.
+   Save / edit / cancel?
+   ```
+
+   - **save**: append to `## Inbox` and confirm "Got it — logged '[title]'."
+   - **edit**: prompt for which field to change; re-render the block.
+   - **cancel**: drop the record, no write.
+
+3. Only after explicit "save" (or equivalent: "yes", "looks good"), append
+   the formatted task record to the `## Inbox` section.
+
+4. Do NOT silently infer. Every `(inferred)` field must be visible in the
+   confirmation block. If a value cannot reasonably be inferred (e.g., the
+   source is genuinely ambiguous and context provides no signal), leave it
+   blank in the block and ask the user inline before save.
 
 Do NOT prioritize or schedule the task yet. Intake only captures. Judgment comes in the next phase.
