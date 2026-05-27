@@ -126,31 +126,56 @@ If the user presses Enter or provides no input → use `Eisenhower List`.
 
 No osascript validation needed — the Reminders adapter creates the list on first push if it doesn't exist.
 
-**Ask:**
-> "What is the full path to your claude-eisenhower plugin folder?
-> (This is where you cloned or installed the plugin. Example: ~/repos/claude-eisenhower)
-> Path: "
+**Auto-detect the plugin install path** — do NOT ask the user to type it.
 
-**Required** — do not proceed with an empty or unverified path.
+Until Claude Code injects `${CLAUDE_PLUGIN_ROOT}` into prompt-context Bash env
+(it currently injects only into `command:`-type hooks), the plugin still needs
+an absolute path on disk to invoke `scripts/cal_query.swift` and friends. Discover
+it programmatically rather than asking the user to type — that prompt was the
+worst friction in v0.9.3-era setup and the most common source of typo failures.
 
-After the user provides a path:
-1. Expand `~` to the user's home directory if present (substitute the literal home directory path for `~`).
-2. Verify the path exists and contains a `scripts/` subdirectory (allow up to 3 attempts total; each path submission — whether it returns `missing` or a shell error — counts as one attempt):
-   ```applescript
-   set thePath to do shell script "echo " & quoted form of "<user's expanded path>"
-   do shell script "test -d " & quoted form of thePath & "/scripts && echo exists || echo missing"
-   ```
-   Substitute `<user's expanded path>` with the literal path the user provided, with `~` replaced by their home directory.
-3. If the shell command returns an error (not `exists` or `missing`): say "Could not verify the path due to a system error. Enter the path manually and I'll trust your input, or type 'skip'."
-4. If result is `missing`: say "That path doesn't look right — I can't find a scripts/ folder there. Double-check the path and try again." Re-ask (up to 3 total attempts).
-5. After 3 failed attempts: say "I wasn't able to verify the path. You can type 'skip' to configure `plugin_root` manually in `config/task-output-config.md` later."
-6. If result is `exists`: proceed with the verified path.
+Run this single discovery command via osascript:
 
-**Do not fall back to a hardcoded default.** The path must be confirmed before writing config.
+```applescript
+do shell script "find " & ¬
+  quoted form of (system attribute "HOME" & "/.claude/plugins") & " " & ¬
+  quoted form of (system attribute "HOME" & "/repos") & " " & ¬
+  quoted form of (system attribute "HOME" & "/projects") & " " & ¬
+  quoted form of (system attribute "HOME" & "/Documents") & ¬
+  " -maxdepth 6 -type f -name plugin.json -path '*claude-plugin/plugin.json' 2>/dev/null" & ¬
+  " | xargs -I{} sh -c 'grep -l \"\\\"name\\\": \\\"claude-eisenhower\\\"\" {} 2>/dev/null' | head -1"
+```
+
+Some users will not have `~/repos` or `~/projects`. The `2>/dev/null` swallows
+ENOENT noise so the pipeline only surfaces real hits. Missing search roots are
+NOT a failure — the find just skips them.
+
+Interpret the result:
+
+1. **Exactly one match returned** (e.g. `/Users/alice/repos/claude-eisenhower/.claude-plugin/plugin.json`):
+   - Strip the trailing `/.claude-plugin/plugin.json` to get the plugin root.
+   - Say: "Detected plugin install at `{plugin_root}`. Use this? (yes / no — let me type it)"
+   - On `yes` (or equivalent), proceed with the detected path.
+   - On `no`, prompt once for the absolute path. No retry loop — if the single
+     re-entry is invalid, write `plugin_root: <not detected — see setup>` and
+     surface: "I couldn't verify the path. Edit `config/task-output-config.md`
+     manually before running /schedule or /today."
+
+2. **Multiple matches returned** (e.g. user has the plugin cloned in two places):
+   - Show the list, ask the user to pick by number, proceed with that choice.
+
+3. **No matches returned**:
+   - Single fallback prompt: "I couldn't auto-detect the plugin install. What's
+     the absolute path to your claude-eisenhower folder?"
+   - Accept whatever the user gives — do NOT run the verification retry loop.
+     A wrong path will surface clearly the first time the user runs /schedule
+     or /today (cal_query.swift will error). Cheaper to recover then than to
+     gate setup behind shell ceremony.
 
 **Write** `config/task-output-config.md`:
 - Read `config/task-output-config.md.example`
-- Replace `~/repos/claude-eisenhower` in the `plugin_root:` line with the user's value
+- Replace `YOUR_PLUGIN_INSTALL_PATH` on the `plugin_root:` line with the
+  detected (or user-supplied) absolute path
 - Replace `YOUR_REMINDERS_LIST_NAME` with the user's value (under the `### reminders` block)
 - Leave the `Active Adapter` line, all other adapter sections, and all comments unchanged
 - Write to `config/task-output-config.md`

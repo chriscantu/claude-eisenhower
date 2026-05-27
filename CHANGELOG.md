@@ -7,6 +7,47 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [Unreleased] — Plugin Root Cleanup (#23)
+
+Eliminates user-typing of the plugin install path during `/setup`. The path
+is now auto-detected via a single `find` for `.claude-plugin/plugin.json`
+across `~/.claude/plugins`, `~/repos`, `~/projects`, and `~/Documents`.
+
+**Validation finding:** `${CLAUDE_PLUGIN_ROOT}` is still NOT injected into the
+Bash tool / osascript MCP environment in Claude Code 2.1.144 — only into
+`command:`-type entries in `hooks/hooks.json`. The 2026-03-02 finding in
+`docs/specs/plugin-path-resolution-spec.md` holds. Until that platform gap
+closes, commands continue to resolve the install path through the
+`plugin_root` field in `config/task-output-config.md`.
+
+**Changes:**
+- `commands/setup.md` Step 3: replaced the "type the absolute path" prompt +
+  3-attempt retry block with auto-detection. User confirms once; falls back
+  to a single re-entry prompt only when discovery turns up zero matches.
+- `config/task-output-config.md.example`: `plugin_root:` placeholder is now
+  `YOUR_PLUGIN_INSTALL_PATH` (intentionally invalid so a missing /setup
+  fails loudly the first time a script is invoked). Header comment documents
+  the auto-populated contract.
+- `adapters/reminders.md`: removed hardcoded `~/repos/claude-eisenhower`
+  from the `osascript` call examples; references resolved `pluginRoot`.
+- `skills/core/references/plugin-root-resolution.md`: removed hardcoded
+  fallback path. Unconfigured plugin now stops with an actionable error
+  pointing at `/setup` rather than silently routing to a path that may
+  not exist on the user's machine.
+- `tests/plugin-root-cleanup.test.ts`: new contract suite (22 tests) —
+  asserts `setup.md` has no path-prompt language, runtime files contain
+  no hardcoded `~/repos/claude-eisenhower`, and the config example is
+  path-free and labeled auto-populated.
+
+**Migration for existing users:** any `config/task-output-config.md` that
+already contains a valid absolute `plugin_root:` value keeps working as-is —
+the resolution step still reads that field unchanged. No re-run of `/setup`
+is required. Users who hand-typed an invalid path will, on next /schedule
+or /today run, see the new "plugin_root is not configured" error from the
+resolution skill and can fix it by running `/setup`.
+
+---
+
 ## [v1.8.0] — 2026-03-27 — SessionStart Structured Briefing (P5)
 
 Enhanced SessionStart hook with a structured briefing that surfaces specific
