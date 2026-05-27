@@ -25,15 +25,15 @@ import {
 } from "./delegate-core";
 
 // Derive validators from WEIGHTS so the WEIGHTS table is the SINGLE source
-// of truth for both enums. Adding a new relationship to the Relationship
-// union forces a corresponding WEIGHTS.relationship entry (compile error
-// otherwise), which auto-extends VALID_RELATIONSHIPS — same drift-prevention
-// pattern that QUADRANT_VERBS got wrong.
+// of truth for both enums. WEIGHTS uses `satisfies Record<Relationship, …>`
+// (see delegate-core.ts), so adding a Relationship/CapacitySignal union
+// member without adding the matching weight entry is a COMPILE ERROR.
+// `Object.keys` on the satisfies-typed object is sound; no `as` cast needed.
 const VALID_RELATIONSHIPS: ReadonlySet<Relationship> = new Set(
-  Object.keys(WEIGHTS.relationship) as Relationship[]
+  Object.keys(WEIGHTS.relationship) as Array<keyof typeof WEIGHTS.relationship>
 );
 const VALID_CAPACITY_SIGNALS: ReadonlySet<CapacitySignal> = new Set(
-  Object.keys(WEIGHTS.capacity) as CapacitySignal[]
+  Object.keys(WEIGHTS.capacity) as Array<keyof typeof WEIGHTS.capacity>
 );
 
 /**
@@ -264,6 +264,12 @@ export function buildMessage(
         msg += `\nNote: ${top.alias} is showing low capacity — confirm availability.`;
       }
       return msg;
+    }
+    default: {
+      // Exhaustiveness check: if a new status is added to MatchResult["status"]
+      // and a case is forgotten above, TypeScript flags this assignment.
+      const _exhaustive: never = status;
+      throw new Error(`buildMessage: unhandled status ${_exhaustive}`);
     }
   }
 }

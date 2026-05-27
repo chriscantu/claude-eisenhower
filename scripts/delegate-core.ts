@@ -148,15 +148,32 @@ export interface MatchResult {
   runnerUpDelta: number | null;
 }
 
+/**
+ * Scoring weights — single source of truth for relationship + capacity
+ * axes. `satisfies` (not `as`) is load-bearing: adding a member to the
+ * `Relationship` or `CapacitySignal` union without adding the matching
+ * entry here is a COMPILE ERROR. This is the drift-prevention property
+ * that match-delegate.ts's VALID_* derivation relies on.
+ *
+ * `as Record<...>` would NOT give that guarantee — it permits any object
+ * whose keys are a subset of the union.
+ */
 export const WEIGHTS = {
   domain_match: 3,
-  relationship: { direct_report: 2, peer: 1, vendor: 0, partner: 0 } as Record<Relationship, number>,
-  capacity: { high: 2, medium: 1, low: -1 } as Record<CapacitySignal, number>,
+  relationship: { direct_report: 2, peer: 1, vendor: 0, partner: 0 },
+  capacity: { high: 2, medium: 1, low: -1 },
+} satisfies {
+  domain_match: number;
+  relationship: Record<Relationship, number>;
+  capacity: Record<CapacitySignal, number>;
 };
 
-export const REL_RANK: Record<Relationship, number> = {
-  direct_report: 2, peer: 1, vendor: 0, partner: 0,
-};
+/**
+ * Relationship rank for tiebreak in rankCandidates. Derived from
+ * WEIGHTS.relationship so the relationship axis has ONE source of truth.
+ * Same numeric values as the score weights — no parallel literal to drift.
+ */
+export const REL_RANK: Record<Relationship, number> = WEIGHTS.relationship;
 
 // ── Memory schema constants — single source of truth ─────────────────────────
 //
@@ -255,7 +272,9 @@ export function scoreDelegate(
 export function rankCandidates(candidates: ScoredCandidate[]): ScoredCandidate[] {
   return [...candidates].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return (REL_RANK[b.relationship] ?? 0) - (REL_RANK[a.relationship] ?? 0);
+    // REL_RANK is Record<Relationship, number> — no `?? 0` needed because
+    // b.relationship is typed as Relationship, so the lookup cannot miss.
+    return REL_RANK[b.relationship] - REL_RANK[a.relationship];
   });
 }
 
