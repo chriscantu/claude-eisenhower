@@ -89,14 +89,25 @@ Parse the JSON output. The `status` field will be one of:
 
 ## Step 4: Present the scoring result with narrative scorecard
 
+The CLI in Step 3 emits a JSON document on stdout. Parse it and read the
+following fields (NOT in-process JS objects — these are top-level / per-element
+fields on the parsed JSON):
+
+- `candidates[]` — array of scored candidates, each with `alias`, `role`,
+  `score`, `matched_domains`, `breakdown` (per-axis: `domain`, `relationship`,
+  `capacity`, `pending`)
+- `runnerUpDelta` — **top-level** field, NOT a sub-property of any candidate.
+  Type is `number | null`. `null` means "fewer than 2 viable candidates" —
+  semantically distinct from `0` ("tied with top"). Do NOT coerce or render
+  `null` as `0`.
+
 **If `status: match`:**
 
-Render a narrative scorecard for the top candidate using `candidates[0].breakdown`
-(per-axis: `domain`, `relationship`, `capacity`, `pending`). Do not just dump the
-score — explain it. Use this shape:
+Render a narrative scorecard for the top candidate from the parsed JSON.
+Use the breakdown object on `candidates[0]` to show each axis explicitly:
 
 ```
-Suggested delegate: [candidates[0].alias] ([candidates[0].role]) — score [breakdown.total]
+Suggested delegate: [candidates[0].alias] ([candidates[0].role]) — score [candidates[0].score]
   breakdown:
     domain +[breakdown.domain] ([matched_domains.join(", ")])
     [relationship] +[breakdown.relationship]
@@ -107,16 +118,15 @@ Why [alias]: [1-sentence narrative tying the matched domain(s) to the task,
 the relationship advantage, and any capacity caveat].
 ```
 
-**Always surface the runner-up** when `candidates.length >= 2` (no within-2-points
-gating — runners-up calibrate user trust over time):
+**Surface the runner-up** ONLY when BOTH (a) `candidates.length >= 2` AND
+(b) `runnerUpDelta !== null`. If either is false, do NOT render the runner-up
+block — there is no runner-up. (`null` ≠ `0`. A delta of 0 means tied; null
+means absent. They are not interchangeable.)
 
 ```
-Runner-up: [candidates[1].alias] ([candidates[1].role]) — score [breakdown.total]
+Runner-up: [candidates[1].alias] ([candidates[1].role]) — score [candidates[1].score]
   (delta [runnerUpDelta])
   breakdown: [same per-axis format as above]
-
-What would change my mind: if [candidates[0].alias]'s capacity drops to low,
-[candidates[1].alias] wins by [computed delta after capacity flip].
 ```
 
 **Third-place** (when `candidates.length >= 3`): one-line summary —
@@ -169,21 +179,30 @@ When the user overrides the suggested delegate (picks a different alias than
 > **capacity** (who's actually overloaded?), or **relationship** (peer/report
 > mismatch)?
 
-Capture the answer and append a row to `memory/delegation-learnings.md` (create
-the file if it does not exist) in this format:
+Capture the answer and append a row to `memory/delegation-learnings.md`
+(create the file with the header row below if it does not exist). The `Reason`
+cell uses `/` as the value separator since `|` is the markdown table delimiter:
 
 ```
-| Date | Task | Suggested | Chosen | Reason | Detail |
-|------|------|-----------|--------|--------|--------|
-| 2026-MM-DD | [task title] | [suggested alias] | [chosen alias] | domain|capacity|relationship | [user's detail] |
+| Date       | Task         | Suggested        | Chosen        | Reason                              | Detail              |
+|------------|--------------|------------------|---------------|-------------------------------------|---------------------|
+| {TODAY}    | {task title} | {suggested alias}| {chosen alias}| domain / capacity / relationship    | {user's detail}     |
 ```
 
-This learning loop closes the override gap — without it, the plugin learns nothing
-when scoring guesses wrong. Future stakeholder graph tuning reads this file to
-suggest domain additions, capacity refreshes, or relationship corrections.
+Set `Reason` to ONE of: `domain`, `capacity`, `relationship`. Set `Detail`
+to the user's specific answer (e.g., "missed: legal review" or "Sam is on
+vacation this week").
 
-The user may decline to answer ("just go" / "skip") — in that case, do NOT block.
-Continue to Step 5 confirmation. The learning loop is best-effort, not mandatory.
+**If the user declines to answer** ("just go" / "skip"): do NOT block —
+continue to Step 5 confirmation. ALSO append a stub row with
+`Reason: declined` and `Detail: —`. The override signal ("scoring picked X
+but user chose Y") is preserved even without the diagnostic axis; without
+the stub the override is invisible to any future review.
+
+`memory/delegation-learnings.md` is a manual review log. Nothing else
+currently reads it; the value is letting the user notice override patterns
+when they review the file themselves. Do not claim the plugin "learns from"
+this file — it does not, today.
 
 ---
 

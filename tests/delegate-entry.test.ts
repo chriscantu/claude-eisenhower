@@ -100,15 +100,15 @@ describe("Phase 5: /delegate Direct Entry Point — Scoring (DEL-002, DEL-003)",
     expect(candidates[0].matched_domains).toContain("infrastructure");
   });
 
-  test("TEST-DEL-502: runner-up surfaced when within 2 points of top score", () => {
-    // Both infraLead and lowCapEngineer match "infrastructure" (+3 domain, +2 DR = 5 for infraLead/medium, +1 = 6; lowCap: +3 +2 -1 = 4)
+  test("TEST-DEL-502: runner-up always surfaced when viable (top-3 cap, no delta gating)", () => {
+    // Per issue #26: the within-2-points filter was dropped; runners-up
+    // always surface up to the top-3 cap to calibrate user trust.
     const { candidates } = runDelegateScoring(
       [infraLead, lowCapEngineer],
       "infrastructure migration",
       ""
     );
     // infraLead scores 6 (domain +3, DR +2, medium +1), lowCap scores 4 (domain +3, DR +2, low -1)
-    // 6 - 4 = 2, so lowCap is within the 2-point window — should appear as runner-up
     expect(candidates.length).toBeGreaterThanOrEqual(2);
     expect(candidates[1].alias).toBe("Riley L.");
   });

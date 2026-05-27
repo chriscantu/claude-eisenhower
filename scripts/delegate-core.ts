@@ -72,17 +72,32 @@ export interface StakeholderFile {
 }
 
 /**
- * Per-axis score breakdown for transparency. Sums to ScoredCandidate.score
- * (anti-domain veto sets total = -Infinity; breakdown still reports the
- * would-be-component contributions for debugging).
+ * Per-axis score breakdown for transparency. The sum of (domain,
+ * relationship, capacity, pending) equals ScoredCandidate.score for
+ * non-vetoed candidates. Vetoed candidates have score = -Infinity; the
+ * breakdown still reports would-be component contributions for debugging.
+ * Invariants (by construction in scoreDelegate):
+ *   - domain      >= 0
+ *   - relationship >= 0 (WEIGHTS.relationship has no negative entries)
+ *   - capacity    in {-1, 1, 2} (low / medium / high)
+ *   - pending     <= 0 (penalty)
  */
 export interface ScoreBreakdown {
-  domain: number;          // sum of WEIGHTS.domain_match per matched domain
-  relationship: number;    // WEIGHTS.relationship[stakeholder.relationship]
-  capacity: number;        // WEIGHTS.capacity[stakeholder.capacity_signal]
-  pending: number;         // overload * PENDING_PENALTY (already negative)
-  total: number;           // sum of above, OR -Infinity if vetoed
+  domain: number;
+  relationship: number;
+  capacity: number;
+  pending: number;
   vetoed: boolean;
+}
+
+/**
+ * Sum of breakdown axes. ScoredCandidate.score is canonical; this helper
+ * is exposed so consumers can verify the invariant or render axis totals
+ * without re-implementing the sum.
+ */
+export function breakdownSum(b: ScoreBreakdown): number {
+  if (b.vetoed) return -Infinity;
+  return b.domain + b.relationship + b.capacity + b.pending;
 }
 
 export interface ScoredCandidate {
@@ -95,9 +110,9 @@ export interface ScoredCandidate {
   capacity_warning: boolean;
   notes?: string;
   /**
-   * Per-axis breakdown. Populated by scoreDelegate. Renderers should use
-   * this to display "domain +6, direct_report +2, capacity high +2" rather
-   * than a single opaque number. See issue #26.
+   * Per-axis breakdown. Renderers display "domain +6, direct_report +2,
+   * capacity high +2" rather than the opaque score. ScoredCandidate.score
+   * equals breakdownSum(breakdown) by construction.
    */
   breakdown: ScoreBreakdown;
 }
@@ -107,11 +122,13 @@ export interface MatchResult {
   candidates: ScoredCandidate[];
   message: string;
   /**
-   * Score delta between top candidate and runner-up (candidates[0].score
-   * - candidates[1].score). Null when fewer than 2 candidates exist.
-   * Renderers use this for "what would change my mind" framing.
+   * Score delta between top candidate and runner-up
+   * (candidates[0].score - candidates[1].score). null — and only null —
+   * when fewer than 2 candidates exist. Renderers must NOT coerce null
+   * to 0; the two states are semantically distinct ("no runner-up" vs
+   * "tied runner-up").
    */
-  runnerUpDelta?: number | null;
+  runnerUpDelta: number | null;
 }
 
 export const WEIGHTS = {
@@ -190,27 +207,27 @@ export function scoreDelegate(
   const relationshipScore = WEIGHTS.relationship[stakeholder.relationship] ?? 0;
   const capacityScore = WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
   const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
-  // Guard against JS -0 when overload is 0 (0 * -2 = -0)
+  // Guard against JS -0 (0 * -2 = -0). renderScorecard's `pending < 0`
+  // check would still be correct without this (since -0 < 0 is false),
+  // but Object.is(0, -0) is false too — keeping pendingScore strictly
+  // +0 avoids `toBe(0)` test surprises and downstream display drift.
   const pendingScore = overload === 0 ? 0 : overload * PENDING_PENALTY;
-
-  const componentSum = domainScore + relationshipScore + capacityScore + pendingScore;
-  const total = vetoed ? -Infinity : componentSum;
 
   const breakdown: ScoreBreakdown = {
     domain: domainScore,
     relationship: relationshipScore,
     capacity: capacityScore,
     pending: pendingScore,
-    total,
     vetoed,
   };
+  const score = breakdownSum(breakdown);
 
   return {
     alias: getDisplayAlias(stakeholder),
     role: stakeholder.role,
     relationship: stakeholder.relationship,
     capacity_signal: stakeholder.capacity_signal,
-    score: total,
+    score,
     matched_domains: matchedDomains,
     capacity_warning: stakeholder.capacity_signal === "low" || pendingCount > PENDING_THRESHOLD,
     notes: stakeholder.notes,
@@ -251,45 +268,6 @@ export function runMatch(
     ? candidates[0].score - candidates[1].score
     : null;
   return { status: "match", candidates, runnerUpDelta };
-}
-
-// ── Quadrant verb labels — user-facing rendering ─────────────────────────────
-//
-// Q1-Q4 are machine-readable metadata in TASKS.md. User-facing surfaces
-// (today, plan-week, review-week, scan-email tables, etc.) must render the
-// verb label alongside the code so the user doesn't have to memorize the 2x2
-// lookup every time. See issue #30.
-
-export type Quadrant = "Q1" | "Q2" | "Q3" | "Q4";
-
-/**
- * Canonical Q → verb mapping. Changing a verb here propagates to all
- * user-facing renders. Q-codes remain the machine-readable form in TASKS.md.
- */
-export const QUADRANT_VERBS: Record<Quadrant, string> = {
-  Q1: "Do",
-  Q2: "Schedule",
-  Q3: "Delegate",
-  Q4: "Cut",
-} as const;
-
-/**
- * Renders a quadrant as a user-facing label.
- *  - "compound" (default): "Q2 · Schedule" — code + verb, scannable in tables
- *  - "verb": "Schedule" — verb only, for compact lists
- *  - "bracket": "[Q2 · Schedule]" — bracketed for bullet lists
- */
-export function renderQuadrantLabel(
-  q: Quadrant,
-  style: "compound" | "verb" | "bracket" = "compound"
-): string {
-  const verb = QUADRANT_VERBS[q];
-  switch (style) {
-    case "verb":     return verb;
-    case "bracket":  return `[${q} · ${verb}]`;
-    case "compound":
-    default:         return `${q} · ${verb}`;
-  }
 }
 
 // ── Authority flag — single source of truth ──────────────────────────────────

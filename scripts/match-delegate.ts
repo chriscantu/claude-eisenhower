@@ -19,9 +19,17 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import {
-  Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, runMatch, getDisplayAlias,
+  Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, Relationship,
+  CapacitySignal, runMatch, getDisplayAlias,
   GLOSSARY_COLUMNS, glossaryColIndex,
 } from "./delegate-core";
+
+const VALID_RELATIONSHIPS: ReadonlySet<Relationship> = new Set([
+  "direct_report", "peer", "vendor", "partner",
+]);
+const VALID_CAPACITY_SIGNALS: ReadonlySet<CapacitySignal> = new Set([
+  "high", "medium", "low",
+]);
 
 /**
  * Validates that the parsed header row of memory/glossary.md matches GLOSSARY_COLUMNS.
@@ -116,6 +124,32 @@ function findGlossaryPath(): string {
   return path.join(repoRoot, "memory", "glossary.md");
 }
 
+/**
+ * Validates that every stakeholder's relationship and capacity_signal fields
+ * are in the canonical enum. Without this, a typo
+ * (e.g., `relationship: direct_repor`) would silently score the stakeholder
+ * with a 0-weight relationship axis — they'd lose to peers forever with no
+ * surface signal. Throws on the first invalid field, identifying the file,
+ * the offending alias, and the unknown value.
+ */
+function validateStakeholderEnums(graphPath: string, stakeholders: Stakeholder[]): void {
+  for (const s of stakeholders) {
+    const alias = getDisplayAlias(s);
+    if (!VALID_RELATIONSHIPS.has(s.relationship)) {
+      throw new Error(
+        `${graphPath}: stakeholder "${alias}" has invalid relationship "${s.relationship}". ` +
+        `Valid values: ${Array.from(VALID_RELATIONSHIPS).join(", ")}`
+      );
+    }
+    if (!VALID_CAPACITY_SIGNALS.has(s.capacity_signal)) {
+      throw new Error(
+        `${graphPath}: stakeholder "${alias}" has invalid capacity_signal "${s.capacity_signal}". ` +
+        `Valid values: ${Array.from(VALID_CAPACITY_SIGNALS).join(", ")}`
+      );
+    }
+  }
+}
+
 export function loadStakeholders(graphPath: string): Stakeholder[] | null {
   if (!fs.existsSync(graphPath)) return null;
   const raw = fs.readFileSync(graphPath, "utf8");
@@ -124,41 +158,54 @@ export function loadStakeholders(graphPath: string): Stakeholder[] | null {
     parsed = yaml.load(raw) as StakeholderFile;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`stakeholders.yaml parse error: ${msg}`);
+    throw new Error(`Failed to parse ${graphPath}: ${msg}`);
   }
   if (!parsed?.stakeholders || parsed.stakeholders.length === 0) return [];
+  validateStakeholderEnums(graphPath, parsed.stakeholders);
   return parsed.stakeholders;
 }
 
 /**
- * Renders a single candidate's score breakdown as a one-line scorecard.
- * Example: "Alex E. (8): domain +6 (auth, infra), direct_report +2, capacity high +2"
- * Used by buildMessage and exposed for narrative rendering in commands/delegate.md.
+ * Renders a per-axis score breakdown as a one-line scorecard.
+ *
+ * Every axis with a non-default contribution is rendered explicitly so the
+ * user can distinguish "vendor with relationship weight 0 by design" from
+ * "stakeholder whose relationship enum is missing from WEIGHTS". The only
+ * axis that's omitted is `pending` when there is no penalty — `pending +0`
+ * adds noise without information since the penalty exists only on overload.
+ *
+ * Example (direct_report, two domains, high capacity):
+ *   "Alex E. (7): domain +6 (auth, infra), direct_report +2, capacity high +2"
+ *
+ * Example (vendor, contract match, high capacity, 0-weight relationship):
+ *   "Vendor A (5): domain +3 (procurement), vendor 0, capacity high +2"
  */
 export function renderScorecard(c: ScoredCandidate): string {
   const parts: string[] = [];
   if (c.breakdown.domain > 0) {
     const dom = c.matched_domains.length > 0 ? ` (${c.matched_domains.join(", ")})` : "";
     parts.push(`domain +${c.breakdown.domain}${dom}`);
+  } else {
+    parts.push(`domain 0`);
   }
-  if (c.breakdown.relationship !== 0) {
-    const sign = c.breakdown.relationship > 0 ? "+" : "";
-    parts.push(`${c.relationship} ${sign}${c.breakdown.relationship}`);
-  }
-  if (c.breakdown.capacity !== 0) {
-    const sign = c.breakdown.capacity > 0 ? "+" : "";
-    parts.push(`capacity ${c.capacity_signal} ${sign}${c.breakdown.capacity}`);
-  }
+  parts.push(`${c.relationship} ${signedNumber(c.breakdown.relationship)}`);
+  parts.push(`capacity ${c.capacity_signal} ${signedNumber(c.breakdown.capacity)}`);
   if (c.breakdown.pending < 0) {
     parts.push(`pending ${c.breakdown.pending}`);
   }
   return `${c.alias} (${c.score}): ${parts.join(", ")}`;
 }
 
+function signedNumber(n: number): string {
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `${n}`;
+  return `0`;
+}
+
 function buildMessage(
   status: MatchResult["status"],
   candidates: ScoredCandidate[],
-  runnerUpDelta: number | null = null,
+  runnerUpDelta: number | null,
 ): string {
   switch (status) {
     case "no_graph":
@@ -172,7 +219,13 @@ function buildMessage(
       const top = candidates[0];
       let msg = `Suggested delegate: ${renderScorecard(top)}`;
       if (candidates.length > 1) {
-        msg += `\nRunner-up: ${renderScorecard(candidates[1])} (delta ${runnerUpDelta ?? 0})`;
+        // candidates.length > 1 implies runnerUpDelta is a number, never null.
+        // Don't `?? 0` — "no runner-up" (null) and "tied runner-up" (0) are
+        // semantically distinct; coercing collapses them.
+        if (runnerUpDelta === null) {
+          throw new Error("runnerUpDelta cannot be null when 2+ candidates exist");
+        }
+        msg += `\nRunner-up: ${renderScorecard(candidates[1])} (delta ${runnerUpDelta})`;
       }
       if (candidates.length > 2) {
         msg += `\nAlso considered: ${renderScorecard(candidates[2])}`;
@@ -189,7 +242,7 @@ function run(): void {
   const args = process.argv.slice(2);
   if (args.length < 1) {
     console.log(JSON.stringify({
-      status: "no_match", candidates: [],
+      status: "no_match", candidates: [], runnerUpDelta: null,
       message: "Usage: match-delegate.ts <task-title> [task-description]",
     }, null, 2));
     process.exit(1);
@@ -203,16 +256,24 @@ function run(): void {
     stakeholders = loadStakeholders(graphPath);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.log(JSON.stringify({ status: "no_graph", candidates: [], message: msg }, null, 2));
+    console.log(JSON.stringify({
+      status: "no_graph", candidates: [], runnerUpDelta: null, message: msg,
+    }, null, 2));
     process.exit(1);
   }
 
   if (stakeholders === null) {
-    console.log(JSON.stringify({ status: "no_graph", candidates: [], message: buildMessage("no_graph", []) }, null, 2));
+    console.log(JSON.stringify({
+      status: "no_graph", candidates: [], runnerUpDelta: null,
+      message: buildMessage("no_graph", [], null),
+    }, null, 2));
     return;
   }
   if (stakeholders.length === 0) {
-    console.log(JSON.stringify({ status: "empty_graph", candidates: [], message: buildMessage("empty_graph", []) }, null, 2));
+    console.log(JSON.stringify({
+      status: "empty_graph", candidates: [], runnerUpDelta: null,
+      message: buildMessage("empty_graph", [], null),
+    }, null, 2));
     return;
   }
 

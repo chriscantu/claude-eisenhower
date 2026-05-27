@@ -21,10 +21,12 @@ distinction in the confirmation block below.
 - **Source**: Where this came from. Options: Email, Slack, Meeting, Conversation, Calendar, Jira, Asana, Linear, GitHub, Self, Other. Infer from context if not stated — mark as `(inferred)`.
 - **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated. See alias resolution step below — resolve to display alias before writing. Mark `(stated)` or `(inferred)` based on whether the user named them.
 - **Urgency signal**: What was said about timing (quote or paraphrase). If nothing stated, write "Not specified."
-- **Raw due date** (ISO format: `YYYY-MM-DD`): If any temporal phrase appears in the input ("by Thursday", "before EOW", "next Tuesday", "end of month"), **parse it to an ISO date** relative to today. Surface the parse origin as `(parsed from "<phrase>")`. Only write `Not specified` when no date or temporal phrase is mentioned in the user's text. Examples:
-  - Input "by Thursday" (today is Mon 2026-06-02) → `Due date: 2026-06-05 (parsed from "by Thursday")`
-  - Input "next week" → `Due date: 2026-06-09 (parsed from "next week")`
-  - Input "Friday" → `Due date: 2026-06-06 (parsed from "Friday")`
+- **Raw due date** (ISO format: `YYYY-MM-DD`): If any temporal phrase appears in the input ("by Thursday", "before EOW", "next Tuesday", "end of month"), **parse it to an ISO date relative to the current session date** (the date injected by the harness — see `# currentDate` in CLAUDE.md, e.g. "Today's date is 2026-05-27"). Use that date as the anchor for every parse; do NOT use a hardcoded calendar date from this prompt. Surface the parse origin AND the anchor so silent mis-anchoring is visible at confirmation time:
+  - Format: `Due date: {ISO} (parsed from "{phrase}", anchor {today's ISO})`
+  - Examples (symbolic — substitute the actual session date for {TODAY}):
+    - Input "by Thursday" → `Due date: {next Thursday on/after TODAY} (parsed from "by Thursday", anchor {TODAY})`
+    - Input "next week" → `Due date: {TODAY+7} (parsed from "next week", anchor {TODAY})`
+    - Input "Friday" → `Due date: {next Friday on/after TODAY} (parsed from "Friday", anchor {TODAY})`
   - No date mentioned → `Due date: Not specified`
 
 ## Format the task record as:

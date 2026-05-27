@@ -73,12 +73,13 @@ After classifying a task as Q3, before saving:
 
 4. **Parse the JSON output**. The CLI returns a JSON object matching the `MatchResult` interface:
    - `status` — `match`, `no_match`, `empty_graph`, or `no_graph`
-   - `candidates[]` — ranked by score, each with: `alias`, `role`, `relationship`, `capacity_signal`, `score`, `matched_domains[]`, `capacity_warning` (boolean)
+   - `candidates[]` — ranked by score, each with: `alias`, `role`, `relationship`, `capacity_signal`, `score`, `matched_domains[]`, `capacity_warning` (boolean), and **`breakdown`** (per-axis: `domain`, `relationship`, `capacity`, `pending`)
+   - `runnerUpDelta` — **top-level** field, `number | null`. `null` means fewer than 2 viable candidates (NOT zero). Do not coerce.
    - `message` — a pre-formatted human-readable summary string
 
-5. **Surface results**:
-   - `status: match` with one clear top scorer → suggest by alias with reasoning from `matched_domains` and `relationship`
-   - `status: match` with tied scores → surface both, prefer `direct_report` on tiebreak, ask user to choose
+5. **Surface results using the narrative scorecard** (same shape as `/delegate` Step 4 — these two commands consume the same CLI and should render consistently):
+   - `status: match` → render the top candidate with its per-axis breakdown — `domain +N (matched_domains)`, `relationship +N`, `capacity +N`, `pending -N` (when overloaded). Include a one-sentence "Why [alias]" narrative.
+   - Surface the runner-up ONLY when `candidates.length >= 2` AND `runnerUpDelta !== null`. Include the delta inline.
    - `status: no_match` → say "No clear domain match in your stakeholder graph." Ask: "Who should own this?"
    - If a candidate has `capacity_warning: true` → add: "Note: [alias] is currently showing low capacity — confirm they can take this on."
 

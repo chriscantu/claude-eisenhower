@@ -14,6 +14,7 @@ import {
   scoreDelegate,
   runMatch,
   WEIGHTS,
+  breakdownSum,
 } from "../scripts/delegate-core";
 import { renderScorecard } from "../scripts/match-delegate";
 
@@ -47,7 +48,7 @@ const vetoed: Stakeholder = {
 };
 
 describe("Issue #26: scoring breakdown is exposed", () => {
-  test("breakdown sums to total score (no veto, no pending)", () => {
+  test("breakdownSum equals score (no veto, no pending)", () => {
     const c = scoreDelegate(infraDirect, "Update infrastructure alerting", "");
     const b = c.breakdown;
     expect(b.domain).toBe(WEIGHTS.domain_match); // 1 match
@@ -56,7 +57,7 @@ describe("Issue #26: scoring breakdown is exposed", () => {
     expect(b.pending).toBe(0);
     expect(b.vetoed).toBe(false);
     expect(b.domain + b.relationship + b.capacity + b.pending).toBe(c.score);
-    expect(b.total).toBe(c.score);
+    expect(breakdownSum(b)).toBe(c.score);
   });
 
   test("breakdown reflects negative components (peer + medium capacity)", () => {
@@ -71,14 +72,21 @@ describe("Issue #26: scoring breakdown is exposed", () => {
     const c = scoreDelegate(infraDirect, "Infrastructure work", "", 5);
     // overload = max(0, 5-2) = 3; pending = 3 * -2 = -6
     expect(c.breakdown.pending).toBe(-6);
-    expect(c.breakdown.total).toBe(c.score);
+    expect(breakdownSum(c.breakdown)).toBe(c.score);
+  });
+
+  test("pending is strict +0 (not -0) when no overload", () => {
+    const c = scoreDelegate(infraDirect, "Infrastructure work", "", 0);
+    // Object.is differentiates +0 from -0; toBe uses Object.is.
+    expect(Object.is(c.breakdown.pending, 0)).toBe(true);
+    expect(Object.is(c.breakdown.pending, -0)).toBe(false);
   });
 
   test("vetoed candidate has -Infinity score, breakdown.vetoed=true", () => {
     const c = scoreDelegate(vetoed, "Frontend compliance dashboard", "");
     expect(c.score).toBe(-Infinity);
     expect(c.breakdown.vetoed).toBe(true);
-    expect(c.breakdown.total).toBe(-Infinity);
+    expect(breakdownSum(c.breakdown)).toBe(-Infinity);
   });
 });
 
@@ -130,6 +138,31 @@ describe("Issue #26: renderScorecard produces narrative format", () => {
     const c = scoreDelegate(infraDirect, "Infrastructure work", "", 5);
     const card = renderScorecard(c);
     expect(card).toContain("pending -6");
+  });
+
+  test("scorecard renders relationship axis even when weight is 0 (vendor)", () => {
+    // Vendor relationship weight is 0. Previous behavior silently omitted
+    // the axis, making "vendor by design" indistinguishable from "enum
+    // missing from WEIGHTS" config bug.
+    const card = renderScorecard(
+      scoreDelegate(lowCapVendor, "Negotiate contracts renewal", "")
+    );
+    expect(card).toContain("Vendor X");
+    expect(card).toContain("vendor 0"); // axis rendered explicitly
+  });
+
+  test("scorecard renders all axes (domain 0 + zero-weight rel) for transparency", () => {
+    const peer0: Stakeholder = {
+      name: "FIRST_LAST_99", alias: "Generic P.", role: "Peer",
+      relationship: "peer", domains: ["something-unrelated"],
+      capacity_signal: "medium",
+    };
+    const card = renderScorecard(
+      scoreDelegate(peer0, "Task with no domain match", "")
+    );
+    expect(card).toContain("domain 0");
+    expect(card).toContain("peer +1");
+    expect(card).toContain("capacity medium +1");
   });
 });
 
