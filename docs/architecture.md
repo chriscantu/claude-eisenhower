@@ -170,43 +170,39 @@ stateDiagram-v2
 
 ## 3. Memory Manager
 
-Introduced in v1.0.1. Unifies all delegation memory operations (read, write, update)
-under the `memory-manager` skill (`skills/memory-manager/SKILL.md`). Replaces the
-inline try/fallback pattern that was duplicated across 6 command locations.
+Introduced in v1.0.1; consolidated to a single backend in v1.9.0. All delegation
+memory operations (read, write, update) flow through the `memory-manager` skill
+(`skills/memory-manager/SKILL.md`), which writes to local markdown files only.
 
-See `memory-system-adr.md` for the original write contract and `memory-access-layer.md`
-(superseded) for the read-only predecessor.
+See `single-backend-memory.md` for the current architectural decision. The prior
+`memory-system-adr.md` and `memory-access-layer.md` are superseded — they
+described a dual-backend pattern (external `productivity:memory-management`
+skill primary, local files fallback) that silently disabled the scoring
+algorithm's `PENDING_PENALTY` whenever the abstraction "worked."
 
 ```mermaid
 flowchart TD
     subgraph WRITE["Memory Write  (schedule · execute · delegate)"]
         direction LR
         wcmd["Command needs\nto log delegation"]
-        wskill{"productivity:\nmemory-management\navailable?"}
-        wskill_yes["Write to skill\n✓ Done"]
-        wskill_no["Append to\nmemory/stakeholders-log.md"]
+        wglossary["Append row to\nmemory/glossary.md"]
+        wpeople["Append row to\nmemory/people/{alias}.md"]
         wfail["Surface warning —\ntrack manually"]
 
-        wcmd --> wskill
-        wskill -->|"yes"| wskill_yes
-        wskill -->|"no"| wskill_no
-        wskill_no -->|"write fails"| wfail
+        wcmd --> wglossary
+        wglossary --> wpeople
+        wpeople -->|"write fails"| wfail
     end
 
-    subgraph READ["Memory Read  (review-week)"]
+    subgraph READ["Memory Read  (review-week · match-delegate)"]
         direction LR
-        rcmd["Command needs\npending check-ins"]
-        rskill{"productivity:\nmemory-management\navailable?"}
-        rskill_yes["Query skill\nfor check-ins"]
-        rskill_no["Parse\nmemory/stakeholders-log.md"]
+        rcmd["Command needs\npending check-ins\nor pending counts"]
+        rparse["Parse\nmemory/glossary.md"]
         rmerge["Deduplicate against\nTASKS.md Delegated records"]
-        rout["Return unified\nentry list"]
+        rout["Return entry list\nor {alias: count} map"]
 
-        rcmd --> rskill
-        rskill -->|"yes"| rskill_yes
-        rskill -->|"no"| rskill_no
-        rskill_yes --> rmerge
-        rskill_no --> rmerge
+        rcmd --> rparse
+        rparse --> rmerge
         rmerge --> rout
     end
 
@@ -233,7 +229,7 @@ flowchart TD
 | Swift | `cal_query.swift` (EventKit — O(1) calendar query) |
 | Config | `calendar-config.md` · `email-config.md` · `task-output-config.md` · `stakeholders.yaml` |
 | Data (runtime) | `TASKS.md` · `memory/` (stakeholders-log, review-log, people/, glossary) |
-| External | Mac Calendar · Mac Reminders · `productivity:memory-management` skill |
+| External | Mac Calendar · Mac Reminders |
 | Adapters | `reminders.md` (active) · `jira.md` · `linear.md` · `asana.md` (planned) |
 | Infrastructure | Jest (196 tests) · GitHub Actions (CI + tag-based release) |
 
@@ -245,7 +241,6 @@ flowchart TD
 |----------|-----------|-----------|
 | EventKit Swift script instead of AppleScript `whose` | AppleScript `whose` is O(n) and times out on large calendars | `calendar-performance-fix.md` |
 | Four-state model (Inbox/Active/Delegated/Done) | Separates action state from Eisenhower priority classification | `four-state-task-model-spec.md` |
-| Single write target for memory | Eliminates dual-write split-state problem | `memory-system-adr.md` |
-| Memory Access Layer (read abstraction) | Commands read memory without knowing backend; same return shape from skill or local file | `memory-access-layer.md` |
+| Single-backend memory (markdown only) | Restores `PENDING_PENALTY` end-to-end; eliminates the dual-backend illusion where the scoring axis silently no-op'd whenever the abstraction "worked" | `single-backend-memory.md` |
 | `delegate-core.ts` as shared module | DRY: scoring logic, types, and constants imported by CLI and tests; never duplicated | `docs/PRINCIPLES.md` |
 | No Blocked state | Anti-pattern — creates a holding area with no forcing function; every stuck task needs an action | `four-state-task-model-spec.md` |

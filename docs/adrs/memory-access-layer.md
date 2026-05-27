@@ -1,17 +1,19 @@
 # Memory Access Layer
 
 **Date**: 2026-03-04
-**Status**: Superseded — see `skills/memory-manager/SKILL.md` (v1.0.1)
+**Status**: Superseded — see `docs/adrs/single-backend-memory.md` (v1.9.0)
 **Scope**: All commands and skills that read stakeholder delegation entries
-**Related**: `memory-system-adr.md` (write contract)
+**Related**: `memory-system-adr.md` (also superseded), `single-backend-memory.md` (current)
 
 ---
 
-> **Superseded in v1.0.1.** The read contract defined here has been unified with write
-> and update contracts into the `memory-manager` skill
-> (`skills/memory-manager/SKILL.md`). This document is retained as a historical
-> record of the read-abstraction design decision. Do not implement the pattern described
-> below inline in commands — use the memory-manager skill instead.
+> **Superseded in v1.9.0 (#28).** The dual-backend abstraction described here
+> silently disabled the scoring algorithm's `PENDING_PENALTY` whenever the
+> external `productivity:memory-management` skill was active — the very
+> condition the abstraction was designed for. See
+> `docs/adrs/single-backend-memory.md` for the current decision: local
+> markdown files are the single backend, with no external fallback or primary.
+> The historical content below is retained for archaeology only.
 
 ---
 

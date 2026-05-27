@@ -24,7 +24,6 @@ directly from that source rather than requiring manual intake.
 
 | Tool | Status | How it works |
 |------|--------|-------------|
-| productivity:memory-management | Optional (external) | See External Skill Dependencies below |
 | Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `config/email-config.md`. |
 | Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `config/calendar-config.md`. |
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `config/task-output-config.md` and `adapters/`. |
@@ -42,19 +41,6 @@ handling to reference Slack-specific context (channels, DM types, reactions).
 
 ## External Skill Dependencies
 
-These skills are not bundled with claude-eisenhower but are called by its commands.
-Install them separately from the Claude plugins marketplace.
-
-### productivity:memory-management
-
-**Used by**: `/schedule` (Step 7), `/execute` (stakeholder wrap-up), `/delegate` (Step 8),
-`skills/core/SKILL.md` (Stakeholder Memory section)
-
-**Purpose**: Persists stakeholder follow-up entries across sessions — who owns what,
-check-in dates, status.
-
-**If not installed**: The plugin will still operate; stakeholder follow-up tracking
-will be skipped. A warning note will appear at each call site.
-
-**Install**: Search "productivity" in Claude plugins marketplace and install the
-`productivity` plugin.
+None. As of v1.9.0 the plugin owns all stakeholder memory locally — see
+`docs/adrs/single-backend-memory.md` for the decision to retire the external
+`productivity:memory-management` dependency.

@@ -92,37 +92,29 @@ describe("Prompt Contracts: no prohibited section headers (Q2-001)", () => {
   }
 });
 
-// ── Test group 2: Memory guard line ───────────────────────────────────────
+// ── Test group 2: No references to the retired external memory skill ─────
+//
+// As of v1.9.0 (#28) the plugin owns delegation memory fully — there is no
+// productivity:memory-management dependency. Catch regressions where a new
+// prompt file accidentally reintroduces the dual-backend illusion.
+// See docs/adrs/single-backend-memory.md.
 
-const MEMORY_SKILL_TOKEN = "productivity:memory-management";
-const MEMORY_GUARD_LINE =
-  "Do NOT write to local memory files if productivity:memory-management succeeded.";
+const RETIRED_MEMORY_SKILL_TOKEN = "productivity:memory-management";
 
-describe("Prompt Contracts: memory guard line present (Q2-002)", () => {
-  // Guard line must be present in any command, agent, OR skill file that references
-  // productivity:memory-management. After the memory-manager refactor the guard
-  // lives in skills/memory-manager/SKILL.md, so skill files are included here.
-  // Agent files (agents/*.md) are also included — task-prioritizer.md references
-  // the skill and must carry the guard line.
+describe("Prompt Contracts: no references to retired external memory skill (Q2-002)", () => {
   for (const filePath of [...commandFiles, ...agentFiles, ...skillFiles]) {
     const relPath = path.relative(repoRoot, filePath);
 
-    test(`Q2-002: ${relPath} — if it mentions ${MEMORY_SKILL_TOKEN}, it must contain the guard line`, () => {
+    test(`Q2-002: ${relPath} must not reference ${RETIRED_MEMORY_SKILL_TOKEN}`, () => {
       const content = readContent(filePath);
-
-      if (!content.includes(MEMORY_SKILL_TOKEN)) {
-        // File does not reference the skill — guard line is not required.
-        return;
-      }
-
-      if (!content.includes(MEMORY_GUARD_LINE)) {
+      if (content.includes(RETIRED_MEMORY_SKILL_TOKEN)) {
         throw new Error(
-          `${relPath} references "${MEMORY_SKILL_TOKEN}" but is missing the required guard line:\n` +
-            `  "${MEMORY_GUARD_LINE}"`
+          `${relPath} references the retired "${RETIRED_MEMORY_SKILL_TOKEN}" skill. ` +
+            `Memory is markdown-only as of v1.9.0 — use the memory-manager skill instead. ` +
+            `See docs/adrs/single-backend-memory.md.`
         );
       }
-
-      expect(content).toContain(MEMORY_GUARD_LINE);
+      expect(content).not.toContain(RETIRED_MEMORY_SKILL_TOKEN);
     });
   }
 });

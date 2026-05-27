@@ -105,15 +105,16 @@ Each has an explicit reason for deferral and should be picked up before a major 
 | Item | Description | Why Deferred |
 |------|-------------|--------------|
 | **R8** — ts-jest `globals` deprecation | `scripts/package.json` uses `globals.ts-jest.tsconfig` which is deprecated in ts-jest v29. Migrate to the `transform` key format. Functional today; will become an error in a future ts-jest major version. | Not broken; migration is mechanical but noisy. Address before next ts-jest major upgrade. |
-| **R9** — Stale PRINCIPLES.md reference | `PRINCIPLES.md` line 25 references `docs/adrs/memory-access-layer.md` which is superseded. Should point to `skills/memory-manager/SKILL.md`. | Low risk; the superseded doc still exists with a deprecation notice. Fix in next PRINCIPLES.md edit session. |
 
 ---
 
 ## Open Questions
 
-1. **Memory system ownership**: Is `productivity:memory-management` the long-term
-   stakeholder memory system, or should this plugin own its memory fully? Currently
-   both are used. Decouple or consolidate?
+1. ~~**Memory system ownership**: Is `productivity:memory-management` the long-term
+   stakeholder memory system, or should this plugin own its memory fully?~~
+   **Resolved (#28, v1.9.0)**: The plugin owns memory fully. Local markdown files
+   (`memory/glossary.md` + `memory/people/{alias}.md`) are the single backend.
+   See `docs/adrs/single-backend-memory.md` for the decision.
 
 2. **YAML front matter timing**: Should YAML front matter land in v1.1 alongside
    the schema spec, or after the spec has been stable for one release cycle?

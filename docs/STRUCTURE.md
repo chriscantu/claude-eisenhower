@@ -211,8 +211,9 @@ docs/
 
   adrs/                              -- architectural decision records
     calendar-performance-fix.md      -- ADR: why Swift EventKit instead of AppleScript
-    memory-system-adr.md             -- ADR: single write target for delegation memory (Option B)
-    memory-access-layer.md           -- Superseded -- see skills/memory-manager/SKILL.md (v1.0.1)
+    single-backend-memory.md         -- ADR: markdown-only memory backend (v1.9.0); supersedes the two below
+    memory-system-adr.md             -- Superseded -- see single-backend-memory.md
+    memory-access-layer.md           -- Superseded -- see single-backend-memory.md
     architectural-review-2026-03-02.md -- ADR: full codebase review at v0.9.1; shaped v1.0 roadmap
     security-audit-applescript.md    -- AppleScript shell injection audit (v0.9.7)
 ```
