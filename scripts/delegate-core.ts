@@ -71,6 +71,20 @@ export interface StakeholderFile {
   stakeholders: Stakeholder[];
 }
 
+/**
+ * Per-axis score breakdown for transparency. Sums to ScoredCandidate.score
+ * (anti-domain veto sets total = -Infinity; breakdown still reports the
+ * would-be-component contributions for debugging).
+ */
+export interface ScoreBreakdown {
+  domain: number;          // sum of WEIGHTS.domain_match per matched domain
+  relationship: number;    // WEIGHTS.relationship[stakeholder.relationship]
+  capacity: number;        // WEIGHTS.capacity[stakeholder.capacity_signal]
+  pending: number;         // overload * PENDING_PENALTY (already negative)
+  total: number;           // sum of above, OR -Infinity if vetoed
+  vetoed: boolean;
+}
+
 export interface ScoredCandidate {
   alias: string;
   role: string;
@@ -80,12 +94,24 @@ export interface ScoredCandidate {
   matched_domains: string[];
   capacity_warning: boolean;
   notes?: string;
+  /**
+   * Per-axis breakdown. Populated by scoreDelegate. Renderers should use
+   * this to display "domain +6, direct_report +2, capacity high +2" rather
+   * than a single opaque number. See issue #26.
+   */
+  breakdown: ScoreBreakdown;
 }
 
 export interface MatchResult {
   status: "match" | "no_match" | "no_graph" | "empty_graph";
   candidates: ScoredCandidate[];
   message: string;
+  /**
+   * Score delta between top candidate and runner-up (candidates[0].score
+   * - candidates[1].score). Null when fewer than 2 candidates exist.
+   * Renderers use this for "what would change my mind" framing.
+   */
+  runnerUpDelta?: number | null;
 }
 
 export const WEIGHTS = {
@@ -145,14 +171,7 @@ export function scoreDelegate(
 ): ScoredCandidate {
   const searchText = normalizeText(`${taskTitle} ${taskDescription}`);
   const matchedDomains: string[] = [];
-  let score = 0;
 
-  // ── Anti-domain veto ──────────────────────────────────────────────────────
-  // Hard veto: if any anti_domain keyword appears in task text, this
-  // stakeholder is unconditionally excluded. -Infinity ensures runMatch()
-  // filters them out at the viable.filter(score > 0) step.
-  // matched_domains is still populated so callers can surface "vetoed despite
-  // matching X" in debug output or future /memory tooling.
   let vetoed = false;
   for (const anti of stakeholder.anti_domains ?? []) {
     if (searchText.includes(normalizeText(anti))) {
@@ -160,35 +179,42 @@ export function scoreDelegate(
       break;
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
+  let domainScore = 0;
   for (const domain of stakeholder.domains ?? []) {
     if (searchText.includes(normalizeText(domain))) {
-      score += WEIGHTS.domain_match;
+      domainScore += WEIGHTS.domain_match;
       matchedDomains.push(domain);
     }
   }
-  score += WEIGHTS.relationship[stakeholder.relationship] ?? 0;
-  score += WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
-
-  // Apply a penalty for each pending task beyond the threshold.
-  // This gives the static capacity_signal real-time correction from memory.
+  const relationshipScore = WEIGHTS.relationship[stakeholder.relationship] ?? 0;
+  const capacityScore = WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
   const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
-  score += overload * PENDING_PENALTY;
+  // Guard against JS -0 when overload is 0 (0 * -2 = -0)
+  const pendingScore = overload === 0 ? 0 : overload * PENDING_PENALTY;
 
-  // Anti-domain veto overrides all scoring — applied last so matched_domains
-  // is still populated for debugging visibility.
-  if (vetoed) score = -Infinity;
+  const componentSum = domainScore + relationshipScore + capacityScore + pendingScore;
+  const total = vetoed ? -Infinity : componentSum;
+
+  const breakdown: ScoreBreakdown = {
+    domain: domainScore,
+    relationship: relationshipScore,
+    capacity: capacityScore,
+    pending: pendingScore,
+    total,
+    vetoed,
+  };
 
   return {
     alias: getDisplayAlias(stakeholder),
     role: stakeholder.role,
     relationship: stakeholder.relationship,
     capacity_signal: stakeholder.capacity_signal,
-    score,
+    score: total,
     matched_domains: matchedDomains,
     capacity_warning: stakeholder.capacity_signal === "low" || pendingCount > PENDING_THRESHOLD,
     notes: stakeholder.notes,
+    breakdown,
   };
 }
 
@@ -204,18 +230,27 @@ export function runMatch(
   title: string,
   desc = "",
   pendingCounts: Record<string, number> = {}
-): { status: MatchResult["status"]; candidates: ScoredCandidate[] } {
-  if (stakeholders.length === 0) return { status: "empty_graph", candidates: [] };
+): { status: MatchResult["status"]; candidates: ScoredCandidate[]; runnerUpDelta: number | null } {
+  if (stakeholders.length === 0) {
+    return { status: "empty_graph", candidates: [], runnerUpDelta: null };
+  }
   const scored = stakeholders.map((s) => {
     const alias = getDisplayAlias(s);
     return scoreDelegate(s, title, desc, pendingCounts[alias] ?? 0);
   });
   const ranked = rankCandidates(scored);
   const viable = ranked.filter((c) => c.score > 0);
-  if (viable.length === 0) return { status: "no_match", candidates: [] };
-  const topScore = viable[0].score;
-  const candidates = viable.filter((c) => c.score >= topScore - 2).slice(0, 3);
-  return { status: "match", candidates };
+  if (viable.length === 0) {
+    return { status: "no_match", candidates: [], runnerUpDelta: null };
+  }
+  // Issue #26: always return top 3 viable candidates so renderers can show
+  // narrative scorecards even on clear wins. The previous within-2-points
+  // filter hid runners-up that calibrate user trust over time.
+  const candidates = viable.slice(0, 3);
+  const runnerUpDelta = candidates.length >= 2
+    ? candidates[0].score - candidates[1].score
+    : null;
+  return { status: "match", candidates, runnerUpDelta };
 }
 
 // ── Authority flag — single source of truth ──────────────────────────────────

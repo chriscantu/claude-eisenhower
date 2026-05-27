@@ -130,26 +130,55 @@ export function loadStakeholders(graphPath: string): Stakeholder[] | null {
   return parsed.stakeholders;
 }
 
-function buildMessage(status: MatchResult["status"], candidates: ScoredCandidate[]): string {
+/**
+ * Renders a single candidate's score breakdown as a one-line scorecard.
+ * Example: "Alex E. (8): domain +6 (auth, infra), direct_report +2, capacity high +2"
+ * Used by buildMessage and exposed for narrative rendering in commands/delegate.md.
+ */
+export function renderScorecard(c: ScoredCandidate): string {
+  const parts: string[] = [];
+  if (c.breakdown.domain > 0) {
+    const dom = c.matched_domains.length > 0 ? ` (${c.matched_domains.join(", ")})` : "";
+    parts.push(`domain +${c.breakdown.domain}${dom}`);
+  }
+  if (c.breakdown.relationship !== 0) {
+    const sign = c.breakdown.relationship > 0 ? "+" : "";
+    parts.push(`${c.relationship} ${sign}${c.breakdown.relationship}`);
+  }
+  if (c.breakdown.capacity !== 0) {
+    const sign = c.breakdown.capacity > 0 ? "+" : "";
+    parts.push(`capacity ${c.capacity_signal} ${sign}${c.breakdown.capacity}`);
+  }
+  if (c.breakdown.pending < 0) {
+    parts.push(`pending ${c.breakdown.pending}`);
+  }
+  return `${c.alias} (${c.score}): ${parts.join(", ")}`;
+}
+
+function buildMessage(
+  status: MatchResult["status"],
+  candidates: ScoredCandidate[],
+  runnerUpDelta: number | null = null,
+): string {
   switch (status) {
     case "no_graph":
       return "No stakeholder graph found. Copy config/stakeholders.yaml.example " +
              "to stakeholders.yaml and fill in your delegates.";
     case "empty_graph":
-      return "Stakeholder graph is empty � no delegates configured.";
+      return "Stakeholder graph is empty — no delegates configured.";
     case "no_match":
       return "No clear domain match in your stakeholder graph. Who should own this?";
     case "match": {
       const top = candidates[0];
-      const domainStr = top.matched_domains.length > 0
-        ? `domain match: ${top.matched_domains.join(", ")}`
-        : "relationship fit";
-      let msg = `Suggested delegate: ${top.alias} (${top.role}) � ${domainStr}`;
+      let msg = `Suggested delegate: ${renderScorecard(top)}`;
       if (candidates.length > 1) {
-        msg += `. Also matched: ${candidates[1].alias} (${candidates[1].role}).`;
+        msg += `\nRunner-up: ${renderScorecard(candidates[1])} (delta ${runnerUpDelta ?? 0})`;
+      }
+      if (candidates.length > 2) {
+        msg += `\nAlso considered: ${renderScorecard(candidates[2])}`;
       }
       if (top.capacity_warning) {
-        msg += ` Note: ${top.alias} is showing low capacity � confirm availability.`;
+        msg += `\nNote: ${top.alias} is showing low capacity — confirm availability.`;
       }
       return msg;
     }
@@ -188,8 +217,13 @@ function run(): void {
   }
 
   const pendingCounts = loadPendingCounts(findGlossaryPath());
-  const { status, candidates } = runMatch(stakeholders, taskTitle, taskDescription, pendingCounts);
-  console.log(JSON.stringify({ status, candidates, message: buildMessage(status, candidates) }, null, 2));
+  const { status, candidates, runnerUpDelta } = runMatch(stakeholders, taskTitle, taskDescription, pendingCounts);
+  console.log(JSON.stringify({
+    status,
+    candidates,
+    runnerUpDelta,
+    message: buildMessage(status, candidates, runnerUpDelta),
+  }, null, 2));
 }
 
 // Only execute when run directly (not when imported by tests or other modules)

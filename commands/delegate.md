@@ -87,19 +87,40 @@ Parse the JSON output. The `status` field will be one of:
 
 ---
 
-## Step 4: Present the scoring result
+## Step 4: Present the scoring result with narrative scorecard
 
 **If `status: match`:**
 
+Render a narrative scorecard for the top candidate using `candidates[0].breakdown`
+(per-axis: `domain`, `relationship`, `capacity`, `pending`). Do not just dump the
+score — explain it. Use this shape:
+
 ```
-Suggested delegate: [candidates[0].alias] ([candidates[0].role])
-Reason: domain match on [matched_domains.join(", ")], relationship: [relationship], capacity: [capacity_signal]
+Suggested delegate: [candidates[0].alias] ([candidates[0].role]) — score [breakdown.total]
+  breakdown:
+    domain +[breakdown.domain] ([matched_domains.join(", ")])
+    [relationship] +[breakdown.relationship]
+    capacity [capacity_signal] [+/-][breakdown.capacity]
+    [if breakdown.pending < 0] pending [breakdown.pending] (currently overloaded)
+
+Why [alias]: [1-sentence narrative tying the matched domain(s) to the task,
+the relationship advantage, and any capacity caveat].
 ```
 
-If a runner-up exists (candidates[1] is within 2 points of candidates[0]):
+**Always surface the runner-up** when `candidates.length >= 2` (no within-2-points
+gating — runners-up calibrate user trust over time):
+
 ```
-Runner-up: [candidates[1].alias] ([candidates[1].role])
+Runner-up: [candidates[1].alias] ([candidates[1].role]) — score [breakdown.total]
+  (delta [runnerUpDelta])
+  breakdown: [same per-axis format as above]
+
+What would change my mind: if [candidates[0].alias]'s capacity drops to low,
+[candidates[1].alias] wins by [computed delta after capacity flip].
 ```
+
+**Third-place** (when `candidates.length >= 3`): one-line summary —
+`Also considered: [alias] ([score]) — [single dominant axis or "weak match"]`.
 
 If `capacity_warning` is true for the top candidate, append:
 > Note: [alias] is currently showing low capacity — confirm they can take this on.
@@ -133,8 +154,36 @@ Confirm? (yes / assign someone else / make this Q1 instead)
 Do NOT write anything until the user says yes (or equivalent: "confirm", "go ahead",
 "looks good").
 
-If the user says "assign someone else": return to Step 4 and ask who.
+If the user says "assign someone else": return to Step 4 and ask who. Then run the
+**override learning loop** described in Step 5b before continuing.
 If the user says "make this Q1": stop. Say "Run /intake or /prioritize to log this as Q1."
+
+---
+
+## Step 5b: Override learning loop
+
+When the user overrides the suggested delegate (picks a different alias than
+`candidates[0].alias`), ask ONE structured question before continuing:
+
+> Was the suggestion wrong because of **domain** (which one was missed?),
+> **capacity** (who's actually overloaded?), or **relationship** (peer/report
+> mismatch)?
+
+Capture the answer and append a row to `memory/delegation-learnings.md` (create
+the file if it does not exist) in this format:
+
+```
+| Date | Task | Suggested | Chosen | Reason | Detail |
+|------|------|-----------|--------|--------|--------|
+| 2026-MM-DD | [task title] | [suggested alias] | [chosen alias] | domain|capacity|relationship | [user's detail] |
+```
+
+This learning loop closes the override gap — without it, the plugin learns nothing
+when scoring guesses wrong. Future stakeholder graph tuning reads this file to
+suggest domain additions, capacity refreshes, or relationship corrections.
+
+The user may decline to answer ("just go" / "skip") — in that case, do NOT block.
+Continue to Step 5 confirmation. The learning loop is best-effort, not mandatory.
 
 ---
 
