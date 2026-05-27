@@ -71,6 +71,38 @@ export interface StakeholderFile {
   stakeholders: Stakeholder[];
 }
 
+/**
+ * Per-axis score breakdown for transparency. The sum of (domain,
+ * relationship, capacity, pending) equals ScoredCandidate.score for
+ * non-vetoed candidates. Vetoed candidates have score = -Infinity; the
+ * breakdown still reports would-be component contributions for debugging.
+ * Invariants (by construction in scoreDelegate):
+ *   - domain      >= 0
+ *   - relationship >= 0 (WEIGHTS.relationship has no negative entries)
+ *   - capacity    in {-1, 1, 2} (low / medium / high)
+ *   - pending     <= 0 (penalty)
+ */
+export interface ScoreBreakdown {
+  domain: number;
+  relationship: number;
+  capacity: number;
+  pending: number;
+  vetoed: boolean;
+}
+
+/**
+ * Sum of breakdown axes — used by scoreDelegate to assign
+ * ScoredCandidate.score, and by consumers that need to re-derive the
+ * total from a breakdown object (e.g., axis-only renderers that compute
+ * totals on the fly). Vetoed candidates return -Infinity regardless of
+ * axis values — the axis values report would-be contributions for
+ * debugging, but the candidate is structurally excluded.
+ */
+export function breakdownSum(b: ScoreBreakdown): number {
+  if (b.vetoed) return -Infinity;
+  return b.domain + b.relationship + b.capacity + b.pending;
+}
+
 export interface ScoredCandidate {
   alias: string;
   role: string;
@@ -80,23 +112,68 @@ export interface ScoredCandidate {
   matched_domains: string[];
   capacity_warning: boolean;
   notes?: string;
+  /**
+   * Per-axis breakdown. Renderers display "domain +6, direct_report +2,
+   * capacity high +2" rather than the opaque score. ScoredCandidate.score
+   * equals breakdownSum(breakdown) by construction.
+   */
+  breakdown: ScoreBreakdown;
 }
 
+/**
+ * MatchResult.status values:
+ *   - match          → 1+ viable candidates returned in `candidates`
+ *   - no_match       → graph loaded but no candidate scored > 0
+ *   - empty_graph    → stakeholders.yaml exists but `stakeholders: []`
+ *   - no_graph       → stakeholders.yaml file is missing
+ *   - invalid_graph  → stakeholders.yaml present but contains schema /
+ *                      validation errors (e.g., unknown relationship or
+ *                      capacity_signal enum value). Distinct from no_graph
+ *                      so prompts can route the user to fix the typo
+ *                      rather than re-creating the file.
+ *   - internal_error → an internal invariant violation (e.g., runMatch
+ *                      contract broken); `message` carries the detail.
+ */
 export interface MatchResult {
-  status: "match" | "no_match" | "no_graph" | "empty_graph";
+  status: "match" | "no_match" | "no_graph" | "empty_graph" | "invalid_graph" | "internal_error";
   candidates: ScoredCandidate[];
   message: string;
+  /**
+   * Score delta between top candidate and runner-up
+   * (candidates[0].score - candidates[1].score). null — and only null —
+   * when fewer than 2 candidates exist. Renderers must NOT coerce null
+   * to 0; the two states are semantically distinct ("no runner-up" vs
+   * "tied runner-up").
+   */
+  runnerUpDelta: number | null;
 }
 
+/**
+ * Scoring weights — single source of truth for relationship + capacity
+ * axes. `satisfies` (not `as`) is load-bearing: adding a member to the
+ * `Relationship` or `CapacitySignal` union without adding the matching
+ * entry here is a COMPILE ERROR. This is the drift-prevention property
+ * that match-delegate.ts's VALID_* derivation relies on.
+ *
+ * `as Record<...>` would NOT give that guarantee — it permits any object
+ * whose keys are a subset of the union.
+ */
 export const WEIGHTS = {
   domain_match: 3,
-  relationship: { direct_report: 2, peer: 1, vendor: 0, partner: 0 } as Record<Relationship, number>,
-  capacity: { high: 2, medium: 1, low: -1 } as Record<CapacitySignal, number>,
+  relationship: { direct_report: 2, peer: 1, vendor: 0, partner: 0 },
+  capacity: { high: 2, medium: 1, low: -1 },
+} satisfies {
+  domain_match: number;
+  relationship: Record<Relationship, number>;
+  capacity: Record<CapacitySignal, number>;
 };
 
-export const REL_RANK: Record<Relationship, number> = {
-  direct_report: 2, peer: 1, vendor: 0, partner: 0,
-};
+/**
+ * Relationship rank for tiebreak in rankCandidates. Derived from
+ * WEIGHTS.relationship so the relationship axis has ONE source of truth.
+ * Same numeric values as the score weights — no parallel literal to drift.
+ */
+export const REL_RANK: Record<Relationship, number> = WEIGHTS.relationship;
 
 // ── Memory schema constants — single source of truth ─────────────────────────
 //
@@ -145,14 +222,7 @@ export function scoreDelegate(
 ): ScoredCandidate {
   const searchText = normalizeText(`${taskTitle} ${taskDescription}`);
   const matchedDomains: string[] = [];
-  let score = 0;
 
-  // ── Anti-domain veto ──────────────────────────────────────────────────────
-  // Hard veto: if any anti_domain keyword appears in task text, this
-  // stakeholder is unconditionally excluded. -Infinity ensures runMatch()
-  // filters them out at the viable.filter(score > 0) step.
-  // matched_domains is still populated so callers can surface "vetoed despite
-  // matching X" in debug output or future /memory tooling.
   let vetoed = false;
   for (const anti of stakeholder.anti_domains ?? []) {
     if (searchText.includes(normalizeText(anti))) {
@@ -160,25 +230,31 @@ export function scoreDelegate(
       break;
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
+  let domainScore = 0;
   for (const domain of stakeholder.domains ?? []) {
     if (searchText.includes(normalizeText(domain))) {
-      score += WEIGHTS.domain_match;
+      domainScore += WEIGHTS.domain_match;
       matchedDomains.push(domain);
     }
   }
-  score += WEIGHTS.relationship[stakeholder.relationship] ?? 0;
-  score += WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
-
-  // Apply a penalty for each pending task beyond the threshold.
-  // This gives the static capacity_signal real-time correction from memory.
+  const relationshipScore = WEIGHTS.relationship[stakeholder.relationship] ?? 0;
+  const capacityScore = WEIGHTS.capacity[stakeholder.capacity_signal] ?? 0;
   const overload = Math.max(0, pendingCount - PENDING_THRESHOLD);
-  score += overload * PENDING_PENALTY;
+  // Guard against JS -0 (0 * -2 = -0). renderScorecard's `pending < 0`
+  // check would still be correct without this (since -0 < 0 is false),
+  // but Object.is(0, -0) is false too — keeping pendingScore strictly
+  // +0 avoids `toBe(0)` test surprises and downstream display drift.
+  const pendingScore = overload === 0 ? 0 : overload * PENDING_PENALTY;
 
-  // Anti-domain veto overrides all scoring — applied last so matched_domains
-  // is still populated for debugging visibility.
-  if (vetoed) score = -Infinity;
+  const breakdown: ScoreBreakdown = {
+    domain: domainScore,
+    relationship: relationshipScore,
+    capacity: capacityScore,
+    pending: pendingScore,
+    vetoed,
+  };
+  const score = breakdownSum(breakdown);
 
   return {
     alias: getDisplayAlias(stakeholder),
@@ -189,13 +265,16 @@ export function scoreDelegate(
     matched_domains: matchedDomains,
     capacity_warning: stakeholder.capacity_signal === "low" || pendingCount > PENDING_THRESHOLD,
     notes: stakeholder.notes,
+    breakdown,
   };
 }
 
 export function rankCandidates(candidates: ScoredCandidate[]): ScoredCandidate[] {
   return [...candidates].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return (REL_RANK[b.relationship] ?? 0) - (REL_RANK[a.relationship] ?? 0);
+    // REL_RANK is Record<Relationship, number> — no `?? 0` needed because
+    // b.relationship is typed as Relationship, so the lookup cannot miss.
+    return REL_RANK[b.relationship] - REL_RANK[a.relationship];
   });
 }
 
@@ -204,18 +283,27 @@ export function runMatch(
   title: string,
   desc = "",
   pendingCounts: Record<string, number> = {}
-): { status: MatchResult["status"]; candidates: ScoredCandidate[] } {
-  if (stakeholders.length === 0) return { status: "empty_graph", candidates: [] };
+): { status: MatchResult["status"]; candidates: ScoredCandidate[]; runnerUpDelta: number | null } {
+  if (stakeholders.length === 0) {
+    return { status: "empty_graph", candidates: [], runnerUpDelta: null };
+  }
   const scored = stakeholders.map((s) => {
     const alias = getDisplayAlias(s);
     return scoreDelegate(s, title, desc, pendingCounts[alias] ?? 0);
   });
   const ranked = rankCandidates(scored);
   const viable = ranked.filter((c) => c.score > 0);
-  if (viable.length === 0) return { status: "no_match", candidates: [] };
-  const topScore = viable[0].score;
-  const candidates = viable.filter((c) => c.score >= topScore - 2).slice(0, 3);
-  return { status: "match", candidates };
+  if (viable.length === 0) {
+    return { status: "no_match", candidates: [], runnerUpDelta: null };
+  }
+  // Return top 3 viable candidates unconditionally so renderers can show
+  // narrative scorecards even on clear wins. The previous within-2-points
+  // filter hid runners-up that calibrate user trust over time.
+  const candidates = viable.slice(0, 3);
+  const runnerUpDelta = candidates.length >= 2
+    ? candidates[0].score - candidates[1].score
+    : null;
+  return { status: "match", candidates, runnerUpDelta };
 }
 
 // ── Authority flag — single source of truth ──────────────────────────────────

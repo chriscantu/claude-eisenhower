@@ -155,7 +155,7 @@ Render only if Section C from Step 2 has results.
 
 ```
 ─── 📋 Your Plate — Active Tasks Due Next Week ───────────────────────────
-  • "{task title}" — Due: {date}  [Priority: {Q1|Q2|Q3|Q4}]
+  • "{task title}" — Due: {date}  [{Q1 · Do | Q2 · Schedule | Q3 · Delegate | Q4 · Cut}]
   ...
 ```
 

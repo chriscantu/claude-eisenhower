@@ -24,6 +24,67 @@ Parse $ARGUMENTS for intent:
 
 If no argument is provided, show a brief summary of all scheduled tasks and ask which one they're working on.
 
+## Step 2b: Match the task and confirm before mutating
+
+`/execute` has multiple side-effects with different recoverability:
+
+- **TASKS.md edits** — reversible by hand-editing the file afterward,
+  but TASKS.md is gitignored so there is no version history to roll back to.
+- **Task-output adapter** (e.g., Reminders) — once the Reminder is created
+  or marked complete, the external system has its own state. The adapter
+  does NOT undo on a subsequent run; you would need to manually clean up
+  in Reminders.app.
+- **memory-manager** invocations (`log-delegation`, `resolve-delegation`,
+  `update-checkin`) — write to local memory files; reversible by editing
+  those files but not by a single command.
+
+The Reminders push is the one that genuinely cannot be auto-undone. Treat
+the confirmation gate below as the last opportunity to catch a misfire on
+that side-effect specifically.
+
+1. **Scan TASKS.md** for tasks matching the free-text portion of $ARGUMENTS
+   (case-insensitive substring match against the `Title:` field across
+   `## Active`, `## Delegated`, and `## Inbox` sections).
+
+2. **If exactly one match:** Display the matched record verbatim before
+   any mutation. Preview shape:
+
+   ```
+   Matched task:
+     Title:      {title}
+     State:      {state}
+     Owner:      {owner or "self"}
+     Priority:   {Q1·Do | Q2·Schedule | Q3·Delegate | Q4·Cut}
+     Scheduled:  {scheduled date or "—"}
+     Check-by:   {check-by date or "—"}
+
+   Confirm {done | progress | followup | delegate} for this task? (yes / no / cancel)
+   ```
+
+   Do NOT proceed to Step 3 until the user explicitly confirms with
+   "yes", "confirm", "go ahead", or equivalent.
+
+3. **If 2+ matches (multiple match scenario):** Do NOT silently pick. List
+   every match with a number and force a disambiguation pick:
+
+   ```
+   Multiple tasks match "{free text}":
+     1. {title}  [{state}]  Scheduled: {date}
+     2. {title}  [{state}]  Scheduled: {date}
+     3. {title}  [{state}]  Scheduled: {date}
+
+   Which one? (pick by number, or "cancel")
+   ```
+
+   After the user picks a number, render the matched-record preview
+   from (2) and require explicit confirmation before any mutation.
+
+4. **If zero matches:** Surface the miss explicitly — "No task matches
+   '{free text}'. Closest titles: ..." — and ask the user to refine
+   their input. Do NOT create a new task as a fallback.
+
+After explicit confirmation, proceed to Step 3 and run the action.
+
 ## Step 3: Handle each action
 
 ### Mark Done

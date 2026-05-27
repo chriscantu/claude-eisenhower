@@ -302,7 +302,7 @@ describe("C2: loadStakeholders YAML parse guard", () => {
   test("throws a clean Error on malformed YAML", () => {
     const badYaml = path.join(tmpDir, "stakeholders.yaml");
     fs.writeFileSync(badYaml, "bad: yaml: :\n  - [invalid");
-    expect(() => loadStakeholders(badYaml)).toThrow("stakeholders.yaml parse error");
+    expect(() => loadStakeholders(badYaml)).toThrow(/Failed to parse .*stakeholders\.yaml/);
   });
 
   test("returns null when file does not exist", () => {

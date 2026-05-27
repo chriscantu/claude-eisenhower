@@ -84,22 +84,60 @@ Parse the JSON output. The `status` field will be one of:
 - `no_match` — no domain keyword scored above 0
 - `empty_graph` — graph empty (handled above)
 - `no_graph` — file missing (handled above)
+- `invalid_graph` — file exists but has a schema / validation error. Do NOT
+  tell the user to create the file — they already have one. Surface the
+  `message` field verbatim (it names the file, alias, and offending value)
+  and ask them to fix the typo. Skip to a manual delegate prompt: "Who
+  should own this in the meantime?"
+- `internal_error` — match-delegate hit an internal invariant. Show the
+  `message` field, do NOT auto-assign, fall back to manual delegate prompt.
 
 ---
 
-## Step 4: Present the scoring result
+## Step 4: Present the scoring result with narrative scorecard
+
+The CLI in Step 3 emits a JSON document on stdout. Parse it and read the
+following fields (NOT in-process JS objects — these are top-level / per-element
+fields on the parsed JSON):
+
+- `candidates[]` — array of scored candidates, each with `alias`, `role`,
+  `score`, `matched_domains`, `breakdown` (per-axis: `domain`, `relationship`,
+  `capacity`, `pending`)
+- `runnerUpDelta` — **top-level** field, NOT a sub-property of any candidate.
+  Type is `number | null`. `null` means "fewer than 2 viable candidates" —
+  semantically distinct from `0` ("tied with top"). Do NOT coerce or render
+  `null` as `0`.
 
 **If `status: match`:**
 
+Render a narrative scorecard for the top candidate from the parsed JSON.
+Use the breakdown object on `candidates[0]` to show each axis explicitly:
+
 ```
-Suggested delegate: [candidates[0].alias] ([candidates[0].role])
-Reason: domain match on [matched_domains.join(", ")], relationship: [relationship], capacity: [capacity_signal]
+Suggested delegate: [candidates[0].alias] ([candidates[0].role]) — score [candidates[0].score]
+  breakdown:
+    domain +[breakdown.domain] ([matched_domains.join(", ")])
+    [relationship] +[breakdown.relationship]
+    capacity [capacity_signal] [+/-][breakdown.capacity]
+    [if breakdown.pending < 0] pending [breakdown.pending] (currently overloaded)
+
+Why [alias]: [1-sentence narrative tying the matched domain(s) to the task,
+the relationship advantage, and any capacity caveat].
 ```
 
-If a runner-up exists (candidates[1] is within 2 points of candidates[0]):
+**Surface the runner-up** ONLY when BOTH (a) `candidates.length >= 2` AND
+(b) `runnerUpDelta !== null`. If either is false, do NOT render the runner-up
+block — there is no runner-up. (`null` ≠ `0`. A delta of 0 means tied; null
+means absent. They are not interchangeable.)
+
 ```
-Runner-up: [candidates[1].alias] ([candidates[1].role])
+Runner-up: [candidates[1].alias] ([candidates[1].role]) — score [candidates[1].score]
+  (delta [runnerUpDelta])
+  breakdown: [same per-axis format as above]
 ```
+
+**Third-place** (when `candidates.length >= 3`): one-line summary —
+`Also considered: [alias] ([score]) — [single dominant axis or "weak match"]`.
 
 If `capacity_warning` is true for the top candidate, append:
 > Note: [alias] is currently showing low capacity — confirm they can take this on.
@@ -133,8 +171,51 @@ Confirm? (yes / assign someone else / make this Q1 instead)
 Do NOT write anything until the user says yes (or equivalent: "confirm", "go ahead",
 "looks good").
 
-If the user says "assign someone else": return to Step 4 and ask who.
+If the user says "assign someone else": return to Step 4 and ask who. Then run the
+**override learning loop** described in Step 5b before continuing.
 If the user says "make this Q1": stop. Say "Run /intake or /prioritize to log this as Q1."
+
+---
+
+## Step 5b: Override learning loop
+
+When the user overrides the suggested delegate (picks a different alias than
+`candidates[0].alias`), ask ONE structured question before continuing:
+
+> Was the suggestion wrong because of **domain** (which one was missed?),
+> **capacity** (who's actually overloaded?), or **relationship** (peer/report
+> mismatch)?
+
+Capture the answer and append a row to `memory/delegation-learnings.md`
+(create the file with the header row below if it does not exist). The
+`Reason` cell holds ONE concrete value — not a list — chosen from the
+allowed set described below the example.
+
+Example row (concrete values, not placeholders):
+
+```
+| Date       | Task                     | Suggested | Chosen | Reason | Detail                  |
+|------------|--------------------------|-----------|--------|--------|-------------------------|
+| 2026-05-27 | Review API contract spec | Jordan F. | Alex E.| domain | missed: legal compliance|
+```
+
+Set `Reason` to EXACTLY ONE of: `domain`, `capacity`, `relationship`, or
+`declined` (decline path — see below). Do NOT write the literal string
+"domain / capacity / relationship" into the cell — that is the
+*alternative set*, not a valid value. Set `Detail` to the user's specific
+answer (e.g., "missed: legal review" or "Sam is on vacation this week");
+use `—` for the decline path.
+
+**If the user declines to answer** ("just go" / "skip"): do NOT block —
+continue to Step 5 confirmation. ALSO append a stub row with
+`Reason: declined` and `Detail: —`. The override signal ("scoring picked X
+but user chose Y") is preserved even without the diagnostic axis; without
+the stub the override is invisible to any future review.
+
+`memory/delegation-learnings.md` is a manual review log. Nothing else
+currently reads it; the value is letting the user notice override patterns
+when they review the file themselves. Do not claim the plugin "learns from"
+this file — it does not, today.
 
 ---
 
