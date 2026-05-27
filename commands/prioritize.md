@@ -72,7 +72,13 @@ After classifying a task as Q3, before saving:
    If `memory/glossary.md` does not exist, pending counts default to 0 (no error).
 
 4. **Parse the JSON output**. The CLI returns a JSON object matching the `MatchResult` interface:
-   - `status` — `match`, `no_match`, `empty_graph`, or `no_graph`
+   - `status` — one of:
+     - `match` — candidates returned
+     - `no_match` — graph loaded but no candidate scored > 0
+     - `empty_graph` — graph empty
+     - `no_graph` — file missing
+     - `invalid_graph` — file present but schema/validation errors. Show `message` verbatim (it names the typo); do NOT instruct user to create the file. Fall back to manual delegate prompt.
+     - `internal_error` — internal invariant hit. Show `message`, fall back to manual delegate prompt.
    - `candidates[]` — ranked by score, each with: `alias`, `role`, `relationship`, `capacity_signal`, `score`, `matched_domains[]`, `capacity_warning` (boolean), and **`breakdown`** (per-axis: `domain`, `relationship`, `capacity`, `pending`)
    - `runnerUpDelta` — **top-level** field, `number | null`. `null` means fewer than 2 viable candidates (NOT zero). Do not coerce.
    - `message` — a pre-formatted human-readable summary string

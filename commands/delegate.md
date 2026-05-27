@@ -84,6 +84,13 @@ Parse the JSON output. The `status` field will be one of:
 - `no_match` — no domain keyword scored above 0
 - `empty_graph` — graph empty (handled above)
 - `no_graph` — file missing (handled above)
+- `invalid_graph` — file exists but has a schema / validation error. Do NOT
+  tell the user to create the file — they already have one. Surface the
+  `message` field verbatim (it names the file, alias, and offending value)
+  and ask them to fix the typo. Skip to a manual delegate prompt: "Who
+  should own this in the meantime?"
+- `internal_error` — match-delegate hit an internal invariant. Show the
+  `message` field, do NOT auto-assign, fall back to manual delegate prompt.
 
 ---
 
@@ -180,18 +187,24 @@ When the user overrides the suggested delegate (picks a different alias than
 > mismatch)?
 
 Capture the answer and append a row to `memory/delegation-learnings.md`
-(create the file with the header row below if it does not exist). The `Reason`
-cell uses `/` as the value separator since `|` is the markdown table delimiter:
+(create the file with the header row below if it does not exist). The
+`Reason` cell holds ONE concrete value — not a list — chosen from the
+allowed set described below the example.
+
+Example row (concrete values, not placeholders):
 
 ```
-| Date       | Task         | Suggested        | Chosen        | Reason                              | Detail              |
-|------------|--------------|------------------|---------------|-------------------------------------|---------------------|
-| {TODAY}    | {task title} | {suggested alias}| {chosen alias}| domain / capacity / relationship    | {user's detail}     |
+| Date       | Task                     | Suggested | Chosen | Reason | Detail                  |
+|------------|--------------------------|-----------|--------|--------|-------------------------|
+| 2026-05-27 | Review API contract spec | Jordan F. | Alex E.| domain | missed: legal compliance|
 ```
 
-Set `Reason` to ONE of: `domain`, `capacity`, `relationship`. Set `Detail`
-to the user's specific answer (e.g., "missed: legal review" or "Sam is on
-vacation this week").
+Set `Reason` to EXACTLY ONE of: `domain`, `capacity`, `relationship`, or
+`declined` (decline path — see below). Do NOT write the literal string
+"domain / capacity / relationship" into the cell — that is the
+*alternative set*, not a valid value. Set `Detail` to the user's specific
+answer (e.g., "missed: legal review" or "Sam is on vacation this week");
+use `—` for the decline path.
 
 **If the user declines to answer** ("just go" / "skip"): do NOT block —
 continue to Step 5 confirmation. ALSO append a stub row with

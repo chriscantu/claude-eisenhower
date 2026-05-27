@@ -21,25 +21,55 @@ distinction in the confirmation block below.
 - **Source**: Where this came from. Options: Email, Slack, Meeting, Conversation, Calendar, Jira, Asana, Linear, GitHub, Self, Other. Infer from context if not stated — mark as `(inferred)`.
 - **Requester**: Who asked or who this is for. Include role if known. Use "Self" if self-generated. See alias resolution step below — resolve to display alias before writing. Mark `(stated)` or `(inferred)` based on whether the user named them.
 - **Urgency signal**: What was said about timing (quote or paraphrase). If nothing stated, write "Not specified."
-- **Raw due date** (ISO format: `YYYY-MM-DD`): If any temporal phrase appears in the input ("by Thursday", "before EOW", "next Tuesday", "end of month"), **parse it to an ISO date relative to the current session date** (the date injected by the harness — see `# currentDate` in CLAUDE.md, e.g. "Today's date is 2026-05-27"). Use that date as the anchor for every parse; do NOT use a hardcoded calendar date from this prompt. Surface the parse origin AND the anchor so silent mis-anchoring is visible at confirmation time:
-  - Format: `Due date: {ISO} (parsed from "{phrase}", anchor {today's ISO})`
-  - Examples (symbolic — substitute the actual session date for {TODAY}):
-    - Input "by Thursday" → `Due date: {next Thursday on/after TODAY} (parsed from "by Thursday", anchor {TODAY})`
-    - Input "next week" → `Due date: {TODAY+7} (parsed from "next week", anchor {TODAY})`
-    - Input "Friday" → `Due date: {next Friday on/after TODAY} (parsed from "Friday", anchor {TODAY})`
-  - No date mentioned → `Due date: Not specified`
+- **Due date** (ISO format: `YYYY-MM-DD`): apply the rules below.
+
+### Due date — anchor and origin
+
+The session date (today's actual ISO date) is injected by the harness as a
+`# currentDate` block in your system context (e.g. "Today's date is
+2026-05-27"). Use that date as the anchor for every temporal-phrase parse.
+
+**If `# currentDate` is NOT present in your context** (custom harness, dev
+session, etc.), STOP and ask the user: "What is today's date?" Do NOT
+fall back to internal training-cutoff dates and do NOT use any example
+ISO from this prompt as the anchor — the examples are illustrative only.
+
+For each input, the Due date renders in exactly ONE of these forms:
+
+| User input contains                                | Output format                                                  | Origin marker        |
+|----------------------------------------------------|----------------------------------------------------------------|----------------------|
+| Verbatim ISO date (`2026-06-04`)                   | `Due date: 2026-06-04 (verbatim)`                              | `(verbatim)`         |
+| Temporal phrase (`by Thursday`, `EOW`, `next week`) | `Due date: {ISO} (parsed from "{phrase}", anchor {TODAY-ISO})` | `(parsed from ...)`  |
+| No date or phrase                                  | `Due date: Not specified`                                      | `(not mentioned)`    |
+
+Notes:
+- The three markers are mutually exclusive — pick exactly one. Verbatim
+  ISO wins over phrase-parse even when both rules could apply (a user
+  who typed `2026-06-04` does not need the parse origin trail).
+- The anchor field is REQUIRED on `(parsed from ...)` outputs — without
+  it, silent mis-anchoring cannot be detected at confirmation time.
+- Examples are SYMBOLIC. Substitute the actual session date for
+  {TODAY-ISO}; do NOT use any example date below as a live anchor:
+  - Input "by Thursday" → `Due date: {next Thursday on/after TODAY} (parsed from "by Thursday", anchor {TODAY-ISO})`
+  - Input "next week" → `Due date: {TODAY+7} (parsed from "next week", anchor {TODAY-ISO})`
 
 ## Format the task record as:
 
+`{TODAY-ISO}` below is the session date from `# currentDate` (same source
+used for the Due-date anchor above). The `Due date:` line MUST carry the
+origin marker established in the previous section (`(verbatim)`,
+`(parsed from "...", anchor {TODAY-ISO})`, or `Not specified`) so the
+anchor is durable in the persisted record — not just visible at confirmation.
+
 ```
 ---
-[ INTAKE — {today's date} ]
+[ INTAKE — {TODAY-ISO} ]
 Title:        {title}
 Description:  {description}
 Source:       {source}
 Requester:    {requester}
 Urgency:      {urgency signal}
-Due date:     {raw due date}
+Due date:     {ISO date with origin marker, or "Not specified"}
 State:        Inbox
 ---
 ```
@@ -84,10 +114,14 @@ Example: source says "Vargas asked for this" → alias entries include "Vargas" 
      Source:       [source]  (stated | inferred)
      Requester:    [requester]  (stated | inferred)
      Urgency:      [urgency signal]  (stated | not mentioned)
-     Due date:     [ISO date]  (parsed from "[phrase]" | stated | not mentioned)
+     Due date:     [ISO date]  (verbatim | parsed from "[phrase]", anchor [TODAY-ISO] | not mentioned)
 
    Save / edit / cancel?
    ```
+
+   The Due date marker is exactly ONE of the three forms above (verbatim
+   ISO, parsed phrase with anchor, or not mentioned) per the table in the
+   "Due date — anchor and origin" section.
 
    - **save**: append to `## Inbox` and confirm "Got it — logged '[title]'."
    - **edit**: prompt for which field to change; re-render the block.

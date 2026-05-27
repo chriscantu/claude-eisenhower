@@ -26,10 +26,21 @@ If no argument is provided, show a brief summary of all scheduled tasks and ask 
 
 ## Step 2b: Match the task and confirm before mutating
 
-`/execute` is destructive — it moves records between sections, fires the
-task-output adapter (e.g., Reminders), and invokes memory-manager. **There is
-no undo.** Once confirmed, the change is committed and side-effects fire.
-The confirmation step below is the last gate.
+`/execute` has multiple side-effects with different recoverability:
+
+- **TASKS.md edits** — reversible by hand-editing the file afterward,
+  but TASKS.md is gitignored so there is no version history to roll back to.
+- **Task-output adapter** (e.g., Reminders) — once the Reminder is created
+  or marked complete, the external system has its own state. The adapter
+  does NOT undo on a subsequent run; you would need to manually clean up
+  in Reminders.app.
+- **memory-manager** invocations (`log-delegation`, `resolve-delegation`,
+  `update-checkin`) — write to local memory files; reversible by editing
+  those files but not by a single command.
+
+The Reminders push is the one that genuinely cannot be auto-undone. Treat
+the confirmation gate below as the last opportunity to catch a misfire on
+that side-effect specifically.
 
 1. **Scan TASKS.md** for tasks matching the free-text portion of $ARGUMENTS
    (case-insensitive substring match against the `Title:` field across

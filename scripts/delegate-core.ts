@@ -91,9 +91,12 @@ export interface ScoreBreakdown {
 }
 
 /**
- * Sum of breakdown axes. ScoredCandidate.score is canonical; this helper
- * is exposed so consumers can verify the invariant or render axis totals
- * without re-implementing the sum.
+ * Sum of breakdown axes — used by scoreDelegate to assign
+ * ScoredCandidate.score, and by consumers that need to re-derive the
+ * total from a breakdown object (e.g., axis-only renderers that compute
+ * totals on the fly). Vetoed candidates return -Infinity regardless of
+ * axis values — the axis values report would-be contributions for
+ * debugging, but the candidate is structurally excluded.
  */
 export function breakdownSum(b: ScoreBreakdown): number {
   if (b.vetoed) return -Infinity;
@@ -117,8 +120,22 @@ export interface ScoredCandidate {
   breakdown: ScoreBreakdown;
 }
 
+/**
+ * MatchResult.status values:
+ *   - match          → 1+ viable candidates returned in `candidates`
+ *   - no_match       → graph loaded but no candidate scored > 0
+ *   - empty_graph    → stakeholders.yaml exists but `stakeholders: []`
+ *   - no_graph       → stakeholders.yaml file is missing
+ *   - invalid_graph  → stakeholders.yaml present but contains schema /
+ *                      validation errors (e.g., unknown relationship or
+ *                      capacity_signal enum value). Distinct from no_graph
+ *                      so prompts can route the user to fix the typo
+ *                      rather than re-creating the file.
+ *   - internal_error → an internal invariant violation (e.g., runMatch
+ *                      contract broken); `message` carries the detail.
+ */
 export interface MatchResult {
-  status: "match" | "no_match" | "no_graph" | "empty_graph";
+  status: "match" | "no_match" | "no_graph" | "empty_graph" | "invalid_graph" | "internal_error";
   candidates: ScoredCandidate[];
   message: string;
   /**
@@ -260,7 +277,7 @@ export function runMatch(
   if (viable.length === 0) {
     return { status: "no_match", candidates: [], runnerUpDelta: null };
   }
-  // Issue #26: always return top 3 viable candidates so renderers can show
+  // Return top 3 viable candidates unconditionally so renderers can show
   // narrative scorecards even on clear wins. The previous within-2-points
   // filter hid runners-up that calibrate user trust over time.
   const candidates = viable.slice(0, 3);

@@ -20,16 +20,34 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import {
   Stakeholder, StakeholderFile, ScoredCandidate, MatchResult, Relationship,
-  CapacitySignal, runMatch, getDisplayAlias,
+  CapacitySignal, runMatch, getDisplayAlias, WEIGHTS,
   GLOSSARY_COLUMNS, glossaryColIndex,
 } from "./delegate-core";
 
-const VALID_RELATIONSHIPS: ReadonlySet<Relationship> = new Set([
-  "direct_report", "peer", "vendor", "partner",
-]);
-const VALID_CAPACITY_SIGNALS: ReadonlySet<CapacitySignal> = new Set([
-  "high", "medium", "low",
-]);
+// Derive validators from WEIGHTS so the WEIGHTS table is the SINGLE source
+// of truth for both enums. Adding a new relationship to the Relationship
+// union forces a corresponding WEIGHTS.relationship entry (compile error
+// otherwise), which auto-extends VALID_RELATIONSHIPS — same drift-prevention
+// pattern that QUADRANT_VERBS got wrong.
+const VALID_RELATIONSHIPS: ReadonlySet<Relationship> = new Set(
+  Object.keys(WEIGHTS.relationship) as Relationship[]
+);
+const VALID_CAPACITY_SIGNALS: ReadonlySet<CapacitySignal> = new Set(
+  Object.keys(WEIGHTS.capacity) as CapacitySignal[]
+);
+
+/**
+ * Error subclass used by loadStakeholders to distinguish schema/validation
+ * errors (unknown enum values, etc.) from file-missing or YAML-parse errors.
+ * Lets the CLI route these to `status: "invalid_graph"` so prompts can
+ * surface "fix the typo" rather than "create the file you already have".
+ */
+export class StakeholderValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StakeholderValidationError";
+  }
+}
 
 /**
  * Validates that the parsed header row of memory/glossary.md matches GLOSSARY_COLUMNS.
@@ -136,13 +154,13 @@ function validateStakeholderEnums(graphPath: string, stakeholders: Stakeholder[]
   for (const s of stakeholders) {
     const alias = getDisplayAlias(s);
     if (!VALID_RELATIONSHIPS.has(s.relationship)) {
-      throw new Error(
+      throw new StakeholderValidationError(
         `${graphPath}: stakeholder "${alias}" has invalid relationship "${s.relationship}". ` +
         `Valid values: ${Array.from(VALID_RELATIONSHIPS).join(", ")}`
       );
     }
     if (!VALID_CAPACITY_SIGNALS.has(s.capacity_signal)) {
-      throw new Error(
+      throw new StakeholderValidationError(
         `${graphPath}: stakeholder "${alias}" has invalid capacity_signal "${s.capacity_signal}". ` +
         `Valid values: ${Array.from(VALID_CAPACITY_SIGNALS).join(", ")}`
       );
@@ -202,7 +220,7 @@ function signedNumber(n: number): string {
   return `0`;
 }
 
-function buildMessage(
+export function buildMessage(
   status: MatchResult["status"],
   candidates: ScoredCandidate[],
   runnerUpDelta: number | null,
@@ -215,6 +233,16 @@ function buildMessage(
       return "Stakeholder graph is empty — no delegates configured.";
     case "no_match":
       return "No clear domain match in your stakeholder graph. Who should own this?";
+    case "invalid_graph":
+      // Caller (run()) overrides this with the actual validation message
+      // from StakeholderValidationError. This fallback exists only for
+      // direct in-process callers that didn't supply one.
+      return "Stakeholder graph is present but has validation errors. " +
+             "Fix the schema before re-running.";
+    case "internal_error":
+      // Same pattern as invalid_graph — caller overrides with detail.
+      return "Internal match-delegate invariant violated. " +
+             "See match-delegate logs for details.";
     case "match": {
       const top = candidates[0];
       let msg = `Suggested delegate: ${renderScorecard(top)}`;
@@ -223,7 +251,9 @@ function buildMessage(
         // Don't `?? 0` — "no runner-up" (null) and "tied runner-up" (0) are
         // semantically distinct; coercing collapses them.
         if (runnerUpDelta === null) {
-          throw new Error("runnerUpDelta cannot be null when 2+ candidates exist");
+          throw new Error(
+            `runnerUpDelta cannot be null when candidates.length === ${candidates.length}`
+          );
         }
         msg += `\nRunner-up: ${renderScorecard(candidates[1])} (delta ${runnerUpDelta})`;
       }
@@ -255,9 +285,14 @@ function run(): void {
   try {
     stakeholders = loadStakeholders(graphPath);
   } catch (e) {
+    // Route schema/validation errors to `invalid_graph` so the prompt
+    // can surface "fix the typo" rather than "create the file you
+    // already have". File-missing / YAML-parse errors keep `no_graph`.
+    const isValidation = e instanceof StakeholderValidationError;
+    const status: MatchResult["status"] = isValidation ? "invalid_graph" : "no_graph";
     const msg = e instanceof Error ? e.message : String(e);
     console.log(JSON.stringify({
-      status: "no_graph", candidates: [], runnerUpDelta: null, message: msg,
+      status, candidates: [], runnerUpDelta: null, message: msg,
     }, null, 2));
     process.exit(1);
   }
@@ -277,14 +312,32 @@ function run(): void {
     return;
   }
 
-  const pendingCounts = loadPendingCounts(findGlossaryPath());
-  const { status, candidates, runnerUpDelta } = runMatch(stakeholders, taskTitle, taskDescription, pendingCounts);
-  console.log(JSON.stringify({
-    status,
-    candidates,
-    runnerUpDelta,
-    message: buildMessage(status, candidates, runnerUpDelta),
-  }, null, 2));
+  // Wrap the scoring + render tail so internal invariant throws
+  // (e.g., buildMessage's runnerUpDelta-null guard) surface as a
+  // structured JSON envelope on stdout, not as a stack trace on
+  // stderr with empty stdout (which the AppleScript caller cannot
+  // parse).
+  try {
+    const pendingCounts = loadPendingCounts(findGlossaryPath());
+    const { status, candidates, runnerUpDelta } = runMatch(
+      stakeholders, taskTitle, taskDescription, pendingCounts
+    );
+    console.log(JSON.stringify({
+      status,
+      candidates,
+      runnerUpDelta,
+      message: buildMessage(status, candidates, runnerUpDelta),
+    }, null, 2));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.log(JSON.stringify({
+      status: "internal_error",
+      candidates: [],
+      runnerUpDelta: null,
+      message: `match-delegate internal error: ${msg}`,
+    }, null, 2));
+    process.exit(2);
+  }
 }
 
 // Only execute when run directly (not when imported by tests or other modules)
