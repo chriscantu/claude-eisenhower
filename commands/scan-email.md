@@ -191,12 +191,15 @@ Apply classification rules from `skills/core/references/intake-sources.md`:
 Show all matched tasks before writing anything:
 
 ```
-| # | Subject (truncated)        | Category | Quadrant | Due Date | Recommended Action       |
-|---|---------------------------|----------|----------|----------|--------------------------|
-| 1 | Complete Safety Training  | Admin    | Q2       | Mar 5    | Schedule focus block     |
-| 2 | RE: Q1 Initiative Align   | VP Esc.  | Q1       | ASAP     | Act today                |
-| 3 | Q1 Pulse Survey           | Survey   | Q3       | Feb 28   | Respond when time allows |
+| # | Subject (truncated)        | Category | Quadrant       | Due Date | Recommended Action       |
+|---|---------------------------|----------|----------------|----------|--------------------------|
+| 1 | Complete Safety Training  | Admin    | Q2 · Schedule  | Mar 5    | Schedule focus block     |
+| 2 | RE: Q1 Initiative Align   | VP Esc.  | Q1 · Do        | ASAP     | Act today                |
+| 3 | Q1 Pulse Survey           | Survey   | Q3 · Delegate  | Feb 28   | Respond when time allows |
 ```
+
+Render quadrants in the user-facing table as `Q1 · Do`, `Q2 · Schedule`,
+`Q3 · Delegate`, `Q4 · Cut` — verb label makes the action obvious at a glance.
 
 If no actionable emails were found: "No new actionable emails found in {account_name}/{inbox_name}. Your task board is up to date."
 

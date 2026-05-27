@@ -121,9 +121,13 @@ Render only if tasks due or scheduled today exist (Section B from Step 2).
 
 ```
 ─── 📋 On Your Plate Today ──────────────────────────────────
-  • [Q1] "{task title}" — Due: today
-  • [Q2] "{task title}" — Scheduled: today
+  • [Q1 · Do]       "{task title}" — Due: today
+  • [Q2 · Schedule] "{task title}" — Scheduled: today
 ```
+
+Use the verb-label format (`[Q1 · Do]`, `[Q2 · Schedule]`, `[Q3 · Delegate]`,
+`[Q4 · Cut]`) for every user-facing quadrant render. Q-codes alone are
+machine-readable metadata in TASKS.md; the verb label is what the human reads.
 
 ---
 

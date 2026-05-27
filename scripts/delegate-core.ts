@@ -253,6 +253,45 @@ export function runMatch(
   return { status: "match", candidates, runnerUpDelta };
 }
 
+// ── Quadrant verb labels — user-facing rendering ─────────────────────────────
+//
+// Q1-Q4 are machine-readable metadata in TASKS.md. User-facing surfaces
+// (today, plan-week, review-week, scan-email tables, etc.) must render the
+// verb label alongside the code so the user doesn't have to memorize the 2x2
+// lookup every time. See issue #30.
+
+export type Quadrant = "Q1" | "Q2" | "Q3" | "Q4";
+
+/**
+ * Canonical Q → verb mapping. Changing a verb here propagates to all
+ * user-facing renders. Q-codes remain the machine-readable form in TASKS.md.
+ */
+export const QUADRANT_VERBS: Record<Quadrant, string> = {
+  Q1: "Do",
+  Q2: "Schedule",
+  Q3: "Delegate",
+  Q4: "Cut",
+} as const;
+
+/**
+ * Renders a quadrant as a user-facing label.
+ *  - "compound" (default): "Q2 · Schedule" — code + verb, scannable in tables
+ *  - "verb": "Schedule" — verb only, for compact lists
+ *  - "bracket": "[Q2 · Schedule]" — bracketed for bullet lists
+ */
+export function renderQuadrantLabel(
+  q: Quadrant,
+  style: "compound" | "verb" | "bracket" = "compound"
+): string {
+  const verb = QUADRANT_VERBS[q];
+  switch (style) {
+    case "verb":     return verb;
+    case "bracket":  return `[${q} · ${verb}]`;
+    case "compound":
+    default:         return `${q} · ${verb}`;
+  }
+}
+
 // ── Authority flag — single source of truth ──────────────────────────────────
 
 /**
