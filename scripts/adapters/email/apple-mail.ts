@@ -193,6 +193,7 @@ export function createAppleMailAdapter(cfg?: AppleMailAdapterConfig): {
       // ENOENT can surface as an error event rather than a thrown exception.
       const spawnErrorPromise = new Promise<NodeJS.ErrnoException | null>((resolve) => {
         child.on("error", (err: NodeJS.ErrnoException) => resolve(err));
+        child.on("close", () => resolve(null));
       });
 
       const stdoutPromise = collectStream(child.stdout!);

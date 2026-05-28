@@ -233,3 +233,32 @@ export interface EmailScanResult {
    */
   messages: EmailMessage[];
 }
+
+// ---------------------------------------------------------------------------
+// Dispatcher adapter interfaces
+//
+// These are the contracts that adapter implementations must satisfy.
+// Registered with the calendar-query and email-scan dispatchers respectively.
+// Mirrors the TaskOutputAdapter pattern above — single source of truth lives
+// here, dispatchers import rather than define.
+// ---------------------------------------------------------------------------
+
+/**
+ * Calendar-source adapter contract. Implemented by adapters/calendar/*.ts and
+ * registered with the calendar-query dispatcher.
+ */
+export interface CalendarSourceAdapter {
+  /** Provider name (e.g., "eventkit", "google"). Matches config `provider:`. */
+  name: string;
+  query(req: CalendarQueryRequest): Promise<CalendarQueryResult>;
+}
+
+/**
+ * Email-source adapter contract. Implemented by adapters/email/*.ts and
+ * registered with the email-scan dispatcher.
+ */
+export interface EmailSourceAdapter {
+  /** Provider name (e.g., "apple-mail", "google"). Matches config `provider:`. */
+  name: string;
+  scan(req: EmailScanRequest): Promise<EmailScanResult>;
+}

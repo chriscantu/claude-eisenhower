@@ -25,19 +25,15 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { EmailScanRequest, EmailScanResult } from "./adapter-types";
+import type {
+  EmailScanRequest,
+  EmailScanResult,
+  EmailSourceAdapter,
+} from "./adapter-types";
 import { createAppleMailAdapter } from "./adapters/email/apple-mail";
 import { createGoogleGmailAdapter } from "./adapters/email/google";
 
-// ---------------------------------------------------------------------------
-// Public interface
-// ---------------------------------------------------------------------------
-
-export interface EmailSourceAdapter {
-  /** Stable identifier — "apple-mail" | "google" | future providers. */
-  name: string;
-  scan(req: EmailScanRequest): Promise<EmailScanResult>;
-}
+export type { EmailSourceAdapter };
 
 // ---------------------------------------------------------------------------
 // Registry

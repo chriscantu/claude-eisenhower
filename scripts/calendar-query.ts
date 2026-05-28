@@ -25,19 +25,15 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { CalendarQueryRequest, CalendarQueryResult } from "./adapter-types";
+import type {
+  CalendarQueryRequest,
+  CalendarQueryResult,
+  CalendarSourceAdapter,
+} from "./adapter-types";
 import { createEventkitAdapter } from "./adapters/calendar/eventkit";
 import { createGoogleCalendarAdapter } from "./adapters/calendar/google";
 
-// ---------------------------------------------------------------------------
-// Public interface
-// ---------------------------------------------------------------------------
-
-export interface CalendarSourceAdapter {
-  /** Stable identifier — "eventkit" | "google" | future providers. */
-  name: string;
-  query(req: CalendarQueryRequest): Promise<CalendarQueryResult>;
-}
+export type { CalendarSourceAdapter };
 
 // ---------------------------------------------------------------------------
 // Registry

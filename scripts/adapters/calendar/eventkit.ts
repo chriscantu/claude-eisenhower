@@ -132,6 +132,7 @@ export function createEventkitAdapter(cfg?: EventkitAdapterConfig): {
       // ENOENT surfaces as an error event, not a throw, when shell:false
       const spawnErrorPromise = new Promise<NodeJS.ErrnoException | null>((resolve) => {
         child.on("error", (err: NodeJS.ErrnoException) => resolve(err));
+        child.on("close", () => resolve(null));
       });
 
       const stdoutPromise = collectStream(child.stdout!);
