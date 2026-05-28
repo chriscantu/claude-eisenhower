@@ -27,7 +27,7 @@ directly from that source rather than requiring manual intake.
 | Mac Calendar (EventKit) | ✅ Active | Read-only availability checks via the **calendar-query dispatcher** (`scripts/calendar-query.ts`). Dispatcher routes to `adapters/calendar/eventkit.ts` which wraps `cal_query.swift`. Used during `/schedule`, `/scan-email`, `/today`, `/plan-week`, `/review-week`. Configured calendar — see `config/calendar-config.md`. |
 | Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by `/scan-email`. Configured account/inbox only — see `config/email-config.md`. The `email-scan.ts` dispatcher and `adapters/email/apple-mail.ts` adapter exist as the foundation for cross-provider routing; full `/scan-email` rewire to the dispatcher path is tracked separately (see Open Foundation Gaps below). |
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of `/schedule`. Pushes Q1/Q2/Q3 tasks to configured list. Swappable via task-output dispatcher — see `config/task-output-config.md` and `scripts/adapters/task-output/`. |
-| Google Calendar (#64) | 🚧 Stub | Provider stub registered in calendar dispatcher; throws "not implemented" on use. Real adapter lands in [#64](https://github.com/chriscantu/claude-eisenhower/issues/64). Shares OAuth foundation with Gmail / Tasks stubs. |
+| Google Calendar | ✅ Active | Cross-platform read-only calendar adapter via the calendar-query dispatcher. Routes to `adapters/calendar/google.ts` which calls Google Calendar API v3 with the `calendar.readonly` scope. Uses the shared OAuth refresh-token lifecycle in `scripts/google-auth.ts`. Enable by setting `provider: google` + `google_credentials_path` + `google_token_path` in `config/calendar-config.md`. Lands in [#64](https://github.com/chriscantu/claude-eisenhower/issues/64). |
 | Gmail (#65) | 🚧 Stub | Provider stub registered in email dispatcher; throws "not implemented". Real adapter lands in [#65](https://github.com/chriscantu/claude-eisenhower/issues/65). |
 | Google Tasks (#66) | 🚧 Stub | Provider stub registered in task-output dispatcher; throws "not implemented". Real adapter lands in [#66](https://github.com/chriscantu/claude-eisenhower/issues/66). |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
@@ -39,7 +39,7 @@ As of #67, three adapter families share the same dispatcher pattern:
 
 | Family | Dispatcher | Adapters (current + planned) | Config |
 |---|---|---|---|
-| calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — stub) | `config/calendar-config.md` `provider:` |
+| calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — active) | `config/calendar-config.md` `provider:` |
 | email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — stub) | `config/email-config.md` `provider:` |
 | task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — stub) | `config/task-output-config.md` `active_adapter:` |
 
