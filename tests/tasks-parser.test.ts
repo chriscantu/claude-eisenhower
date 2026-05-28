@@ -20,6 +20,7 @@
 import {
   parseTasks,
   renderTasks,
+  validateTaskRecord,
   ParsedTasks,
 } from "../scripts/tasks-parser";
 
@@ -263,5 +264,144 @@ describe("round-trip parseTasks(renderTasks(x)) (PARSE-RT)", () => {
     const once = renderTasks(original);
     const twice = renderTasks(parseTasks(once));
     expect(twice).toBe(once);
+  });
+});
+
+// ─── Awaiting field (PARSE-AWAIT) — issue #44 ─────────────────────────
+
+describe("Awaiting field round-trip (PARSE-AWAIT)", () => {
+  function awaitingTasks(): ParsedTasks {
+    return {
+      Inbox: [],
+      Active: [
+        {
+          fields: {
+            Title: "SOC2 evidence pack",
+            Description: "Need security review sign-off before submission",
+            Source: "Self",
+            Requester: "Self",
+            Urgency: "this quarter",
+            "Due date": "2026-06-30",
+            Priority: "Q2",
+            State: "Active",
+            Owner: "me",
+            Awaiting: "Security review",
+            "Check-by": "2026-06-05",
+            Note: "Pinged Priya 2026-05-25",
+          },
+          section: "Active",
+        },
+      ],
+      Delegated: [],
+      Done: [],
+    };
+  }
+
+  test("PARSE-AWAIT-001: Awaiting field round-trips on Active record", () => {
+    const original = awaitingTasks();
+    const round = parseTasks(renderTasks(original));
+    expect(round.Active).toHaveLength(1);
+    expect(round.Active[0].fields.Awaiting).toBe("Security review");
+    expect(round.Active[0].fields["Check-by"]).toBe("2026-06-05");
+  });
+
+  test("PARSE-AWAIT-002: Awaiting renders between Owner and Check-by in canonical order", () => {
+    const out = renderTasks(awaitingTasks());
+    const ownerIdx = out.indexOf("Owner: me");
+    const awaitingIdx = out.indexOf("Awaiting: Security review");
+    const checkByIdx = out.indexOf("Check-by: 2026-06-05");
+    expect(ownerIdx).toBeGreaterThan(-1);
+    expect(awaitingIdx).toBeGreaterThan(ownerIdx);
+    expect(checkByIdx).toBeGreaterThan(awaitingIdx);
+  });
+
+  test("PARSE-AWAIT-003: idempotent render — Awaiting record stable across two render cycles", () => {
+    const original = awaitingTasks();
+    const once = renderTasks(original);
+    const twice = renderTasks(parseTasks(once));
+    expect(twice).toBe(once);
+  });
+});
+
+// ─── Schema enforcement (PARSE-VALIDATE) — SCHEMA-010 / SCHEMA-011 ────
+
+describe("validateTaskRecord enforcement (PARSE-VALIDATE)", () => {
+  test("PARSE-VALIDATE-001: SCHEMA-010 — Active + Awaiting without Check-by throws", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "SOC2 evidence pack",
+        State: "Active",
+        Owner: "me",
+        Awaiting: "Security review",
+      })
+    ).toThrow(/SCHEMA-010/);
+  });
+
+  test("PARSE-VALIDATE-002: SCHEMA-010 — Active + Awaiting + non-ISO Check-by throws", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "SOC2 evidence pack",
+        State: "Active",
+        Owner: "me",
+        Awaiting: "Security review",
+        "Check-by": "next week",
+      })
+    ).toThrow(/SCHEMA-010/);
+  });
+
+  test("PARSE-VALIDATE-003: SCHEMA-011 — Awaiting on State: Delegated throws", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "Review RFC",
+        State: "Delegated",
+        Owner: "alice",
+        Awaiting: "Architecture council",
+        "Check-by": "2026-06-05",
+      })
+    ).toThrow(/SCHEMA-011/);
+  });
+
+  test("PARSE-VALIDATE-004: SCHEMA-011 — Awaiting on State: Inbox throws", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "Triage",
+        State: "Inbox",
+        Awaiting: "Vendor X",
+      })
+    ).toThrow(/SCHEMA-011/);
+  });
+
+  test("PARSE-VALIDATE-005: valid Active + Awaiting + Check-by passes", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "SOC2 evidence pack",
+        State: "Active",
+        Owner: "me",
+        Awaiting: "Security review",
+        "Check-by": "2026-06-05",
+      })
+    ).not.toThrow();
+  });
+
+  test("PARSE-VALIDATE-006: Active without Awaiting passes (Check-by not required)", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "Fix latency",
+        State: "Active",
+        Owner: "me",
+      })
+    ).not.toThrow();
+  });
+
+  test("PARSE-VALIDATE-007: empty-string Awaiting is treated as unset (no throw)", () => {
+    expect(() =>
+      validateTaskRecord({
+        Title: "Edge case",
+        State: "Delegated",
+        Owner: "alice",
+        Awaiting: "",
+        "Check-by": "2026-06-05",
+      })
+    ).not.toThrow();
   });
 });
