@@ -142,6 +142,7 @@ const FIELD_ORDER: readonly string[] = [
   "Priority",
   "State",
   "Owner",
+  "Awaiting",
   "Check-by",
   "Scheduled",
   "Action",

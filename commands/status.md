@@ -89,8 +89,9 @@ Confirm, adjust, or skip for now?
 
 ## Step 4: Resolve argument (if provided)
 
-If the user provided an argument (e.g., `/status auth-migration` or `/status alex`):
+If the user provided an argument (e.g., `/status auth-migration`, `/status alex`, or `/status awaiting`):
 
+0. **Reserved keyword `awaiting`** (case-insensitive exact match): proceed to Step 6.5 (Awaiting View). Skip project/alias resolution.
 1. Collect all unique `Project:` values from TASKS.md task records
 2. Collect all delegate aliases from Delegated tasks and memory-manager results
 3. Check the argument against project names (case-insensitive partial match)
@@ -226,6 +227,50 @@ Run /status for full org view, or /status {alias} for delegate view.
 ```
 
 Use an actual alias from the project's delegated tasks in the closing prompt example.
+
+Proceed to Step 8 (Done).
+
+---
+
+## Step 6.5: Awaiting view (external blocker rollup)
+
+Render all Active tasks with an `Awaiting:` field set, grouped by blocker. This is the
+view for leader-to-leader conversations: "what's blocked on Vendor X?", "everything
+waiting on Security?".
+
+Collect all tasks with `State: Active` and `Awaiting:` set (any value).
+
+**If none exist:** render `No tasks awaiting external blockers.` and proceed to Step 8.
+
+**Group by `Awaiting:` value** (case-insensitive grouping; preserve the most common
+casing as the display label). Sort groups by overdue count descending, then alphabetically.
+
+**Within each group:** sort by `Check-by:` ascending. Flag overdue items with ⚠️ and
+days overdue (business days).
+
+**Header:**
+
+```
+## Status — Awaiting external blockers
+
+─── {N} task(s) across {M} blocker(s) ───────────────────
+```
+
+**Per-blocker section:**
+
+```
+─── {Blocker} ({count}) ──────────────────────────────────
+  • "{task title}" — Check-by: {date} ⚠️ ({N} days overdue)
+  • "{task title}" — Check-by: {date}
+```
+
+If a task has a `Project:` tag, append it inline: `(Project: {name})`.
+
+**Closing prompt:**
+
+```
+Run /status for full org view, or /status {project} for project view.
+```
 
 Proceed to Step 8 (Done).
 

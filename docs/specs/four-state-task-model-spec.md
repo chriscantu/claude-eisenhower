@@ -41,7 +41,7 @@ Inbox → Active → Delegated → Done
 
 ### Design Rules
 1. **Delegated ≠ Done** — the leader retains accountability for outcome. Check-by date is mandatory.
-2. **No Blocked state** — if a task cannot move forward, the action is to escalate, re-delegate, or drop it. Blockers are noted as a field on Active or Delegated tasks. The check-by date is the forcing function.
+2. **No Blocked state** — if a task cannot move forward, the action is to escalate, re-delegate, or drop it. Blockers are noted as a field on Active or Delegated tasks. The check-by date is the forcing function. For external blockers on Active tasks (vendor, security review, legal sign-off, peer's deliverable), use the `Awaiting:` field with a required `Check-by:` date — see `docs/specs/tasks-schema-spec.md` Decision 6 and issue #44.
 3. **Eisenhower quadrant is preserved** as a metadata field (`Priority:`) for context, but is no longer the status driver.
 
 ---

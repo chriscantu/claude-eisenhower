@@ -57,7 +57,8 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `Priority` | enum | After `/prioritize` | `Q1`, `Q2`, `Q3`, `Q4` |
 | `State` | enum | Always | `Inbox`, `Active`, `Delegated`, `Done` |
 | `Owner` | string | After `/prioritize` | `me` for Active tasks; delegate alias for Delegated tasks |
-| `Check-by` | date (YYYY-MM-DD) | Required if `State: Delegated` | The date to follow up on the delegation. No exceptions. |
+| `Awaiting` | string | Optional; only valid on `State: Active` | Free-form external blocker (e.g., `Vendor X`, `Security review`, `Legal sign-off`). When present, `Check-by` is required — same forcing function as Delegated. |
+| `Check-by` | date (YYYY-MM-DD) | Required if `State: Delegated` OR `Awaiting` is set | The date to follow up on the delegation or external blocker. No exceptions. |
 | `Scheduled` | string | After `/plan-week` or `/schedule` | Either a specific date (`YYYY-MM-DD`) from `/schedule`, or `week of YYYY-MM-DD` from `/plan-week` (week-level commitment, refined to a specific date by `/schedule`). |
 | `Action` | string | After `/schedule` | The specific action assigned (e.g., `[CRITICAL] Start today`, `90-min focus block`, `Delegated — check in {date}`) |
 | `Note` | string | Optional | Blocker context, escalation notes, or elimination record. Format: `Eliminated — Q4 cut {YYYY-MM-DD}` for dropped tasks. |
@@ -107,7 +108,7 @@ TASKS.md must contain exactly these sections in this order:
 | State | Meaning | Required additional fields | Owner value |
 |-------|---------|--------------------------|-------------|
 | `Inbox` | Captured, not yet classified | None | None |
-| `Active` | Committed, owner is doing it | `Priority`, `Owner: me` | `me` |
+| `Active` | Committed, owner is doing it | `Priority`, `Owner: me`. If `Awaiting:` is set, `Check-by:` is also required. | `me` |
 | `Delegated` | Outcome owned by user, execution owned by delegate | `Priority`, `Owner: {alias}`, `Check-by: {date}` | delegate alias |
 | `Done` | Terminal — completed, eliminated, or closed | `Done: {date}`, `Note` if eliminated | Unchanged from previous state |
 
@@ -200,6 +201,25 @@ Then the task record in TASKS.md contains a Synced field
 And the Synced field value matches the push result format defined in this spec
 ```
 
+### SCHEMA-010: Active task with Awaiting requires Check-by
+
+```gherkin
+Given a task is being written with State: Active
+And the record includes an Awaiting field
+When the record is saved to TASKS.md
+Then a Check-by field must be present with a valid YYYY-MM-DD date
+And no Active+Awaiting record may be saved without a Check-by date
+```
+
+### SCHEMA-011: Awaiting field is invalid outside State: Active
+
+```gherkin
+Given a task is being written with State other than Active
+When the record is saved to TASKS.md
+Then the Awaiting field must not be present
+And commands writing Awaiting on Inbox/Delegated/Done are an error
+```
+
 ### SCHEMA-009: Scan-sourced records use State: Inbox
 
 ```gherkin
@@ -233,3 +253,13 @@ And the record appears in the ## Inbox section
    `Project:` has no enforcement gate. Tasks without it are valid and appear as "Untagged"
    in `/status`. The field is populated progressively through `/status` triage, not at
    intake time.
+
+6. **`Awaiting:` is the external-blocker field on Active tasks** — Issue #44 (ROADMAP
+   reconsideration). The four-state model rejects a `Blocked` state because it creates a
+   holding area with no forcing function. But Active tasks frequently wait on external
+   parties (vendor, security review, legal sign-off, peer's deliverable) where the action
+   IS to wait and check back. `Awaiting:` makes that wait queryable. `Check-by:` becomes
+   required when `Awaiting:` is set — same forcing function as Delegated. Internal context
+   (notes about the blocker, escalation history) still goes in `Note:`. `/status awaiting`
+   rolls up by blocker so the leader can answer "what's blocked on Vendor X?" in a
+   peer-leader conversation.

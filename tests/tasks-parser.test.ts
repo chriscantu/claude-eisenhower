@@ -265,3 +265,59 @@ describe("round-trip parseTasks(renderTasks(x)) (PARSE-RT)", () => {
     expect(twice).toBe(once);
   });
 });
+
+// ─── Awaiting field (PARSE-AWAIT) — issue #44 ─────────────────────────
+
+describe("Awaiting field round-trip (PARSE-AWAIT)", () => {
+  function awaitingTasks(): ParsedTasks {
+    return {
+      Inbox: [],
+      Active: [
+        {
+          fields: {
+            Title: "SOC2 evidence pack",
+            Description: "Need security review sign-off before submission",
+            Source: "Self",
+            Requester: "Self",
+            Urgency: "this quarter",
+            "Due date": "2026-06-30",
+            Priority: "Q2",
+            State: "Active",
+            Owner: "me",
+            Awaiting: "Security review",
+            "Check-by": "2026-06-05",
+            Note: "Pinged Priya 2026-05-25",
+          },
+          section: "Active",
+        },
+      ],
+      Delegated: [],
+      Done: [],
+    };
+  }
+
+  test("PARSE-AWAIT-001: Awaiting field round-trips on Active record", () => {
+    const original = awaitingTasks();
+    const round = parseTasks(renderTasks(original));
+    expect(round.Active).toHaveLength(1);
+    expect(round.Active[0].fields.Awaiting).toBe("Security review");
+    expect(round.Active[0].fields["Check-by"]).toBe("2026-06-05");
+  });
+
+  test("PARSE-AWAIT-002: Awaiting renders between Owner and Check-by in canonical order", () => {
+    const out = renderTasks(awaitingTasks());
+    const ownerIdx = out.indexOf("Owner: me");
+    const awaitingIdx = out.indexOf("Awaiting: Security review");
+    const checkByIdx = out.indexOf("Check-by: 2026-06-05");
+    expect(ownerIdx).toBeGreaterThan(-1);
+    expect(awaitingIdx).toBeGreaterThan(ownerIdx);
+    expect(checkByIdx).toBeGreaterThan(awaitingIdx);
+  });
+
+  test("PARSE-AWAIT-003: idempotent render — Awaiting record stable across two render cycles", () => {
+    const original = awaitingTasks();
+    const once = renderTasks(original);
+    const twice = renderTasks(parseTasks(once));
+    expect(twice).toBe(once);
+  });
+});
