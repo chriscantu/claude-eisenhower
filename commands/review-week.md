@@ -192,6 +192,31 @@ Render always (use fallback text if calendar unavailable).
 
 ---
 
+### Section 5b — 📈 Briefing Hit Rate (optional)
+
+Render only if `memory/briefing-events.jsonl` exists (issue #22).
+
+Read the file and compute:
+- Total briefings shown over the trailing 30 days
+- Briefings with a non-`none` suggested action (denominator)
+- Hits: a `command_run` event whose command matched the suggestion within 10 minutes of `shown_at`
+
+Action-to-command map (use these exact mappings):
+- `check-in` → `/delegate`, `/review-week`, `/today`
+- `schedule` → `/schedule`, `/plan-week`
+- `intake` → `/intake`, `/prioritize`
+- `review` → `/review-week`, `/today`
+
+Render:
+```
+─── 📈 Briefing Hit Rate (last 30 days) ──────────────────────────────────
+  {hits}/{denominator} = {pct}%  ({totalBriefings} total briefings shown)
+```
+
+If denominator is 0, skip this section entirely.
+
+---
+
 ### Section 6 — ✅ Recommended Next Steps
 
 Always render. Generate 2–4 action items based on what was surfaced:

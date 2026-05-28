@@ -17,6 +17,22 @@ reminders
 
 ---
 
+## Session Briefing
+
+Controls the SessionStart hook output (issue #22).
+
+briefing_mode: full
+
+Valid values:
+- `full`   — always show the structured briefing (counts + triggered sections + suggested action)
+- `quiet`  — collapse to a one-liner when no trigger fires; show the full briefing only when something needs attention
+- `off`    — suppress the briefing entirely
+
+The briefing is also rate-limited per day: once it has run today (recorded in
+`memory/briefing-events.jsonl`), it will not show again until tomorrow.
+
+---
+
 ## Adapter Settings
 
 ### reminders
