@@ -28,7 +28,7 @@ directly from that source rather than requiring manual intake.
 | Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by `/scan-email`. Configured account/inbox only — see `config/email-config.md`. The `email-scan.ts` dispatcher and `adapters/email/apple-mail.ts` adapter exist as the foundation for cross-provider routing; full `/scan-email` rewire to the dispatcher path is tracked separately (see Open Foundation Gaps below). |
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of `/schedule`. Pushes Q1/Q2/Q3 tasks to configured list. Swappable via task-output dispatcher — see `config/task-output-config.md` and `scripts/adapters/task-output/`. |
 | Google Calendar | ✅ Active | Cross-platform read-only calendar adapter via the calendar-query dispatcher. Routes to `adapters/calendar/google.ts` which calls Google Calendar API v3 with the `calendar.readonly` scope. Uses the shared OAuth refresh-token lifecycle in `scripts/google-auth.ts`. Enable by setting `provider: google` + `google_credentials_path` + `google_token_path` in `config/calendar-config.md`. Lands in [#64](https://github.com/chriscantu/claude-eisenhower/issues/64). |
-| Gmail (#65) | 🚧 Stub | Provider stub registered in email dispatcher; throws "not implemented". Real adapter lands in [#65](https://github.com/chriscantu/claude-eisenhower/issues/65). |
+| Gmail | ✅ Adapter ready | Read-only Gmail scan via googleapis SDK + shared OAuth. Registered in email dispatcher under `provider: google`. Scope: `gmail.readonly`. End-to-end `/scan-email` use depends on the command-side rewire ([#68](https://github.com/chriscantu/claude-eisenhower/issues/68)). PII-safe: never logs sender addresses, subjects, or bodies. Lands in [#65](https://github.com/chriscantu/claude-eisenhower/issues/65). |
 | Google Tasks (#66) | 🚧 Stub | Provider stub registered in task-output dispatcher; throws "not implemented". Real adapter lands in [#66](https://github.com/chriscantu/claude-eisenhower/issues/66). |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
 | Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `config/stakeholders.yaml.example` for schema. |
@@ -40,7 +40,7 @@ As of #67, three adapter families share the same dispatcher pattern:
 | Family | Dispatcher | Adapters (current + planned) | Config |
 |---|---|---|---|
 | calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — active) | `config/calendar-config.md` `provider:` |
-| email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — stub) | `config/email-config.md` `provider:` |
+| email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — adapter ready, command rewire in #68) | `config/email-config.md` `provider:` |
 | task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — stub) | `config/task-output-config.md` `active_adapter:` |
 
 Commands route through a dispatcher — no command invokes `cal_query.swift` or
@@ -101,6 +101,22 @@ re-auth.
 
 Revoke at https://myaccount.google.com/permissions or delete the
 refresh-token file. The plugin keeps no other auth state.
+
+
+## Gmail-specific setup (#65)
+
+To switch /scan-email from Apple Mail to Gmail:
+
+1. Complete the **Google OAuth setup** above. Enable the Gmail API in step 1.4. Reuse the client_secret.json you downloaded; no separate credential needed.
+2. Copy config/email-config.md.example to config/email-config.md (gitignored).
+3. Edit config/email-config.md: set provider: google, account_name: you@gmail.com, inbox_name: INBOX (or another Gmail label — matched case-insensitively against users.labels.list), and uncomment google_credentials_path + google_token_path.
+4. First call into the adapter runs the loopback consent flow described above. Subsequent calls reuse the cached refresh token.
+
+The Gmail adapter is read-only (gmail.readonly scope). It returns the same EmailScanResult shape as the Apple Mail adapter, so callers see identical fields (from, subject, received_at, snippet, body_text, thread_id) regardless of provider.
+
+**PII posture.** The adapter never writes sender addresses, subjects, snippets, or message bodies to stdout/stderr — neither in success nor error paths. Errors surface generic strings like Gmail API error: .... Message content is returned only as the function typed return value to the caller.
+
+**End-to-end /scan-email wiring.** As of #65 the adapter is registered with the dispatcher and importable. The /scan-email command itself still drives Apple Mail via inline AppleScript; the command-side rewire ships in [#68](https://github.com/chriscantu/claude-eisenhower/issues/68).
 
 ## Open Foundation Gaps
 
