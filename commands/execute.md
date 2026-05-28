@@ -105,7 +105,7 @@ After explicit confirmation, proceed to Step 3 and run the action.
    - Otherwise, call the dispatcher — never invoke an adapter's script directly:
 
      ```applescript
-     do shell script "node " & quoted form of (pluginRoot & "/scripts/task-output.ts") & " complete " & ¬
+     do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node task-output.ts complete " & ¬
          quoted form of pluginRoot & " " & ¬
          quoted form of configFile & " " & ¬
          quoted form of title & " " & ¬

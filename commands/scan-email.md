@@ -34,9 +34,9 @@ Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.m
 the user configures `provider: google`. This command does NOT spawn provider
 clients directly. All email I/O routes through:
 
-- `node ${plugin_root}/scripts/email-scan.ts list-mailboxes <account>` —
+- `npx ts-node ${plugin_root}/scripts/email-scan.ts list-mailboxes <account>` —
   enumerate mailbox / label names under the account
-- `node ${plugin_root}/scripts/email-scan.ts scan <account> <inbox> <since> <unread_only> <max_messages>` —
+- `npx ts-node ${plugin_root}/scripts/email-scan.ts scan <account> <inbox> <since> <unread_only> <max_messages>` —
   fetch matching messages with subject + body in one call
 
 Each invocation prints a single line of JSON to stdout:
@@ -62,7 +62,7 @@ Using the `account_name` from `config/email-config.md`, list the mailboxes
 the dispatcher exposes for that account:
 
 ```bash
-node ${plugin_root}/scripts/email-scan.ts list-mailboxes "{account_name}"
+npx ts-node ${plugin_root}/scripts/email-scan.ts list-mailboxes "{account_name}"
 ```
 
 Parse the JSON output. On `ok: true`, `result.mailboxes` is an array of
@@ -82,7 +82,7 @@ application is open / authenticated.
 Fetch matching messages — subject, sender, date, and body all in one pass:
 
 ```bash
-node ${plugin_root}/scripts/email-scan.ts scan "{account_name}" "{inbox_name}" "{since_date}" "{unread_only}" {max_messages}
+npx ts-node ${plugin_root}/scripts/email-scan.ts scan "{account_name}" "{inbox_name}" "{since_date}" "{unread_only}" {max_messages}
 ```
 
 Where:
@@ -131,7 +131,7 @@ slow `whose` clause which times out on large calendars (7000+ events).
 Calculate the number of days from today to the due date, then run:
 
 ```bash
-node ${plugin_root}/scripts/calendar-query.ts query "{calendarName}" {daysAhead} summary
+npx ts-node ${plugin_root}/scripts/calendar-query.ts query "{calendarName}" {daysAhead} summary
 ```
 
 Where `calendarName` is read from `config/calendar-config.md`.
