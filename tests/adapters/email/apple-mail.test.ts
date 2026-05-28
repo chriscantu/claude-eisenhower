@@ -290,4 +290,73 @@ describe("Apple Mail email adapter", () => {
     // Quote in input → \\" in TypeScript string literal = \" in the script text
     expect(scriptText).toContain('My \\"Special\\" Inbox\\\\2026');
   });
+
+  // -------------------------------------------------------------------------
+  // listMailboxes — APPLEMAIL-LM-001..003
+  //
+  // Same spawn/timeout/parse pipeline as scan(), exercised through the new
+  // adapter surface added for issue #68.
+  // -------------------------------------------------------------------------
+
+  test("APPLEMAIL-LM-001: success path — mailbox names parsed from one-per-line stdout", async () => {
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createAppleMailAdapter();
+    const promise = adapter.listMailboxes("Work Account");
+
+    // AppleScript joins boxNames with linefeed before returning, so stdout
+    // looks like one mailbox per line.  Whitespace-only / blank lines are
+    // skipped by the parser.
+    emitStdout("INBOX\nSent\nArchive\nDrafts\n");
+    emitClose(0);
+
+    const result = await promise;
+
+    expect(result.status).toBe("success");
+    expect(result.reason).toBe("OK");
+    expect(result.mailboxes).toEqual(["INBOX", "Sent", "Archive", "Drafts"]);
+
+    // The spawned script should embed the account name (after escapeAppleScriptString).
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    const [binary, args] = spawnMock.mock.calls[0] as [string, string[]];
+    expect(binary).toBe("osascript");
+    expect(args[0]).toBe("-e");
+    expect(args[1]).toContain("Work Account");
+    expect(args[1]).toContain("mailboxes of acct");
+  });
+
+  test("APPLEMAIL-LM-002: empty stdout — returns mailboxes: [] with status success", async () => {
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createAppleMailAdapter();
+    const promise = adapter.listMailboxes("Empty Account");
+
+    emitStdout("");
+    emitClose(0);
+
+    const result = await promise;
+
+    expect(result.status).toBe("success");
+    expect(result.mailboxes).toEqual([]);
+  });
+
+  test("APPLEMAIL-LM-003: nonzero exit — status error with stderr in reason", async () => {
+    const { child, emitStdout, emitStderr, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createAppleMailAdapter();
+    const promise = adapter.listMailboxes("NoSuch");
+
+    emitStdout("");
+    emitStderr('Mail got an error: Account "NoSuch" not found.');
+    emitClose(1);
+
+    const result = await promise;
+
+    expect(result.status).toBe("error");
+    expect(result.reason).toBe('Mail got an error: Account "NoSuch" not found.');
+    expect(result.mailboxes).toEqual([]);
+  });
 });
