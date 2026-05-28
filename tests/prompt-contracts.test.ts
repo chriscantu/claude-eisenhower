@@ -256,6 +256,14 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
     { name: "/execute step", pattern: /\/execute\s+done/ },
     { name: "first-run detection branch", pattern: /first-run|First-run/ },
     { name: "command index section", pattern: /Command\s+index/i },
+    // Lifecycle phase headers — user's mental model. A rename silently
+    // breaks the walkthrough's implicit map.
+    { name: "Capture phase header", pattern: /─── Capture ─/ },
+    { name: "Classify phase header", pattern: /─── Classify ─/ },
+    { name: "Plan phase header", pattern: /─── Plan ─/ },
+    { name: "Act phase header", pattern: /─── Act ─/ },
+    { name: "Reflect phase header", pattern: /─── Reflect ─/ },
+    { name: "Setup phase header", pattern: /─── Setup ─/ },
   ];
 
   for (const tok of requiredTokens) {
@@ -273,6 +281,68 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
       expect(content).toMatch(tok.pattern);
     });
   }
+
+  // Synthetic-sequence ORDER check — the walkthrough must show
+  // intake → prioritize → schedule → execute in that order. Presence
+  // alone (above) doesn't catch a reorder. Issue #41 first-run intent
+  // depends on the user seeing the loop in lifecycle sequence.
+  test("Q2-005: walkthrough sequence is intake → prioritize → schedule → execute", () => {
+    const content = readContent(helpPath);
+    const idxIntake = content.search(/\/intake\s+"/);
+    const idxPrioritize = content.indexOf("/prioritize");
+    const idxSchedule = content.indexOf("/schedule");
+    const idxExecute = content.search(/\/execute\s+done/);
+    expect(idxIntake).toBeGreaterThanOrEqual(0);
+    expect(idxPrioritize).toBeGreaterThan(idxIntake);
+    expect(idxSchedule).toBeGreaterThan(idxPrioritize);
+    expect(idxExecute).toBeGreaterThan(idxSchedule);
+  });
+});
+
+// ── Test group 8: /status triage gate threshold (Q2-008) — issue #41 ─────
+//
+// The triage gate threshold (≥5 tagged tasks) is a load-bearing magic
+// number. Without a pin, a future edit silently changes the threshold and
+// users see behavior flip without explanation. This contract enforces that
+// the spec documents the threshold + a rationale, so any tweak is
+// intentional and accompanied by reasoning.
+
+describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
+  const statusPath = path.join(repoRoot, "commands", "status.md");
+
+  test("Q2-008: /status spec pins the ≥5 tagged threshold", () => {
+    const content = readContent(statusPath);
+    // Threshold must appear in Step 3 (triage) context. Match any phrasing
+    // that names "5" alongside "tagged" within a ~120-char window so a
+    // reword that drops one or the other surfaces here.
+    const hasThreshold = /≥\s*5\s+[^\n]{0,80}tagged|5\s+non-Done\s+tasks?\s+WITH\s+a\s+`Project:`\s+tag/i.test(
+      content
+    );
+    if (!hasThreshold) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate does not document the ≥5 ` +
+          `tagged-tasks threshold in the expected form. A magic number ` +
+          `without a documented rationale produces silent behavior flips.`
+      );
+    }
+    expect(hasThreshold).toBe(true);
+  });
+
+  test("Q2-008: /status spec includes triage gate rationale", () => {
+    const content = readContent(statusPath);
+    // Rationale must explain WHY the gate exists — first-run hostility.
+    const hasRationale = /first run.*untagged|hostile empty-state|enough signal to\s+group|enough tagged tasks/i.test(
+      content
+    );
+    if (!hasRationale) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate is missing a rationale for ` +
+          `the threshold. Without a "why" comment, a future tweak to 3 or 10 ` +
+          `looks arbitrary.`
+      );
+    }
+    expect(hasRationale).toBe(true);
+  });
 });
 
 // ── Test group 7: /help index ↔ commands/ bijection (Q2-007) — issue #41 ─
