@@ -336,20 +336,138 @@ Hold the detected `plugin_root` for Step 0.5; do NOT write the config here.
 
 ---
 
-## Step 4: Stakeholders starter (optional)
+## Step 4: Stakeholders bootstrap (conversational)
+
+`/delegate` is the headline differentiator vs Things / Todoist / Sunsama — but
+it needs a populated `config/stakeholders.yaml`. Hand-editing
+name/alias/role/relationship/domains/capacity_signal/anti_domains for every
+report and peer is a 30–60 minute cold-start tax that gates the feature.
+
+This step replaces the manual edit with a one-person-at-a-time conversation
+that collects only the minimum fields needed to unblock `/delegate`. Domains
+fill in over time via the learn-by-doing log written by `/delegate` itself
+(see `commands/delegate.md` Step 5c).
 
 **Ask:**
-> "Do you want me to create a starter stakeholders file for /delegate? It'll have placeholder entries — you fill in your team's names, roles, and domains after setup. You can skip this and do it later.
+> "Want to add your team now so /delegate works on day one? I'll ask one
+> person at a time — name + role is enough to start. Or skip and I'll seed
+> a placeholder file you can edit later.
 >
-> 1. Yes, create a starter file
-> 2. No, skip for now"
+> 1. Add stakeholders now (recommended)
+> 2. Use placeholder template (edit yourself later)
+> 3. Skip — no /delegate yet"
 
-**If yes:**
+### Option 1 — Conversational bootstrap
+
+Loop one person at a time. For each, collect minimum-viable fields:
+
+1. **Name and display alias.** "Who's first? Give me a name (e.g. `Jordan
+   Vargas`) and how you refer to them in conversation (e.g. `Jordan V.`,
+   `Vargas`)."
+   - Parse into `name` (full) + `alias` list (display first, shorthand
+     after). Single string is allowed; expand to `["Display"]` if the user
+     only gives one form.
+2. **Relationship.** "Direct report, peer, vendor, or partner?"
+3. **Role (optional).** "Job title? (Enter to skip — I'll write `Unknown`.)"
+4. **Capacity signal (optional).** "High, medium, low, or unknown?"
+   Default `medium` if skipped.
+5. **Domains — leave blank.** Tell the user explicitly:
+   > "I'll leave domains blank for now. `/delegate` will suggest keywords
+   > from real tasks you assign — review them in
+   > `memory/domain-suggestions.md` and promote the ones that fit."
+
+After each person:
+> "Got [Display Alias] — [role or "no role"], [relationship]. Add another? (yes / done)"
+
+**Loop termination + input normalization** — treat user response
+case-insensitively:
+
+- **Continue (yes)** accept: `yes`, `y`, `more`, `another`, `next`, `add`
+- **Stop (done)** accept: `done`, `no`, `n`, `stop`, `finish`, `that's it`,
+  `that's all`
+
+Anything else → re-prompt: "yes (add another) or done?" Do NOT infer.
+
+**Duplicate alias guard** — before accepting a new entry, compare its
+display alias (case-insensitively) against BOTH (a) entries collected so
+far this session AND (b) entries already present in `config/stakeholders.yaml`
+on disk (if the file exists — load it at the start of the loop and seed an
+"existing aliases" set from the `alias[0]` of each entry, case-insensitive).
+
+On collision:
+> "Alias '[alias]' already exists ([in this session / in
+> stakeholders.yaml]). Overwrite the existing entry, skip, or use a
+> different display alias? (overwrite / skip / [type new alias])"
+
+- `overwrite`: replace the existing entry on write (see Merge-vs-replace
+  contract below).
+- `skip`: discard the new entry, continue the loop.
+- new alias: re-validate against the existing set.
+
+**Merge-vs-replace contract for Step 5 write.** When the bootstrap finishes
+and Step 5 commits, the YAML write MERGES collected entries into the
+existing `config/stakeholders.yaml` rather than overwriting the whole file:
+
+- Pre-existing entries NOT touched in this session → preserved verbatim.
+- New entries (no collision) → appended under `stakeholders:`.
+- Overwrite collisions → existing entry replaced in place with the new one.
+- Skip collisions → no-op (existing entry preserved).
+
+Only the placeholder template path (Option 2) ever overwrites the whole
+file, and only when the user explicitly chose Option 2 on a clean install.
+
+**Empty-name guard** — if the user says `yes` to "Add another?" but then
+provides no name or a name that is whitespace only, re-prompt once:
+"Need a name to proceed — or say `done`."
+
+### YAML write contract (CRITICAL — escape rules)
+
+Hand-constructing YAML for free-text user input is fragile. Follow these
+rules without exception when serializing collected entries — apostrophes
+(`O'Brien`), colons (`Director: Eng`), brackets, and macOS smart-quote
+substitution all break naive output.
+
+1. **Always double-quote** these scalar values: `name`, every element of
+   `alias[]`, `role`. Example: `role: "Director of Engineering"`.
+2. **Escape embedded double quotes** as `\"`. Example:
+   `name: "Ada \"Curly\" Lovelace"`.
+3. **Reject smart quotes** — if the user input contains EXACTLY these
+   four codepoints `‘` (U+2018) `’` (U+2019) `“` (U+201C) `”` (U+201D),
+   normalize to straight `'` / `"` before quoting. Surface a one-line note:
+   "Normalized smart quotes in '[field]'."
+   Other Unicode quote lookalikes (`′` U+2032, `‵` U+2035, guillemets
+   `«»` U+00AB/U+00BB, German `„` U+201E, etc.) PASS THROUGH unchanged —
+   they're not autocorrect artifacts and the user likely typed them
+   intentionally. Do NOT invent further normalization. This keeps the rule
+   deterministic across LLM runs.
+4. **`domains` is required by the schema** — write `domains: []` literally
+   when the user leaves it blank. Do NOT omit the key. The scoring CLI's
+   stakeholder type declares `domains: string[]` as non-optional in
+   `scripts/delegate-core.ts` — an absent key or YAML null will break
+   downstream consumers.
+5. **`capacity_signal`** writes `medium` literally when skipped (per the
+   default above), not absent.
+6. **Skip** `notes`, `contact_hint`, and `anti_domains` on bootstrap.
+
+Preserve the example file's leading comment block verbatim (it documents
+the schema), then emit `stakeholders:` followed by one entry per collected
+person using the rules above.
+
+Hold the collected list until the user confirms the full setup summary
+(Step 5) — do NOT write `config/stakeholders.yaml` mid-loop. If a downstream
+preview-before-write step exists (see issue #34), it surfaces the roster
+count ("Stakeholders: 4 entries collected") before the write commits.
+
+### Option 2 — Placeholder template
+
 - Read `config/stakeholders.yaml.example`
 - Hold its contents for the Step 0.5 commit loop; do NOT write here.
 - After the Step 0.5-gated write, say: "Created config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
 
-**If no:** skip silently.
+### Option 3 — Skip
+
+Skip silently. `/delegate` will surface "no stakeholder graph" on first use
+and offer to bootstrap then.
 
 ---
 
