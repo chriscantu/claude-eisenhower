@@ -29,7 +29,7 @@ directly from that source rather than requiring manual intake.
 | Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of `/schedule`. Pushes Q1/Q2/Q3 tasks to configured list. Swappable via task-output dispatcher — see `config/task-output-config.md` and `scripts/adapters/task-output/`. |
 | Google Calendar (#64) | 🚧 Stub | Provider stub registered in calendar dispatcher; throws "not implemented" on use. Real adapter lands in [#64](https://github.com/chriscantu/claude-eisenhower/issues/64). Shares OAuth foundation with Gmail / Tasks stubs. |
 | Gmail (#65) | 🚧 Stub | Provider stub registered in email dispatcher; throws "not implemented". Real adapter lands in [#65](https://github.com/chriscantu/claude-eisenhower/issues/65). |
-| Google Tasks (#66) | 🚧 Stub | Provider stub registered in task-output dispatcher; throws "not implemented". Real adapter lands in [#66](https://github.com/chriscantu/claude-eisenhower/issues/66). |
+| Google Tasks | ✅ Active | Cross-platform write-side adapter for non-Mac users. Pushes Q1/Q2/Q3 tasks to a configured Google Tasks list via the Tasks API (scope `tasks`); quadrant encoded as `[Qn]` title prefix (Tasks has no priority field), source/requester appended to notes. Configured via `### google` block in `config/task-output-config.md`. Shares OAuth refresh token with Calendar / Gmail adapters (#67). Lands in [#66](https://github.com/chriscantu/claude-eisenhower/issues/66). |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
 | Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `config/stakeholders.yaml.example` for schema. |
 
@@ -41,7 +41,7 @@ As of #67, three adapter families share the same dispatcher pattern:
 |---|---|---|---|
 | calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — stub) | `config/calendar-config.md` `provider:` |
 | email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — stub) | `config/email-config.md` `provider:` |
-| task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — stub) | `config/task-output-config.md` `active_adapter:` |
+| task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — active) | `config/task-output-config.md` `active_adapter:` |
 
 Commands route through a dispatcher — no command invokes `cal_query.swift` or
 an adapter file directly. Adapters return shared contract shapes
@@ -68,7 +68,7 @@ implemented in `scripts/google-auth.ts`. Setup is identical for all three.
 
 Set `provider: google` and point at the credential + token paths. Examples
 live in `config/calendar-config.md.example`, `config/email-config.md.example`,
-and (when #66 ships) `config/task-output-config.md.example`.
+and `config/task-output-config.md.example` (`### google` block — #66).
 
 ### 3. Run the loopback OAuth flow
 

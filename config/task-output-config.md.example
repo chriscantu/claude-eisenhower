@@ -72,6 +72,15 @@ list_name: YOUR_REMINDERS_LIST_NAME
 ### markdown-file
 file: ./external-todo.md
 
+### google
+# Google Tasks adapter (#66). Set `Active Adapter` above to `google`
+# to route /schedule and /today through this adapter. Shares the OAuth
+# refresh-token lifecycle with the Google Calendar and Gmail adapters
+# (issue #67); the same client_secret.json works for all three.
+credentials_path: ~/.claude-eisenhower/google-client-secret.json
+token_path:       ~/.claude-eisenhower/google-tasks-refresh-token.json
+list_name:        Eisenhower List
+
 ### asana (future)
 workspace_id: ~~asana_workspace
 project_id:   ~~asana_project
@@ -95,7 +104,11 @@ project_id:  ~~linear_project
    /setup run fails loudly the first time a script is invoked.
 3. Set `list_name` under `### reminders` to the name of your Reminders list.
    It will be created automatically if it doesn't exist.
-4. The actual `task-output-config.md` is gitignored — never committed.
+4. For the Google Tasks adapter (`Active Adapter: google`), fill in the
+   `### google` block: `credentials_path` and `token_path` (gitignored;
+   see `docs/CONNECTORS.md` for the Google Cloud Console OAuth client
+   setup) plus `list_name` matching an existing Google Tasks list title.
+5. The actual `task-output-config.md` is gitignored — never committed.
 
 ## How to Switch Adapters
 
