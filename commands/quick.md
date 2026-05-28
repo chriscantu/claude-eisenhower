@@ -49,19 +49,23 @@ detection silently misses everything that doesn't reach Step 3.
 
 **Tentative-Q table** (when the authority check didn't fire):
 
-| Signal in parsed input                                          | Tentative Q |
-|-----------------------------------------------------------------|-------------|
-| `today`, `EOD`, `urgent`, `now`, `asap`, due date = today       | Q1          |
-| `this week`, `by Friday`, due date within 7 days from today     | Q2          |
-| Requester ≠ Self AND no Q1/Q2 signal                            | Q3 (candidate) |
-| No timing AND Requester = Self                                  | Q4          |
+| Signal in parsed input                                                              | Tentative Q |
+|-------------------------------------------------------------------------------------|-------------|
+| `today`, `EOD`, `urgent`, `now`, `asap`, due date = today                           | Q1          |
+| `this week`, `by Friday`, due date within 7 days from today                         | Q2          |
+| Requester ≠ Self AND no Q1/Q2 signal                                                | Q3 (candidate) |
+| Explicit elimination signal (`drop`, `cancel`, `eliminate`, `not doing`, `kill`, `nevermind`, `skip it`, `won't do`) | Q4 |
 
 Match top-to-bottom; take the first that fires. The Q3 row is a
 **candidate** — Step 3 confirms via `match-delegate.ts`.
 
-When NONE of the four rows fires (genuine ambiguity), default to Q2 and
-mark the Q value as `(inferred)`. Never silently pick Q4 for work the user
-explicitly captured — `/quick` is for capture, not elimination.
+When NONE of the four rows fires (genuine ambiguity — including the
+common capture shape "Have/Ask/Get [NAME] do [TASK]" where Requester
+resolves to Self but the work is not for Self, fix #63), default to Q2
+and mark the Q value as `(inferred)`. Never silently pick Q4 for work
+the user explicitly captured — `/quick` is for capture, not
+elimination. Q4 is opt-in: it requires the explicit elimination signal
+in Row 4 above, or a manual Q-override at the Step 4 edit prompt.
 
 ## Step 3: Confirm Q + assign schedule
 

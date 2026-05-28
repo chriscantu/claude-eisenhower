@@ -219,3 +219,49 @@ describe("Quick command: second-pass review fixes (TEST-QUICK-010)", () => {
     expect(c).toMatch(/Joiner `for`[\s\S]{0,80}NOT joiners/);
   });
 });
+
+describe("Quick command: Row 4 requires explicit elimination signal (TEST-QUICK-011, fix #63)", () => {
+  const c = readFile("commands/quick.md");
+
+  // The pre-fix tentative-Q table fired Q4 on "no timing AND Requester = Self",
+  // which over-matched capture-class delegation phrasing like
+  // "Have Jordan update onboarding doc" — Requester resolves to Self (the
+  // capturing user) but the work is not for Self. The shipped spec also
+  // declared "never silently pick Q4 for work the user explicitly captured,"
+  // creating an internal contradiction. Issue #63 narrows Row 4 to require
+  // an explicit elimination token.
+
+  test("TEST-QUICK-011a: Row 4 no longer fires on bare 'no timing AND Requester = Self'", () => {
+    expect(c).not.toMatch(/No timing AND Requester = Self[^|\n]*\|\s*Q4/);
+  });
+
+  test("TEST-QUICK-011b: Row 4 requires an explicit elimination signal", () => {
+    // The Q4 row in the tentative-Q table cites at least one elimination
+    // token (drop/cancel/eliminate/kill/etc.). We assert the row contains
+    // an "elimination signal" label AND at least three of the canonical
+    // tokens — drift-resilient to wording changes but catches reverts to
+    // the old condition.
+    const row4 = c.match(/\|[^\n]*Explicit elimination signal[^\n]*\|\s*Q4\s*\|/);
+    expect(row4).not.toBeNull();
+    const row4Text = row4![0];
+    const tokens = ["drop", "cancel", "eliminate", "kill", "not doing"];
+    const present = tokens.filter((t) => row4Text.includes(t));
+    expect(present.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test("TEST-QUICK-011c: 'never silently pick Q4' override is preserved", () => {
+    expect(c).toMatch(/Never silently pick Q4 for work\s+the user explicitly captured/);
+  });
+
+  test("TEST-QUICK-011d: capture-shape 'Have/Ask/Get NAME do TASK' is named as the no-row-fires path", () => {
+    // The spec must call out the issue's repro case so future edits don't
+    // re-introduce the contradiction silently. We don't enforce a specific
+    // routing decision — just that the case is acknowledged as falling
+    // through to the Q2 default rather than to Q4.
+    expect(c).toMatch(/Have\/Ask\/Get \[NAME\] do \[TASK\][\s\S]{0,200}default to Q2/);
+  });
+
+  test("TEST-QUICK-011e: Q4 is described as opt-in, not a fall-through default", () => {
+    expect(c).toMatch(/Q4 is opt-in/);
+  });
+});
