@@ -97,6 +97,9 @@ Specs before code. Tests before shipping.
 - Tests must be runnable without mocks, network calls, or environment setup beyond
   `npm install`.
 - Test names follow the `TEST-DEL-XXX` convention from `tests/delegation-regression.md`.
+- `cd scripts && npm run typecheck` (= `tsc --noEmit`) is the authoritative TypeScript
+  gate. It must return 0 errors before any PR is merged. `npm test` runs via
+  `ts-jest` and is a useful signal, but `tsc --noEmit` is the contract.
 
 ---
 
