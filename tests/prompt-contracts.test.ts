@@ -128,11 +128,12 @@ describe("Prompt Contracts: no references to retired external memory skill (Q2-0
 // command prompt file — when a maintainer rewrites a command and drops the
 // `State: Delegated` write step, the contract surface fails CI.
 //
-// Field tokens are intentionally permissive: matching `Synced` or
-// `Reminder-id` catches both the colon-prefixed write form (`Synced:`) and
-// inline references in prose. The bar (per #37) is "changing the four-state
-// model breaks at least one test" — the State-line tokens below pin all
-// four section names, so a State enum rename surfaces here too.
+// Field tokens anchor on the colon-prefixed write form (`Synced:`,
+// `Reminder-id:`, `State:`) so the contract checks the actual field-write
+// step in the prompt — not stray prose mentions like
+// "we no longer write Synced fields". The bar (per #37) is "changing the
+// four-state model breaks at least one test" — the State-line tokens below
+// pin all four section names, so a State enum rename surfaces here too.
 //
 // To add a new command:
 //   1. Append a row to `CANONICAL_FIELDS_BY_COMMAND`.
@@ -181,8 +182,8 @@ const CANONICAL_FIELDS_BY_COMMAND: readonly CommandFieldContract[] = [
     mustMention: {
       Scheduled: /\bScheduled:/,
       Action: /\bAction:/,
-      Synced: /\bSynced\b/,
-      "Reminder-id": /\bReminder-id\b/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
       "State: Delegated": /\bState:\s+Delegated\b/,
     },
   },
@@ -192,8 +193,8 @@ const CANONICAL_FIELDS_BY_COMMAND: readonly CommandFieldContract[] = [
       "Delegate to": /\bDelegate to:/,
       "State: Delegated": /\bState:\s+Delegated\b/,
       "Check-by": /\bCheck-by:/,
-      Synced: /\bSynced\b/,
-      "Reminder-id": /\bReminder-id\b/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
     },
   },
   {
@@ -201,8 +202,8 @@ const CANONICAL_FIELDS_BY_COMMAND: readonly CommandFieldContract[] = [
     mustMention: {
       State: /\bState:/,
       Done: /\bDone:/,
-      Synced: /\bSynced\b/,
-      "Reminder-id": /\bReminder-id\b/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
     },
   },
 ];

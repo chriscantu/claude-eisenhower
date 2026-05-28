@@ -34,9 +34,17 @@ const PLUGIN_ROOT = path.resolve(__dirname, "..", "..");
 const TEST_LIST = `Eisenhower Integration Test ${process.pid}-${Date.now()}`;
 
 function osascriptCleanupList(list: string): void {
-  // Best-effort: delete the disposable list. Ignore errors — the test list
-  // may already be gone if a case threw before reaching cleanup.
-  spawnSync(
+  // Best-effort delete of the disposable list. `whose` clause is intentionally
+  // used here — CLAUDE.md's `whose`-ban is scoped to **calendar** queries
+  // (where event-count growth makes the O(n) scan a real wall-clock problem).
+  // Reminders.app is a different store, the test list contains ≤5 reminders
+  // by construction, and the cleanup is a one-shot at suite teardown — no
+  // scaling cliff exists here.
+  //
+  // Cleanup failures are surfaced via console.warn rather than swallowed.
+  // The disposable list name embeds pid+timestamp so leaked artifacts are
+  // discoverable, but a runner watching stderr can still notice.
+  const res = spawnSync(
     "osascript",
     [
       "-e",
@@ -48,6 +56,13 @@ function osascriptCleanupList(list: string): void {
     ],
     { encoding: "utf-8", timeout: 10_000 }
   );
+  if (res.status !== 0 || res.signal) {
+    console.warn(
+      `[integration cleanup] Failed to delete list "${list}" ` +
+        `(status=${res.status}, signal=${res.signal}). ` +
+        `stderr: ${res.stderr?.toString().trim() ?? "(empty)"}`
+    );
+  }
 }
 
 function sampleRecord(overrides: Partial<TaskOutputRecord> = {}): TaskOutputRecord {
@@ -102,6 +117,11 @@ runOrSkip("push_reminder + complete_reminder against real Reminders.app (INT-REM
     // Rename the reminder out-of-band, then complete by id with the new
     // title and the stored id. The id path must win — title fallback would
     // miss because the reminder no longer matches `originalTitle`.
+    //
+    // `whose` is OK here for the same reason as `osascriptCleanupList`:
+    // CLAUDE.md's ban is calendar-scoped (O(n) over event count), the test
+    // list holds ≤2 reminders by construction, and this script runs once
+    // per case.
     const renameResult = spawnSync(
       "osascript",
       [
