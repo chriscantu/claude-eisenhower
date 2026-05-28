@@ -91,7 +91,13 @@ Confirm, adjust, or skip for now?
 
 If the user provided an argument (e.g., `/status auth-migration`, `/status alex`, or `/status awaiting`):
 
-0. **Reserved keyword `awaiting`** (case-insensitive exact match): proceed to Step 6.5 (Awaiting View). Skip project/alias resolution.
+If the argument (after trimming) is the literal `awaiting` (case-insensitive
+exact match), proceed to Step 6.5 (Awaiting View) and skip the project/alias
+resolution below. Trailing tokens after `awaiting` (e.g., `/status awaiting foo`)
+are ignored.
+
+Otherwise:
+
 1. Collect all unique `Project:` values from TASKS.md task records
 2. Collect all delegate aliases from Delegated tasks and memory-manager results
 3. Check the argument against project names (case-insensitive partial match)
@@ -242,11 +248,17 @@ Collect all tasks with `State: Active` and `Awaiting:` set (any value).
 
 **If none exist:** render `No tasks awaiting external blockers.` and proceed to Step 8.
 
-**Group by `Awaiting:` value** (case-insensitive grouping; preserve the most common
-casing as the display label). Sort groups by overdue count descending, then alphabetically.
+**Group by `Awaiting:` value** (case-insensitive grouping). Display label = the
+casing of the FIRST task encountered in document order within each group. This
+rule is deterministic — two runs against the same TASKS.md produce identical
+output (no "most common casing" tie-break, which would diverge across runs
+when two casings appear with equal frequency). Sort groups by overdue count
+descending, then alphabetically (case-insensitive).
 
-**Within each group:** sort by `Check-by:` ascending. Flag overdue items with ⚠️ and
-days overdue (business days).
+**Within each group:** sort by `Check-by:` ascending. Flag overdue items with ⚠️
+and days overdue. Compute days overdue as **business days** (skip Saturday and
+Sunday) — same rule as Step 5 Risks computation. The two surfaces MUST agree on
+overdue counts when the same task qualifies for both.
 
 **Header:**
 
