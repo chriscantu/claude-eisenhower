@@ -27,6 +27,7 @@ import * as path from "path";
 
 import type { CalendarQueryRequest, CalendarQueryResult } from "./adapter-types";
 import { createEventkitAdapter } from "./adapters/calendar/eventkit";
+import { createGoogleCalendarAdapter } from "./adapters/calendar/google";
 
 // ---------------------------------------------------------------------------
 // Public interface
@@ -69,15 +70,7 @@ registerAdapter({
     createEventkitAdapter().query(req),
 });
 
-registerAdapter({
-  name: "google",
-  query: async (_req: CalendarQueryRequest): Promise<CalendarQueryResult> => {
-    throw new Error(
-      "Google Calendar adapter not yet implemented — see #64 " +
-        "(https://github.com/chriscantu/claude-eisenhower/issues/64)"
-    );
-  },
-});
+registerAdapter(createGoogleCalendarAdapter());
 
 // ---------------------------------------------------------------------------
 // Config reader

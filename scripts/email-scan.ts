@@ -27,6 +27,7 @@ import * as path from "path";
 
 import type { EmailScanRequest, EmailScanResult } from "./adapter-types";
 import { createAppleMailAdapter } from "./adapters/email/apple-mail";
+import { createGoogleGmailAdapter } from "./adapters/email/google";
 
 // ---------------------------------------------------------------------------
 // Public interface
@@ -69,15 +70,7 @@ registerAdapter({
     createAppleMailAdapter().scan(req),
 });
 
-registerAdapter({
-  name: "google",
-  scan: async (_req: EmailScanRequest): Promise<EmailScanResult> => {
-    throw new Error(
-      "Gmail adapter not yet implemented — see #65 " +
-        "(https://github.com/chriscantu/claude-eisenhower/issues/65)"
-    );
-  },
-});
+registerAdapter(createGoogleGmailAdapter());
 
 // ---------------------------------------------------------------------------
 // Config reader
