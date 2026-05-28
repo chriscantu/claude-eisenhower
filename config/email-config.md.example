@@ -12,7 +12,7 @@ provider:     apple-mail
 account_name: YOUR_MAIL_ACCOUNT_NAME
 inbox_name:   INBOX
 
-# Gmail (when provider: google) — see #65
+# Gmail (when provider: google)
 # google_credentials_path: ~/.claude-eisenhower/google-client-secret.json
 # google_token_path:       ~/.claude-eisenhower/google-gmail-refresh-token.json
 
@@ -31,13 +31,20 @@ Requires:
 - `google_token_path` — abs path where the refresh token is persisted.
   Created automatically. Mode 0600. Gitignored.
 - Scope: `https://www.googleapis.com/auth/gmail.readonly`.
+- `account_name`: full Gmail address (e.g. `you@gmail.com`).
+- `inbox_name`: Gmail label name. `INBOX` is the default inbox; user
+  labels are matched case-insensitively against the label name returned
+  by `users.labels.list`.
 
-Issue tracker for the Gmail adapter: #65.
+PII posture: the Gmail adapter never logs sender addresses, subjects,
+snippets, or message bodies. Errors surface generic provider messages
+(e.g. `Gmail API error: ...`) — no payload content. Refresh tokens live
+only at the configured `google_token_path` (mode 0600, gitignored).
 
 Note: as of foundation #67, the `/scan-email` command still drives
 Apple Mail directly via embedded AppleScript. The dispatcher path
 exists but is not yet wired up at the command surface — full
-command rewire ships in a follow-up.
+command rewire ships in #68.
 
 ---
 
@@ -80,5 +87,9 @@ accounts, sent mail, or folders are accessed.
 2. Pick a provider:
    - **apple-mail** (Mac default): set `account_name` and `inbox_name`
      to the values from Apple Mail. Leave the `google_*` lines commented out.
-   - **google**: blocked on #65 ship; foundation is in place.
+   - **google**: set `provider: google`, point `account_name` at your Gmail
+     address, set `inbox_name: INBOX` (or another label), uncomment and
+     populate the `google_credentials_path` and `google_token_path` lines.
+     See `docs/CONNECTORS.md` § "Gmail-specific setup (#65)" for the
+     one-time loopback consent flow.
 3. The actual `email-config.md` is gitignored — never committed.
