@@ -256,6 +256,25 @@ describe("reminders adapter — field mapping", () => {
     expect(args).toContain("Some task");
     expect(args).toContain("Eisenhower List");
   });
+
+  test("REM-MAP-006: completeTask forwards externalId as 4th osascript arg (issue #36)", async () => {
+    mockOsascript(`{"status":"success","title":"x","id":"${FAKE_ID}"}\n`);
+    const adapter = createRemindersAdapter({ pluginRoot: "/fake/root" });
+
+    await adapter.completeTask("Some task", "Eisenhower List", FAKE_ID);
+    const [, args] = spawnSyncMock.mock.calls[0];
+    // args = [scriptPath, title, list_name, externalId]
+    expect(args[3]).toBe(FAKE_ID);
+  });
+
+  test("REM-MAP-007: completeTask omits externalId by passing empty string", async () => {
+    mockOsascript(`{"status":"success","title":"x","id":"${FAKE_ID}"}\n`);
+    const adapter = createRemindersAdapter({ pluginRoot: "/fake/root" });
+
+    await adapter.completeTask("Some task", "Eisenhower List");
+    const [, args] = spawnSyncMock.mock.calls[0];
+    expect(args[3]).toBe("");
+  });
 });
 
 describe("reminders adapter — name", () => {

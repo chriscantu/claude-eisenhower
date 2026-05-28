@@ -4,21 +4,31 @@
 -- Completed reminders stay in Reminders history (completed = true, not deleted).
 --
 -- Arguments (positional, space-separated, each quoted):
---   1. title      — reminder name to find (case-insensitive match)
---   2. list_name  — target Reminders list name
+--   1. title         — reminder name (used for fallback / response payload)
+--   2. list_name     — target Reminders list name
+--   3. reminder_id   — (optional) x-coredata URI returned by push_reminder.
+--                      When non-empty, the script looks the reminder up by id
+--                      first. This is the stable path; re-delegation and
+--                      user-driven title changes no longer orphan the
+--                      Reminder. Pass "" to force title-only match.
 --
 -- Returns (stdout, single-line JSON):
---   {"status":"success","title":"...","id":"x-coredata://..."}
---   {"status":"success","title":"...","id":"x-coredata://...","note":"already_completed"}
+--   {"status":"success","title":"...","id":"x-coredata://...","matched_by":"id"|"title"}
+--   {"status":"success","title":"...","id":"x-coredata://...","matched_by":"id"|"title","note":"already_completed"}
 --   {"status":"skipped","title":"...","reason":"not_found"}
 --   {"status":"error","title":"...","reason":"..."}
 --
 -- Usage:
 --   osascript complete_reminder.applescript "Fix deploy pipeline issue" "Eisenhower List"
+--   osascript complete_reminder.applescript "Fix deploy pipeline issue" "Eisenhower List" "x-coredata://..."
 
 on run argv
     set taskTitle to item 1 of argv
     set listName to item 2 of argv
+    set reminderId to ""
+    if (count of argv) ≥ 3 then
+        set reminderId to item 3 of argv
+    end if
 
     tell application "Reminders"
 
@@ -35,22 +45,47 @@ on run argv
             return my jsonError(taskTitle, "list_not_found: " & listName)
         end if
 
-        -- Step 2: Find reminder by title (case-insensitive, trimmed)
         set matchedReminder to missing value
-        set existingReminders to every reminder of targetList
-        repeat with r in existingReminders
-            if (my lowerTrim(name of r)) is (my lowerTrim(taskTitle)) then
-                set matchedReminder to r
-                exit repeat
-            end if
-        end repeat
+        set matchedBy to ""
 
-        -- Step 3: If not found in active reminders, check completed reminders
+        -- Step 2a: id lookup first when caller supplied one
+        if reminderId is not "" then
+            set existingReminders to every reminder of targetList
+            repeat with r in existingReminders
+                if (id of r as string) is reminderId then
+                    set matchedReminder to r
+                    set matchedBy to "id"
+                    exit repeat
+                end if
+            end repeat
+            if matchedReminder is missing value then
+                set completedReminders to every reminder of targetList whose completed is true
+                repeat with r in completedReminders
+                    if (id of r as string) is reminderId then
+                        return my jsonSuccessNote(taskTitle, id of r as string, "id", "already_completed")
+                    end if
+                end repeat
+            end if
+        end if
+
+        -- Step 2b: Title fallback when no id match (or no id supplied)
+        if matchedReminder is missing value then
+            set existingReminders to every reminder of targetList
+            repeat with r in existingReminders
+                if (my lowerTrim(name of r)) is (my lowerTrim(taskTitle)) then
+                    set matchedReminder to r
+                    set matchedBy to "title"
+                    exit repeat
+                end if
+            end repeat
+        end if
+
+        -- Step 3: If still not found, check completed reminders by title
         if matchedReminder is missing value then
             set completedReminders to every reminder of targetList whose completed is true
             repeat with r in completedReminders
                 if (my lowerTrim(name of r)) is (my lowerTrim(taskTitle)) then
-                    return my jsonSuccessNote(taskTitle, id of r as string, "already_completed")
+                    return my jsonSuccessNote(taskTitle, id of r as string, "title", "already_completed")
                 end if
             end repeat
             return my jsonSkipped(taskTitle, "not_found")
@@ -59,7 +94,7 @@ on run argv
         -- Step 4: Mark as complete (stays in history, not deleted)
         try
             set completed of matchedReminder to true
-            return my jsonSuccess(taskTitle, id of matchedReminder as string)
+            return my jsonSuccess(taskTitle, id of matchedReminder as string, matchedBy)
         on error errMsg
             return my jsonError(taskTitle, errMsg)
         end try
@@ -68,12 +103,12 @@ on run argv
 end run
 
 -- JSON emitters. Single-line output. Strings are escaped via jsonEscape.
-on jsonSuccess(t, idStr)
-    return "{\"status\":\"success\",\"title\":\"" & my jsonEscape(t) & "\",\"id\":\"" & my jsonEscape(idStr) & "\"}"
+on jsonSuccess(t, idStr, matchedBy)
+    return "{\"status\":\"success\",\"title\":\"" & my jsonEscape(t) & "\",\"id\":\"" & my jsonEscape(idStr) & "\",\"matched_by\":\"" & my jsonEscape(matchedBy) & "\"}"
 end jsonSuccess
 
-on jsonSuccessNote(t, idStr, noteCode)
-    return "{\"status\":\"success\",\"title\":\"" & my jsonEscape(t) & "\",\"id\":\"" & my jsonEscape(idStr) & "\",\"note\":\"" & my jsonEscape(noteCode) & "\"}"
+on jsonSuccessNote(t, idStr, matchedBy, noteCode)
+    return "{\"status\":\"success\",\"title\":\"" & my jsonEscape(t) & "\",\"id\":\"" & my jsonEscape(idStr) & "\",\"matched_by\":\"" & my jsonEscape(matchedBy) & "\",\"note\":\"" & my jsonEscape(noteCode) & "\"}"
 end jsonSuccessNote
 
 on jsonSkipped(t, reasonCode)
