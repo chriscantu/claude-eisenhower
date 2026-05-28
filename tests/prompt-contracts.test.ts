@@ -233,3 +233,45 @@ describe("Prompt Contracts: command files mention canonical fields (Q2-003)", ()
     }
   }
 });
+
+// ── Test group 4: /trends source contract (Q2-004) — issue #43 ───────────
+//
+// /trends is a read-only command (writes nothing). Its value depends on
+// reading all three analytics logs PLUS TASKS.md. Dropping any source
+// silently degrades the report. This contract pins the source paths in the
+// spec so a maintainer cannot quietly remove a log read without the test
+// flagging it.
+
+describe("Prompt Contracts: /trends source contract (Q2-004)", () => {
+  const trendsPath = path.join(repoRoot, "commands", "trends.md");
+
+  test("Q2-004: commands/trends.md exists", () => {
+    expect(fs.existsSync(trendsPath)).toBe(true);
+  });
+
+  const requiredSources: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "today-log path", pattern: /memory\/today-log\.md/ },
+    { name: "plan-log path", pattern: /memory\/plan-log\.md/ },
+    { name: "review-log path", pattern: /memory\/review-log\.md/ },
+    { name: "TASKS.md", pattern: /TASKS\.md/ },
+    { name: "Throughput pattern", pattern: /Throughput/i },
+    { name: "Defer rate pattern", pattern: /Defer\s+rate/i },
+    { name: "Overdue delegations pattern", pattern: /Overdue\s+delegations/i },
+  ];
+
+  for (const src of requiredSources) {
+    test(`Q2-004: commands/trends.md references "${src.name}"`, () => {
+      const content = readContent(trendsPath);
+      if (!src.pattern.test(content)) {
+        throw new Error(
+          `commands/trends.md is missing the required source/section "${src.name}" ` +
+            `(pattern ${src.pattern}). /trends value depends on all three logs + ` +
+            `TASKS.md plus the three named patterns; dropping any one silently ` +
+            `degrades the report. If you intentionally removed it, update ` +
+            `requiredSources in tests/prompt-contracts.test.ts.`
+        );
+      }
+      expect(content).toMatch(src.pattern);
+    });
+  }
+});
