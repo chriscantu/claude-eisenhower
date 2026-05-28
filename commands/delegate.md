@@ -289,17 +289,21 @@ Stdout is one line of JSON: `{"ok":true,"mode":"push","result":{"status":"...","
 On `result.status: success`: update the task record with:
 ```
 Synced: {adapter} ({list_name}) — {today's date}
+Reminder-id: {result.id}
 ```
 
-On `result.status: skipped`:
+On `result.status: skipped`: include `Reminder-id` only when the dedup path returned a non-empty `id`.
 ```
 Synced: skipped (already exists)
+Reminder-id: {result.id}   ← omit if result.id is ""
 ```
 
 On `result.status: error` or `ok:false`:
 ```
 Synced: failed — {reason or error}
 ```
+
+`Reminder-id` carries the adapter's stable identifier (Reminders x-coredata URI for the Reminders adapter). `commands/execute.md` reads it back at completion time so re-delegation cannot orphan the external record (issue #36).
 
 Show a one-line result: `✓ Check-in pushed to {adapter}` or `⚠ {adapter} push failed — [reason]. TASKS.md entry is saved.`
 

@@ -79,12 +79,25 @@ export interface TaskOutputAdapter {
    */
   pushTask(record: TaskOutputRecord): Promise<PushResult>;
   /**
-   * Mark a task complete in the external system, looked up by title.
-   * `list_name` scopes the lookup for adapters that support multiple lists.
+   * Mark a task complete in the external system.
    *
-   * For Q3 tasks the title is the prefixed form ("Check in: [alias] re: …")
-   * — matching what was pushed. The dispatcher does not re-prefix; the
-   * caller passes the exact title used at push time.
+   * Lookup precedence:
+   *   1. If `externalId` is provided and the adapter supports id-based lookup,
+   *      match by id. This is the stable path: id survives title changes
+   *      (Q3 re-delegation, user renames) which would otherwise orphan the
+   *      external record.
+   *   2. Fallback to title match scoped by `list_name`. For Q3 tasks the
+   *      title is the prefixed form ("Check in: [alias] re: …") matching
+   *      what was pushed.
+   *
+   * `externalId` is the value returned in `PushResult.id` at push time —
+   * persisted to TASKS.md as `Reminder-id:` (Reminders adapter) and looked
+   * up here. Adapters that don't support id-based lookup (e.g.
+   * markdown-file) ignore the parameter and fall through to title match.
    */
-  completeTask(title: string, list_name: string): Promise<CompleteResult>;
+  completeTask(
+    title: string,
+    list_name: string,
+    externalId?: string
+  ): Promise<CompleteResult>;
 }

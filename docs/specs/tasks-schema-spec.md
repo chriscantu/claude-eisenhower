@@ -63,6 +63,7 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `Note` | string | Optional | Blocker context, escalation notes, or elimination record. Format: `Eliminated — Q4 cut {YYYY-MM-DD}` for dropped tasks. |
 | `Done` | date (YYYY-MM-DD) | Required if `State: Done` | The date the task was completed or eliminated |
 | `Synced` | string | After adapter push | Result of the adapter push. See values below. |
+| `Reminder-id` | string | Optional, after adapter push | Adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter; `file:title` for markdown-file). Written when `PushResult.id` is non-empty. Read by `/execute` and passed to the dispatcher so completion looks up the record by id, surviving title changes and Q3 re-delegation (issue #36). |
 | `Project` | string | Optional | Human-readable initiative name, title case (e.g., "Auth Migration"). Introduced by `/status` triage. Not written by other commands unless they opt in. |
 
 ### Synced field values

@@ -109,11 +109,13 @@ After explicit confirmation, proceed to Step 3 and run the action.
          quoted form of pluginRoot & " " & ¬
          quoted form of configFile & " " & ¬
          quoted form of title & " " & ¬
-         quoted form of list_name
+         quoted form of list_name & " " & ¬
+         quoted form of externalId
      ```
 
    - `title` is the title to look up. **For Q3 tasks** that were pushed as check-in reminders, the title was prefixed: "Check in: [delegate] re: [original title]". Use that prefixed form here.
    - `list_name` is the adapter-specific list (read from the matching `### <adapter>` block; Markdown File ignores it).
+   - `externalId` is the value from the task record's `Reminder-id:` field (issue #36). Pass `""` when the field is absent — the adapter falls back to title-based lookup. Passing the id is the stable path: re-delegation and user-driven title changes no longer orphan the Reminder, because the Reminders adapter looks up by id first.
    - Stdout is one line of JSON: `{"ok":true,"mode":"complete","result":{"status":"...","reason":"..."}}`. Parse it.
    - Interpret the `result`:
      - `status: success`, `reason: "Completed"` → append `Synced: {adapter} completed — [today's date]`
