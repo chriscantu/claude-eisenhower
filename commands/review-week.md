@@ -85,7 +85,7 @@ Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.m
 
 Run:
 ```applescript
-do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query " & quoted form of calendarName & " 14 summary 2>&1"
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " 14 summary 2>&1"
 ```
 
 The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability).

@@ -13,6 +13,7 @@
  *   EVENTKIT-006  ENOENT on spawn — "swift binary not found" error
  *   EVENTKIT-007  30s timeout — kills child + returns error
  *   EVENTKIT-008  malformed date line — passes raw strings through unchanged
+ *   EVENTKIT-009  stdout starts with ERROR: on exit 0 → status error (both formats)
  *
  * Issue: #67
  */
@@ -302,5 +303,54 @@ describe("EventKit calendar adapter", () => {
     expect(result.events[0].start).toBe("not-a-date");
     expect(result.events[0].end).toBe("also-bad");
     expect(result.events[0].all_day).toBe(false);
+  });
+
+  test("EVENTKIT-009: stdout starts with ERROR: on exit 0 → status error (full format)", async () => {
+    // cal_query.swift exits 0 even when the named calendar does not exist.
+    // It prints "ERROR: Calendar '<name>' not found\nAvailable calendars: ..."
+    // to stdout. The adapter must detect this and return status: "error".
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createEventkitAdapter({ swift_script_path: "/fake/cal_query.swift" });
+    const promise = adapter.query({
+      calendar_name: "Foo",
+      days_ahead: 1,
+      format: "full",
+    });
+
+    const errorOutput =
+      "ERROR: Calendar 'Foo' not found\nAvailable calendars: Work, Personal";
+    emitStdout(errorOutput);
+    emitClose(0); // exit 0 — the bug this test guards against
+
+    const result = await promise;
+
+    expect(result.status).toBe("error");
+    expect(result.reason).toBe(errorOutput.trim());
+    expect(result.events).toEqual([]);
+  });
+
+  test("EVENTKIT-009b: stdout starts with ERROR: on exit 0 → status error (summary format)", async () => {
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createEventkitAdapter({ swift_script_path: "/fake/cal_query.swift" });
+    const promise = adapter.query({
+      calendar_name: "Foo",
+      days_ahead: 7,
+      format: "summary",
+    });
+
+    const errorOutput =
+      "ERROR: Calendar 'Foo' not found\nAvailable calendars: Work, Personal";
+    emitStdout(errorOutput);
+    emitClose(0);
+
+    const result = await promise;
+
+    expect(result.status).toBe("error");
+    expect(result.reason).toBe(errorOutput.trim());
+    expect(result.events).toEqual([]);
   });
 });

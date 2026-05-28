@@ -61,11 +61,22 @@ function toAppleScriptDate(isoDate: string): string {
   return `${MONTH_NAMES[month] ?? "January"} ${day}, ${year}`;
 }
 
+/**
+ * Escape a string for safe embedding in an AppleScript double-quoted string
+ * literal.  ORDER MATTERS: backslashes must be escaped first, otherwise the
+ * quote-escape's own backslash gets double-escaped on a second pass.
+ * AppleScript string literals only need \ and " escaped — newlines cannot
+ * appear as literal characters inside double-quoted strings (they would need
+ * to come via &-concatenation, which we don't generate here).
+ */
+function escapeAppleScriptString(raw: string): string {
+  return raw.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 /** Build the AppleScript text from the scan request. */
 function buildScript(req: EmailScanRequest, timeoutSec: number): string {
-  // Escape double-quotes in account name to prevent AppleScript injection.
-  const safeAccount = req.account.replace(/"/g, '\\"');
-  const safeInbox = req.inbox.replace(/"/g, '\\"');
+  const safeAccount = escapeAppleScriptString(req.account);
+  const safeInbox = escapeAppleScriptString(req.inbox);
   const sinceDate = toAppleScriptDate(req.since);
   const maxMessages = Math.floor(req.max_messages);
   // Guard: when unread_only, skip already-read messages.

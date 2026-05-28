@@ -151,7 +151,7 @@ Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.m
 Calculate the number of days from today to the due date, then run:
 
 ```applescript
-do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query " & quoted form of calendarName & " " & quoted form of (daysAhead as text) & " summary 2>&1"
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " " & quoted form of (daysAhead as text) & " summary 2>&1"
 ```
 
 Where `calendarName` is read from `config/calendar-config.md`.

@@ -12,6 +12,7 @@
  *   APPLEMAIL-005  ENOENT on spawn — "osascript binary not found" error
  *   APPLEMAIL-006  timeout fires — kills child + returns error
  *   APPLEMAIL-007  script substitution — spawned args contain account and inbox
+ *   APPLEMAIL-008  account/inbox with backslash and quote — correctly double-escaped in script
  *
  * Issue: #67
  */
@@ -255,5 +256,38 @@ describe("Apple Mail email adapter", () => {
     const scriptText = args[1];
     expect(scriptText).toContain("MyGmailAccount");
     expect(scriptText).toContain("Promotions");
+  });
+
+  test("APPLEMAIL-008: account/inbox with backslash and quote — correctly double-escaped in script", async () => {
+    // CodeQL alerts r3320206575 + r3320206585: backslash must be escaped BEFORE
+    // the quote, otherwise `\"` in the input becomes `\\"` in the output which
+    // AppleScript parses as `\"` (injection).  Expected escaping:
+    //   \  →  \\    (two chars in the AppleScript source: backslash backslash)
+    //   "  →  \"    (two chars in the AppleScript source: backslash quote)
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const req = {
+      ...BASE_REQ,
+      account: 'Corp\\Domain"Account',  // contains \ and "
+      inbox: 'My "Special" Inbox\\2026', // contains both
+    };
+
+    const adapter = createAppleMailAdapter();
+    const promise = adapter.scan(req);
+
+    emitStdout("");
+    emitClose(0);
+
+    await promise;
+
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    const [, args] = spawnMock.mock.calls[0] as [string, string[]];
+    const scriptText = args[1] as string;
+
+    // Backslash in input → \\\\ in TypeScript string literal = \\ in the script text
+    expect(scriptText).toContain('Corp\\\\Domain\\"Account');
+    // Quote in input → \\" in TypeScript string literal = \" in the script text
+    expect(scriptText).toContain('My \\"Special\\" Inbox\\\\2026');
   });
 });

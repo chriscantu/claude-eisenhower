@@ -183,9 +183,16 @@ export function createEventkitAdapter(cfg?: EventkitAdapterConfig): {
         return { status: "error", reason, events: [] };
       }
 
-      // Exit 0 — success
+      // Exit 0 — check for application-level error before treating as success.
+      // cal_query.swift exits 0 even when the calendar is not found and prints
+      // "ERROR: Calendar '<name>' not found\nAvailable calendars: ..." to stdout.
+      const stdoutTrim = stdout.trim();
+      if (stdoutTrim.startsWith("ERROR:")) {
+        return { status: "error", reason: stdoutTrim, events: [] };
+      }
+
       if (req.format === "summary") {
-        return { status: "success", reason: stdout.trim(), events: [] };
+        return { status: "success", reason: stdoutTrim, events: [] };
       }
 
       // Parse full format
