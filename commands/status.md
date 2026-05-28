@@ -40,6 +40,33 @@ Cross-reference the results against the TASKS.md Delegated records.
 If the same alias + task title appears in both, suppress the memory-only entry.
 TASKS.md is the authoritative source for that entry.
 
+**Diff surfacing (issue #42)**
+After dedup, detect disagreements between memory and TASKS.md and surface them
+in a dedicated `─── ⚠️ Memory ↔ TASKS.md drift ───` block in the default view
+(rendered after Risks, before Project sections). A disagreement is any of:
+
+1. **Memory says Pending, TASKS.md says Done.** → `{alias} / "{title}":
+   TASKS.md Done {date}; memory still Pending. Run /forget task "{title}"
+   to clean up memory.`
+2. **Memory says Resolved, TASKS.md says Delegated.** → `{alias} /
+   "{title}": memory resolved {date}; still in TASKS.md ## Delegated.
+   Confirm whether the delegate actually finished.`
+3. **Check-by dates disagree.** → `{alias} / "{title}": TASKS.md Check-by
+   {date_a}, memory Check-by {date_b}. TASKS.md wins for /status purposes.`
+4. **Orphan memory row.** Memory references alias+title not present in
+   TASKS.md. → `Orphan: {alias} / "{title}" — memory row with no TASKS.md
+   record. Likely a /forget partial failure. Run /forget task "{title}".`
+5. **Orphan people file.** `memory/people/{alias}.md` exists with no
+   matching glossary row. → `Orphan file: memory/people/{alias-filename}.md.
+   Run /forget {alias} or remove the file manually.`
+6. **Owner mismatch.** Same title in both, different `Owner:`. →
+   `{title}: TASKS.md → {new_owner}, memory → {old_owner}. TASKS.md wins;
+   memory has a stale alias row.`
+
+If no disagreements exist, omit the block entirely — do not render an empty
+placeholder. This is the diff surface for the user; without it, memory drift
+is invisible and accumulates.
+
 ---
 
 ## Step 3: Triage untagged tasks

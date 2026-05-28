@@ -10,7 +10,18 @@ version: 2.0.0
 
 # Memory Manager
 
-Single interface for all delegation memory operations in the claude-eisenhower plugin.
+Single writer for delegation memory CREATE and UPDATE operations in the
+claude-eisenhower plugin. DELETE operations are owned by `/forget`
+(commands/forget.md) and write directly to `memory/glossary.md` and
+`memory/people/*.md` — see issue #42 for the rationale (the destructive
+correction loop has different atomicity, confirmation, and PII concerns from
+the routine operations below).
+
+This partition is intentional. The schema is shared (see
+`docs/specs/memory-schema-spec.md`), so changes to the row format must update
+both this skill AND `commands/forget.md`'s delete logic in the same commit.
+Adding a new operation here? If it's CREATE/UPDATE, extend this skill. If it's
+DELETE, extend `/forget` instead.
 
 The backend is local markdown files only — there is no external skill fallback or
 primary store. See `docs/adrs/single-backend-memory.md` for the architectural decision
