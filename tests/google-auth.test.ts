@@ -348,6 +348,54 @@ describe("runInitialAuthFlow", () => {
       const stored = JSON.parse(fs.readFileSync(tokenPath, "utf-8"));
       expect(stored.refresh_token).toBe("new-refresh-token");
       expect(stored.scopes).toEqual(["https://www.googleapis.com/auth/calendar.readonly"]);
+      expect(typeof stored.created_at).toBe("string");
+      expect(() => new Date(stored.created_at)).not.toThrow();
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+
+  test("GAUTH-008: runInitialAuthFlow invalidates the in-process cache", async () => {
+    const dir = makeTmpDir();
+    try {
+      const credPath = writeInstalledCredentials(dir);
+      const tokenPath = path.join(dir, "token.json");
+
+      // Step 1: Seed disk + in-process cache with old refresh token
+      const farFuture = new Date(Date.now() + 7200 * 1000).toISOString();
+      writeTokenFile(tokenPath, {
+        scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+        expires_at: farFuture,
+      });
+
+      const cfg: GoogleAuthConfig = {
+        scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+        credentials_path: credPath,
+        token_path: tokenPath,
+      };
+
+      // Step 2: Warm the in-process cache with old token
+      const oldResult = await getAccessToken(cfg);
+      expect(oldResult.token).toBe("mock-cached-token");
+
+      // Step 3: Run initial auth flow with a new authorization code that
+      // resolves to a new refresh + access token
+      const newExpiryDate = Date.now() + 3600 * 1000;
+      mockGetToken.mockResolvedValue({
+        tokens: {
+          refresh_token: "new-refresh-token",
+          access_token: "new-access-token",
+          expiry_date: newExpiryDate,
+        },
+      });
+
+      await runInitialAuthFlow(cfg, async (_url: string) => "mock-auth-code-new");
+
+      // Step 4: Next getAccessToken should return the NEW access token
+      // (cache was invalidated by runInitialAuthFlow; disk has fresh token)
+      const newResult = await getAccessToken(cfg);
+      expect(newResult.token).toBe("new-access-token");
+      expect(newResult.token).not.toBe("mock-cached-token");
     } finally {
       fs.rmSync(dir, { recursive: true });
     }

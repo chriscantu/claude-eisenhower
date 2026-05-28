@@ -10,6 +10,7 @@
 
 import * as fs from "fs";
 import * as http from "http";
+import { randomBytes } from "node:crypto";
 import { google } from "googleapis";
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ interface PersistedToken {
 let _cache: AccessToken | null = null;
 
 /** Reset the in-process cache. Exported for testing only — do not call in production. */
+/* istanbul ignore next */
 export function _resetCacheForTesting(): void {
   _cache = null;
 }
@@ -114,15 +116,16 @@ function persistToken(
   tokenPath: string,
   refreshToken: string,
   scopes: string[],
-  cachedToken: string,
-  expiresAt: string
+  cachedToken?: string,
+  expiresAt?: string
 ): void {
-  const data: PersistedToken & { cached_token: string; expires_at: string } = {
+  const data: PersistedToken = {
     refresh_token: refreshToken,
     scopes,
     created_at: new Date().toISOString(),
-    cached_token: cachedToken,
-    expires_at: expiresAt,
+    ...(cachedToken !== undefined && expiresAt !== undefined
+      ? { cached_token: cachedToken, expires_at: expiresAt }
+      : {}),
   };
   fs.writeFileSync(tokenPath, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
@@ -192,6 +195,10 @@ export async function getAccessToken(cfg: GoogleAuthConfig): Promise<AccessToken
  *   returns the authorization code. Defaults to a loopback HTTP server that
  *   captures the redirect. Pass a custom function in tests to avoid starting
  *   a real server.
+ *
+ *   NOTE: When `codeProvider` is injected (test / CLI path), the CSRF `state`
+ *   parameter validation is bypassed because the caller supplies the code
+ *   directly — there is no OAuth redirect to intercept.
  */
 export async function runInitialAuthFlow(
   cfg: GoogleAuthConfig,
@@ -199,17 +206,20 @@ export async function runInitialAuthFlow(
 ): Promise<void> {
   const creds = loadCredentials(cfg.credentials_path);
 
+  // Generate a CSRF state nonce for the loopback flow
+  const state = randomBytes(16).toString("hex");
+
   // Determine redirect URI — loopback unless codeProvider is injected (test mode)
   let redirectUri: string;
   let resolvedCodeProvider: (authUrl: string) => Promise<string>;
 
   if (codeProvider) {
-    // Test / CLI injection: use a placeholder redirect URI
+    // Test / CLI injection: use a placeholder redirect URI; state validation bypassed
     redirectUri = "http://127.0.0.1/oauth2callback";
     resolvedCodeProvider = codeProvider;
   } else {
     // Production: bind an ephemeral loopback server to get the OS-assigned port
-    const { port, provider } = await buildLoopbackProvider();
+    const { port, provider } = await buildLoopbackProvider(state);
     redirectUri = `http://127.0.0.1:${port}/oauth2callback`;
     resolvedCodeProvider = provider;
   }
@@ -221,6 +231,7 @@ export async function runInitialAuthFlow(
     prompt: "consent",
     scope: cfg.scopes,
     redirect_uri: redirectUri,
+    state,
   });
 
   process.stdout.write(`Open this URL in your browser to authorize:\n${authUrl}\n`);
@@ -236,13 +247,20 @@ export async function runInitialAuthFlow(
     );
   }
 
-  const accessToken = tokens.access_token ?? "";
+  // If the token exchange did not return an access_token, persist only the
+  // refresh_token and skip caching. The next getAccessToken call will refresh.
+  if (!tokens.access_token) {
+    persistToken(cfg.token_path, refreshToken, cfg.scopes);
+    _cache = null;
+    return;
+  }
+
   const expiryDate = tokens.expiry_date;
   const expiresAt = expiryDate
     ? new Date(expiryDate).toISOString()
     : new Date(Date.now() + 3600 * 1000).toISOString();
 
-  persistToken(cfg.token_path, refreshToken, cfg.scopes, accessToken, expiresAt);
+  persistToken(cfg.token_path, refreshToken, cfg.scopes, tokens.access_token, expiresAt);
 
   // Invalidate in-process cache so next getAccessToken reads fresh token
   _cache = null;
@@ -255,7 +273,7 @@ interface LoopbackResult {
   provider: (authUrl: string) => Promise<string>;
 }
 
-async function buildLoopbackProvider(): Promise<LoopbackResult> {
+async function buildLoopbackProvider(expectedState: string): Promise<LoopbackResult> {
   return new Promise((resolve, reject) => {
     let codeResolve: (code: string) => void;
     let codeReject: (err: Error) => void;
@@ -268,6 +286,19 @@ async function buildLoopbackProvider(): Promise<LoopbackResult> {
     const server = http.createServer((req, res) => {
       try {
         const url = new URL(req.url ?? "/", "http://127.0.0.1");
+
+        // Validate CSRF state parameter
+        const returnedState = url.searchParams.get("state");
+        if (!returnedState || returnedState !== expectedState) {
+          res.writeHead(400, { "Content-Type": "text/plain" });
+          res.end("OAuth callback rejected: state parameter mismatch (possible CSRF).");
+          server.close();
+          codeReject(
+            new Error("OAuth callback rejected: state parameter mismatch (possible CSRF).")
+          );
+          return;
+        }
+
         const code = url.searchParams.get("code");
         if (code) {
           res.writeHead(200, { "Content-Type": "text/plain" });
@@ -279,6 +310,13 @@ async function buildLoopbackProvider(): Promise<LoopbackResult> {
           res.end("Missing code parameter.");
         }
       } catch (err) {
+        try {
+          res.writeHead(500);
+          res.end("Internal error.");
+        } catch {
+          /* ignore */
+        }
+        server.close();
         codeReject(err instanceof Error ? err : new Error(String(err)));
       }
     });
