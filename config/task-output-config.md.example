@@ -31,6 +31,23 @@ reminders
 
 ---
 
+## Done Archive
+
+Controls auto-archiving of old Done records out of TASKS.md into
+`TASKS-archive.md` (gitignored, lives next to TASKS.md). Issue #25.
+
+done_archive_days: 30
+
+Done records whose `Done:` date is strictly older than this many days
+move to `TASKS-archive.md` on the next archive run. Records without a
+parseable `Done:` date are kept in TASKS.md regardless of age (silent
+drops would be worse than visible clutter).
+
+Archival is opt-in per call site — issue #25 ships the `archiveOldDone()`
+seam in `scripts/tasks-store.ts`; command migrations land in a follow-up.
+
+---
+
 ## Session Briefing
 
 Controls the SessionStart hook output (issue #22).

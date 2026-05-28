@@ -8,6 +8,7 @@ config/task-output-config.md
 
 # Local task board and memory � personal data, not shared
 TASKS.md
+TASKS-archive.md
 memory/
 
 # Stakeholder graph � contains PII (real names, roles, contact info)

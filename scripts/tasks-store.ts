@@ -67,6 +67,25 @@ export interface LockHandle {
   acquiredAt: number;
 }
 
+/**
+ * Archive file lives next to TASKS.md. Hard-coded suffix — issue #25
+ * gitignores `TASKS-archive.md` specifically.
+ */
+const ARCHIVE_SUFFIX = "-archive.md";
+
+/**
+ * Compute the archive path for a given TASKS.md path.
+ *
+ *   /foo/bar/TASKS.md → /foo/bar/TASKS-archive.md
+ *
+ * Exported so callers (and tests) do not duplicate the naming rule.
+ */
+export function archivePathFor(file: string): string {
+  const dir = path.dirname(file);
+  const base = path.basename(file, ".md");
+  return path.join(dir, `${base}${ARCHIVE_SUFFIX}`);
+}
+
 // ─── public API ──────────────────────────────────────────────────────────
 
 /**
@@ -137,6 +156,160 @@ export function writeTasks(
     throw err;
   } finally {
     releaseLock(lock);
+  }
+}
+
+/**
+ * Move Done records older than `thresholdDays` from `file` into the sibling
+ * archive file (`TASKS-archive.md` by default). Returns the number of records
+ * moved. Zero-eligible is a no-op — no archive file is created.
+ *
+ * Eligibility rule:
+ *   - Record must be in the Done section.
+ *   - Record must have a `Done:` field that parses as `YYYY-MM-DD`.
+ *   - `(now - Done) / 86400000 > thresholdDays` (strictly greater than).
+ *
+ * Records without a parseable Done date are kept in the main file — silent
+ * drops would be worse than a small operational annoyance.
+ *
+ * Atomicity contract (issue #25):
+ *   1. Render BOTH new files in memory first. Any render error aborts before
+ *      either file is touched.
+ *   2. Write archive tmpfile + fsync, then main tmpfile + fsync. Either tmp
+ *      failure cleans both tmpfiles and throws — originals untouched.
+ *   3. Rename archive tmpfile → archive (atomic). If this fails, the main
+ *      tmpfile is cleaned up and the original main is untouched.
+ *   4. Rename main tmpfile → main (atomic). If THIS fails after the archive
+ *      rename succeeded, the archive now contains the moved records and the
+ *      main file is unchanged — same records will appear in both on next
+ *      read. Surface the error; caller decides whether to retry. (Better
+ *      than losing records.)
+ *
+ * Lock contract:
+ *   - Holds the main TASKS.md lock for the duration. Archive file has no
+ *     separate lock — the main lock covers both writes.
+ */
+export function archiveOldDone(
+  file: string,
+  thresholdDays: number,
+  opts: AcquireOptions = {}
+): number {
+  if (!Number.isFinite(thresholdDays) || thresholdDays < 0) {
+    throw new RangeError(
+      `tasks-store: archiveOldDone thresholdDays must be a non-negative finite number, got ${thresholdDays}`
+    );
+  }
+
+  const archivePath = archivePathFor(file);
+  const lock = acquireLock(file, opts);
+  try {
+    const main = readTasks(file);
+    const archive = readTasks(archivePath);
+
+    const cutoffMs = Date.now() - thresholdDays * 86_400_000;
+    const keep: TaskRecord[] = [];
+    const move: TaskRecord[] = [];
+
+    for (const rec of main.Done) {
+      const doneStr = rec.fields.Done;
+      if (!doneStr || !/^\d{4}-\d{2}-\d{2}$/.test(doneStr)) {
+        keep.push(rec);
+        continue;
+      }
+      const ts = Date.parse(doneStr + "T00:00:00Z");
+      if (Number.isNaN(ts)) {
+        keep.push(rec);
+        continue;
+      }
+      if (ts < cutoffMs) {
+        move.push(rec);
+      } else {
+        keep.push(rec);
+      }
+    }
+
+    if (move.length === 0) return 0;
+
+    const newMain: ParsedTasks = { ...main, Done: keep };
+    const newArchive: ParsedTasks = {
+      Inbox: archive.Inbox,
+      Active: archive.Active,
+      Delegated: archive.Delegated,
+      Done: [...archive.Done, ...move],
+    };
+
+    // Pre-flight: render BOTH first so a render error aborts before any
+    // disk write.
+    const renderedMain = renderTasks(newMain);
+    const renderedArchive = renderTasks(newArchive);
+
+    // Ensure parent dir exists for archive.
+    const archDir = path.dirname(archivePath);
+    if (!fs.existsSync(archDir)) {
+      fs.mkdirSync(archDir, { recursive: true });
+    }
+
+    const mainTmp = `${file}.tmp.${process.pid}`;
+    const archiveTmp = `${archivePath}.tmp.${process.pid}`;
+
+    const cleanupTmp = () => {
+      for (const p of [mainTmp, archiveTmp]) {
+        try {
+          if (fs.existsSync(p)) fs.unlinkSync(p);
+        } catch {
+          /* swallow */
+        }
+      }
+    };
+
+    try {
+      writeAtomicNoRename(archiveTmp, renderedArchive);
+      writeAtomicNoRename(mainTmp, renderedMain);
+    } catch (err) {
+      cleanupTmp();
+      throw err;
+    }
+
+    // Rename archive first — if the main rename fails after this, records
+    // are duplicated (in both files) rather than lost.
+    try {
+      fs.renameSync(archiveTmp, archivePath);
+    } catch (err) {
+      cleanupTmp();
+      throw err;
+    }
+    try {
+      fs.renameSync(mainTmp, file);
+    } catch (err) {
+      // Archive write already landed; main rename failed. Clean main tmp
+      // and surface — caller will see duplicate records on retry and can
+      // decide how to recover.
+      try {
+        if (fs.existsSync(mainTmp)) fs.unlinkSync(mainTmp);
+      } catch {
+        /* swallow */
+      }
+      throw err;
+    }
+
+    return move.length;
+  } finally {
+    releaseLock(lock);
+  }
+}
+
+/**
+ * Write `body` to `tmpPath` with fsync. Caller is responsible for the
+ * rename step. Used by `archiveOldDone` so two tmpfiles can be staged
+ * before either rename lands.
+ */
+function writeAtomicNoRename(tmpPath: string, body: string): void {
+  const fd = fs.openSync(tmpPath, "w");
+  try {
+    fs.writeSync(fd, body);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
   }
 }
 
