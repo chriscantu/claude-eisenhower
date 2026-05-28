@@ -25,6 +25,12 @@ dist/
 
 # Plugin artifact � produced by npm run package, not committed
 *.plugin
+
+# Build/runtime byproducts — LLVM coverage profraw, embedded sqlite, log spam (#46)
+*.profraw
+*.db
+*.log
+
 # Git worktrees - isolated development workspaces
 .worktrees/
 
