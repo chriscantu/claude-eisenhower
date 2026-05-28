@@ -70,11 +70,15 @@ function stripAppleScriptContinuations(text: string): string {
 //   AppleScript      →  `"node " & <concatenation> <dispatcher>.ts`
 //
 // Negative lookbehinds let `npx ts-node` and `ts-node` through.
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function bareNodeRegexes(script: string): {
   bash: RegExp;
   applescript: RegExp;
 } {
-  const esc = script.replace(/\./g, "\\.");
+  const esc = escapeRegExp(script);
   return {
     // Match bare `node` followed by any non-whitespace path token ending in
     // <dispatcher>.ts. The path token may contain shell vars, quotes, slashes.
