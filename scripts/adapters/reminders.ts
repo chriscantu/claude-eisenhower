@@ -163,9 +163,13 @@ export function createRemindersAdapter(
 
     async completeTask(
       title: string,
-      list_name: string
+      list_name: string,
+      externalId?: string
     ): Promise<CompleteResult> {
-      const out = runOsascript(completeScript, [title, list_name], timeoutMs);
+      // Always pass a 3rd argv slot so the AppleScript can disambiguate
+      // "no id supplied" from a stray future arg. Empty string = title-only.
+      const args = [title, list_name, externalId ?? ""];
+      const out = runOsascript(completeScript, args, timeoutMs);
       if (out.timedOut) {
         return {
           status: "error",

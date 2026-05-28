@@ -31,12 +31,18 @@ import type {
   TaskOutputRecord,
 } from "../scripts/adapter-types";
 
+interface CompleteCall {
+  title: string;
+  list_name: string;
+  externalId?: string;
+}
+
 function fakeAdapter(name: string): TaskOutputAdapter & {
   pushCalls: TaskOutputRecord[];
-  completeCalls: { title: string; list_name: string }[];
+  completeCalls: CompleteCall[];
 } {
   const pushCalls: TaskOutputRecord[] = [];
-  const completeCalls: { title: string; list_name: string }[] = [];
+  const completeCalls: CompleteCall[] = [];
   return {
     name,
     pushCalls,
@@ -45,8 +51,12 @@ function fakeAdapter(name: string): TaskOutputAdapter & {
       pushCalls.push(record);
       return { status: "success", reason: "Created", id: `${name}:${record.title}` };
     },
-    async completeTask(title: string, list_name: string): Promise<CompleteResult> {
-      completeCalls.push({ title, list_name });
+    async completeTask(
+      title: string,
+      list_name: string,
+      externalId?: string
+    ): Promise<CompleteResult> {
+      completeCalls.push({ title, list_name, externalId });
       return { status: "success", reason: "Completed" };
     },
   };
@@ -88,7 +98,21 @@ describe("dispatcher — dispatch by name", () => {
     const result = await completeTask("Some task", "Eisenhower List", "alpha");
 
     expect(result.status).toBe("success");
-    expect(a.completeCalls).toEqual([{ title: "Some task", list_name: "Eisenhower List" }]);
+    expect(a.completeCalls).toEqual([
+      { title: "Some task", list_name: "Eisenhower List", externalId: undefined },
+    ]);
+  });
+
+  test("DISP-002b: completeTask forwards externalId to adapter (issue #36)", async () => {
+    const a = fakeAdapter("alpha");
+    registerAdapter(a);
+
+    const id = "x-coredata://AB/p123";
+    await completeTask("Some task", "Eisenhower List", "alpha", id);
+
+    expect(a.completeCalls).toEqual([
+      { title: "Some task", list_name: "Eisenhower List", externalId: id },
+    ]);
   });
 
   test("DISP-003: multiple adapters can be registered and chosen by name", async () => {

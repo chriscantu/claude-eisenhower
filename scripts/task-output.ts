@@ -73,9 +73,10 @@ export async function pushTask(
 export async function completeTask(
   title: string,
   list_name: string,
-  adapterName: string
+  adapterName: string,
+  externalId?: string
 ): Promise<CompleteResult> {
-  return lookupOrThrow(adapterName).completeTask(title, list_name);
+  return lookupOrThrow(adapterName).completeTask(title, list_name, externalId);
 }
 
 /**
@@ -154,7 +155,12 @@ function resolveMarkdownFilePath(configFile?: string): string {
 //
 // Usage (called from command prompts via node):
 //   node task-output.ts push <pluginRoot> <configFile> <recordJsonPath> [adapterOverride]
-//   node task-output.ts complete <pluginRoot> <configFile> <title> <list_name> [adapterOverride]
+//   node task-output.ts complete <pluginRoot> <configFile> <title> <list_name> [externalId] [adapterOverride]
+//
+// `externalId` is the value previously returned in PushResult.id (issue #36).
+// Pass "" when the task record has no Reminder-id field — the adapter falls
+// back to title-based lookup. Adapters that don't support id-based lookup
+// (e.g. markdown-file) ignore the value.
 //
 // recordJsonPath is a path to a JSON file containing a TaskOutputRecord —
 // passing it on argv would explode on quoting for descriptions. Result is
@@ -175,7 +181,7 @@ async function runCli(argv: string[]): Promise<CliOutput> {
     return { ok: false, error: "Missing required args: pluginRoot configFile." };
   }
   bootstrapBuiltInAdapters(pluginRoot, configFile);
-  const explicit = mode === "push" ? rest[1] : rest[2];
+  const explicit = mode === "push" ? rest[1] : rest[3];
   const adapterName = explicit ?? readActiveAdapter(configFile);
   if (!adapterName) {
     return { ok: false, error: "No active adapter configured and no override provided." };
@@ -191,10 +197,16 @@ async function runCli(argv: string[]): Promise<CliOutput> {
     }
     const title = rest[0];
     const list_name = rest[1];
+    const externalId = rest[2] ?? "";
     if (!title || !list_name) {
       return { ok: false, error: "complete: missing title or list_name." };
     }
-    const result = await completeTask(title, list_name, adapterName);
+    const result = await completeTask(
+      title,
+      list_name,
+      adapterName,
+      externalId === "" ? undefined : externalId
+    );
     return { ok: true, mode: "complete", result };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };

@@ -209,10 +209,12 @@ Task output: [N] pushed to Reminders (Eisenhower List)
   • "Fix deploy pipeline issue" — list not found. Check config/task-output-config.md.
 ```
 
-**Update each task record in TASKS.md** with a `Synced:` field:
-- Success: `Synced: Reminders (Eisenhower List) — [today's date]`
-- Skipped: `Synced: skipped (already exists)`
-- Failed:  `Synced: failed — [reason]`
+**Update each task record in TASKS.md** with a `Synced:` field and, when the adapter returns a non-empty `id`, a `Reminder-id:` field:
+- Success: `Synced: Reminders (Eisenhower List) — [today's date]` and `Reminder-id: [result.id]`
+- Skipped: `Synced: skipped (already exists)` and `Reminder-id: [result.id]` when the dedup path returned the existing reminder's id
+- Failed:  `Synced: failed — [reason]` (no `Reminder-id`)
+
+`Reminder-id` is the adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter, file:title for markdown-file). `commands/execute.md` passes it back to the dispatcher at completion so re-delegation or user-driven title changes cannot orphan the external record (issue #36).
 
 ## Step 7: Log Q3 stakeholders
 

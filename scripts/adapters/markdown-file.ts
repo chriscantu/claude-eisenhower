@@ -111,7 +111,8 @@ export function createMarkdownFileAdapter(
 
     async completeTask(
       title: string,
-      _list_name: string
+      _list_name: string,
+      _externalId?: string
     ): Promise<CompleteResult> {
       if (!fs.existsSync(file)) {
         return { status: "skipped", reason: "File not found" };

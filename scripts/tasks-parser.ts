@@ -148,6 +148,7 @@ const FIELD_ORDER: readonly string[] = [
   "Note",
   "Done",
   "Synced",
+  "Reminder-id",
   "Project",
 ] as const;
 
