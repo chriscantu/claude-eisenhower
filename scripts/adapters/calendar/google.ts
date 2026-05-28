@@ -64,7 +64,10 @@ export interface CalendarV3Like {
   };
   events: {
     list: (params: object) => Promise<{
-      data: { items?: Array<GoogleEventLike> };
+      data: {
+        items?: Array<GoogleEventLike>;
+        nextPageToken?: string | null;
+      };
     }>;
   };
 }
@@ -142,9 +145,26 @@ function mapEvent(ev: GoogleEventLike): CalendarEvent | null {
   return { title, start: startRaw, end: endRaw, all_day };
 }
 
-/** YYYY-MM-DD slice from any ISO-ish string. */
+/**
+ * YYYY-MM-DD in the host's local timezone for any ISO-ish string. Matches
+ * `cal_query.swift`'s `dayFmt.string(from: event.startDate)` which uses
+ * the device's local day. Issue #79 — without local conversion, a UTC
+ * event that crosses local midnight buckets into a different day than
+ * the EventKit adapter produces for the same calendar.
+ *
+ * Date-only inputs (`YYYY-MM-DD`, used for all-day events) are returned
+ * as-is — Google returns these in the calendar's local day already, and
+ * parsing them through `new Date(...)` would re-interpret them as UTC
+ * midnight and roll the day back in westerly timezones.
+ */
 function dayKey(iso: string): string {
-  return iso.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso.slice(0, 10);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function isWeekend(yyyyMmDd: string): boolean {
@@ -317,15 +337,26 @@ export function createGoogleCalendarAdapter(
         const end = new Date(now.getTime() + req.days_ahead * 86_400_000);
         const timeMax = end.toISOString();
 
-        const eventsResp = await calendar.events.list({
-          calendarId: match.id,
-          timeMin,
-          timeMax,
-          singleEvents: true,
-          orderBy: "startTime",
-          maxResults: 2500,
-        });
-        const googleEvents = eventsResp.data.items ?? [];
+        // Paginate via nextPageToken. The single-page 2500 cap silently
+        // truncates busy/shared calendars over multi-month windows — EventKit
+        // has no such cap, so a parity gap surfaces in summary mode. Issue #79.
+        const googleEvents: GoogleEventLike[] = [];
+        let pageToken: string | undefined;
+        do {
+          const eventsResp = await calendar.events.list({
+            calendarId: match.id,
+            timeMin,
+            timeMax,
+            singleEvents: true,
+            orderBy: "startTime",
+            maxResults: 2500,
+            ...(pageToken ? { pageToken } : {}),
+          });
+          for (const ev of eventsResp.data.items ?? []) {
+            googleEvents.push(ev);
+          }
+          pageToken = eventsResp.data.nextPageToken ?? undefined;
+        } while (pageToken);
 
         const mapped: CalendarEvent[] = [];
         for (const ev of googleEvents) {
