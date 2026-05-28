@@ -27,6 +27,8 @@ import {
   isLockStale,
   LOCK_SUFFIX,
   LockTimeoutError,
+  archiveOldDone,
+  archivePathFor,
 } from "../scripts/tasks-store";
 
 function tmpdir(prefix = "ce-store-"): string {
@@ -112,7 +114,10 @@ describe("readTasks / writeTasks (STORE-RW)", () => {
     expect(r).toEqual({ Inbox: [], Active: [], Delegated: [], Done: [] });
   });
 
-  test("STORE-RW-002: write then read returns the same parsed structure", () => {
+  test("STORE-RW-002: write then read preserves Active/Delegated/Inbox round-trip", () => {
+    // Issue #25: Done records intentionally collapse to one-line compact form,
+    // so they DO NOT round-trip full field content. Active/Delegated/Inbox
+    // still round-trip exactly.
     const dir = tmpdir();
     const file = path.join(dir, "TASKS.md");
     const original = sampleTasks();
@@ -120,10 +125,17 @@ describe("readTasks / writeTasks (STORE-RW)", () => {
     writeTasks(file, original);
     const roundTripped = readTasks(file);
 
-    expect(roundTripped).toEqual(original);
+    expect(roundTripped.Active).toEqual(original.Active);
+    expect(roundTripped.Delegated).toEqual(original.Delegated);
+    expect(roundTripped.Inbox).toEqual(original.Inbox);
+    // Done preserves the compact subset only.
+    expect(roundTripped.Done).toHaveLength(1);
+    expect(roundTripped.Done[0].fields.Title).toBe("Old work");
+    expect(roundTripped.Done[0].fields.State).toBe("Done");
+    expect(roundTripped.Done[0].fields.Done).toBe("2026-05-20");
   });
 
-  test("STORE-RW-003: write produces canonical section headers in order", () => {
+  test("STORE-RW-003: write produces canonical section headers in #25 order (Active→Delegated→Inbox→Done)", () => {
     const dir = tmpdir();
     const file = path.join(dir, "TASKS.md");
     writeTasks(file, sampleTasks());
@@ -134,10 +146,10 @@ describe("readTasks / writeTasks (STORE-RW)", () => {
     const delegatedIdx = raw.indexOf("## Delegated");
     const doneIdx = raw.indexOf("## Done");
 
-    expect(inboxIdx).toBeGreaterThanOrEqual(0);
-    expect(activeIdx).toBeGreaterThan(inboxIdx);
+    expect(activeIdx).toBeGreaterThanOrEqual(0);
     expect(delegatedIdx).toBeGreaterThan(activeIdx);
-    expect(doneIdx).toBeGreaterThan(delegatedIdx);
+    expect(inboxIdx).toBeGreaterThan(delegatedIdx);
+    expect(doneIdx).toBeGreaterThan(inboxIdx);
   });
 
   test("STORE-RW-004: parse → render → parse is stable (idempotent)", () => {
@@ -288,6 +300,168 @@ describe("lockfile (STORE-LCK)", () => {
     } finally {
       releaseLock(lock);
     }
+  });
+});
+
+// ─── archive split (STORE-ARC) ───────────────────────────────────────────
+
+describe("archiveOldDone (STORE-ARC)", () => {
+  function doneRecord(title: string, doneDate: string) {
+    return {
+      fields: { Title: title, State: "Done", Done: doneDate },
+      section: "Done" as const,
+    };
+  }
+
+  function isoDaysAgo(n: number): string {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  test("STORE-ARC-001: archivePathFor sits next to TASKS.md as TASKS-archive.md", () => {
+    const p = archivePathFor("/foo/bar/TASKS.md");
+    expect(p).toBe("/foo/bar/TASKS-archive.md");
+  });
+
+  test("STORE-ARC-002: Done <threshold stays, Done >threshold moves to archive", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    const archive = archivePathFor(file);
+
+    const fresh = doneRecord("Fresh task", isoDaysAgo(5));
+    const old = doneRecord("Old task", isoDaysAgo(60));
+
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [fresh, old],
+    });
+
+    const moved = archiveOldDone(file, 30);
+    expect(moved).toBe(1);
+
+    const main = readTasks(file);
+    expect(main.Done).toHaveLength(1);
+    expect(main.Done[0].fields.Title).toBe("Fresh task");
+
+    expect(fs.existsSync(archive)).toBe(true);
+    const arch = readTasks(archive);
+    expect(arch.Done).toHaveLength(1);
+    expect(arch.Done[0].fields.Title).toBe("Old task");
+  });
+
+  test("STORE-ARC-003: archive append — second run merges into existing archive", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    const archive = archivePathFor(file);
+
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [doneRecord("Old 1", isoDaysAgo(45))],
+    });
+    expect(archiveOldDone(file, 30)).toBe(1);
+
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [doneRecord("Old 2", isoDaysAgo(40))],
+    });
+    expect(archiveOldDone(file, 30)).toBe(1);
+
+    const arch = readTasks(archive);
+    expect(arch.Done).toHaveLength(2);
+    const titles = arch.Done.map((r) => r.fields.Title);
+    expect(titles).toContain("Old 1");
+    expect(titles).toContain("Old 2");
+  });
+
+  test("STORE-ARC-004: no eligible records is a no-op (returns 0, no archive created)", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    const archive = archivePathFor(file);
+
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [doneRecord("Fresh", isoDaysAgo(2))],
+    });
+    expect(archiveOldDone(file, 30)).toBe(0);
+    expect(fs.existsSync(archive)).toBe(false);
+  });
+
+  test("STORE-ARC-005: Active / Delegated / Inbox are untouched even if Done date present", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    writeTasks(file, {
+      Inbox: [
+        {
+          fields: { Title: "Inbox item", State: "Inbox", Done: isoDaysAgo(90) },
+          section: "Inbox",
+        },
+      ],
+      Active: [],
+      Delegated: [],
+      Done: [],
+    });
+    expect(archiveOldDone(file, 30)).toBe(0);
+    const main = readTasks(file);
+    expect(main.Inbox).toHaveLength(1);
+  });
+
+  test("STORE-ARC-006: records without a parseable Done date are skipped (kept in main)", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [
+        { fields: { Title: "No date", State: "Done" }, section: "Done" },
+        { fields: { Title: "Bad date", State: "Done", Done: "not a date" }, section: "Done" },
+      ],
+    });
+    expect(archiveOldDone(file, 30)).toBe(0);
+    expect(readTasks(file).Done).toHaveLength(2);
+  });
+
+  test("STORE-ARC-007: zero threshold archives every Done with a parseable date", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [
+        doneRecord("Today", isoDaysAgo(0)),
+        doneRecord("Yesterday", isoDaysAgo(1)),
+      ],
+    });
+    // threshold 0 means "older than 0 days" — both today (parsed as
+    // midnight UTC, strictly before now) and yesterday qualify.
+    expect(archiveOldDone(file, 0)).toBe(2);
+    expect(readTasks(file).Done).toHaveLength(0);
+  });
+
+  test("STORE-ARC-008: archive write is atomic across both files (no stray .tmp)", () => {
+    const dir = tmpdir();
+    const file = path.join(dir, "TASKS.md");
+    writeTasks(file, {
+      Inbox: [],
+      Active: [],
+      Delegated: [],
+      Done: [doneRecord("Old", isoDaysAgo(60))],
+    });
+    archiveOldDone(file, 30);
+    const stray = fs.readdirSync(dir).filter((f) => f.endsWith(".tmp"));
+    expect(stray).toEqual([]);
+    const locks = fs.readdirSync(dir).filter((f) => f.endsWith(".lock"));
+    expect(locks).toEqual([]);
   });
 });
 
