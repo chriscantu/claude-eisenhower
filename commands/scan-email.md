@@ -177,7 +177,12 @@ Show all matched tasks before writing anything:
 Render quadrants in the user-facing table as `Q1 · Do`, `Q2 · Schedule`,
 `Q3 · Delegate`, `Q4 · Cut` — verb label makes the action obvious at a glance.
 
-If no actionable emails were found: "No new actionable emails found in {account_name}/{inbox_name}. Your task board is up to date."
+If no actionable emails were found, distinguish the two failure shapes so a first-run user does NOT conclude the plugin is broken (issue #41):
+
+- **Inbox was empty** (0 messages reached the categorization step): "No emails found in {account_name}/{inbox_name} over the scan window. Your inbox is empty."
+- **Inbox had messages, none matched** (N messages scanned, 0 categorized as Admin/Compliance, VP Escalation, Survey, or other actionable categories): "Scanned {N} email(s) in {account_name}/{inbox_name}; 0 matched the actionable patterns (Admin/Compliance, VP Escalation, Survey, or other category triggers). Your task board is up to date — this is a normal result on a clean week."
+
+The explicit `{N}` count confirms the scan ran. Without it, a new user with a normal inbox that simply contains no compliance/escalation/survey emails concludes the plugin is broken.
 
 If any emails could not be confidently categorized, list them separately: "These emails didn't match a clear category — review manually if needed:" followed by subject and sender.
 

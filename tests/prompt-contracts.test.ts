@@ -286,6 +286,71 @@ describe("Prompt Contracts: /trends source contract (Q2-004)", () => {
   }
 });
 
+// ── Test group 5: /help first-run contract (Q2-005) — issue #41 ──────────
+//
+// /help is the first-run entry point. It MUST walk a new user through the
+// full intake → prioritize → schedule → execute loop on synthetic data so
+// they form a mental model before live use. A contract pins those four
+// commands so a future rewrite cannot silently drop a lifecycle step from
+// the walkthrough.
+
+describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
+  const helpPath = path.join(repoRoot, "commands", "help.md");
+
+  test("Q2-005: commands/help.md exists", () => {
+    expect(fs.existsSync(helpPath)).toBe(true);
+  });
+
+  const requiredTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "/intake step", pattern: /\/intake\s+"/ },
+    { name: "/prioritize step", pattern: /\/prioritize\b/ },
+    { name: "/schedule step", pattern: /\/schedule\b/ },
+    { name: "/execute step", pattern: /\/execute\s+done/ },
+    { name: "first-run detection branch", pattern: /first-run|First-run/ },
+    { name: "command index section", pattern: /Command\s+index/i },
+    // Lifecycle phase headers — user's mental model. A rename silently
+    // breaks the walkthrough's implicit map.
+    { name: "Capture phase header", pattern: /─── Capture ─/ },
+    { name: "Classify phase header", pattern: /─── Classify ─/ },
+    { name: "Plan phase header", pattern: /─── Plan ─/ },
+    { name: "Act phase header", pattern: /─── Act ─/ },
+    { name: "Reflect phase header", pattern: /─── Reflect ─/ },
+    { name: "Setup phase header", pattern: /─── Setup ─/ },
+  ];
+
+  for (const tok of requiredTokens) {
+    test(`Q2-005: commands/help.md references "${tok.name}"`, () => {
+      const content = readContent(helpPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/help.md is missing the required walkthrough token ` +
+            `"${tok.name}" (pattern ${tok.pattern}). The first-run ` +
+            `walkthrough depends on showing the full lifecycle loop. If ` +
+            `you intentionally removed it, update requiredTokens in ` +
+            `tests/prompt-contracts.test.ts AND docs/empty-states.md.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
+
+  // Synthetic-sequence ORDER check — the walkthrough must show
+  // intake → prioritize → schedule → execute in that order. Presence
+  // alone (above) doesn't catch a reorder. Issue #41 first-run intent
+  // depends on the user seeing the loop in lifecycle sequence.
+  test("Q2-005: walkthrough sequence is intake → prioritize → schedule → execute", () => {
+    const content = readContent(helpPath);
+    const idxIntake = content.search(/\/intake\s+"/);
+    const idxPrioritize = content.indexOf("/prioritize");
+    const idxSchedule = content.indexOf("/schedule");
+    const idxExecute = content.search(/\/execute\s+done/);
+    expect(idxIntake).toBeGreaterThanOrEqual(0);
+    expect(idxPrioritize).toBeGreaterThan(idxIntake);
+    expect(idxSchedule).toBeGreaterThan(idxPrioritize);
+    expect(idxExecute).toBeGreaterThan(idxSchedule);
+  });
+});
+
 // ── Test group 6: /memory + /forget contracts (Q2-006) — issue #42 ───────
 //
 // /memory is the user-facing inspection surface for everything under
@@ -364,4 +429,146 @@ describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
       expect(content).toMatch(tok.pattern);
     });
   }
+});
+
+// ── Test group 7: /help index ↔ commands/ bijection (Q2-007) — issue #41 ─
+//
+// /help is the canonical command discovery surface. The Step 3 index hardcodes
+// a list of /command rows; if a new command ships without an index update, it
+// is silently undiscoverable. Conversely, if the index lists a command that
+// doesn't exist on disk, first-run users hit "command not found." This contract
+// enforces a bidirectional match between commands/*.md and /help's index.
+//
+// Allowlist captures arg-form variants (e.g., "/status awaiting" is the
+// `awaiting` keyword arg on /status, not a separate command file) so the
+// bidirection check doesn't flag legitimate sub-commands.
+
+const HELP_INDEX_ARG_FORM_ALLOWLIST: ReadonlyArray<string> = [
+  "status awaiting",
+];
+
+describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () => {
+  const helpPath = path.join(repoRoot, "commands", "help.md");
+  const helpContent = fs.existsSync(helpPath) ? readContent(helpPath) : "";
+
+  // Discover the Command index block — anchor on the Step 3 heading so casual
+  // prose mentions of "command index" elsewhere don't match. The fenced block
+  // immediately follows the step heading; capture between the opening and
+  // closing ``` markers.
+  const indexBlockMatch = helpContent.match(
+    /^##\s+Step\s+3:\s+Command\s+index[\s\S]*?```([\s\S]*?)```/im
+  );
+  const indexBlock = indexBlockMatch?.[1] ?? "";
+
+  // Extract every /token from index block. Token = leading slash + name +
+  // optional space-separated arg word(s).
+  const indexedSlashes = new Set(
+    Array.from(indexBlock.matchAll(/\s\/([a-z][a-z0-9-]*(?:\s+[a-z][a-z0-9-]*)?)\b/g))
+      .map((m) => m[1])
+  );
+
+  // Discover all commands/*.md basenames except help.md itself.
+  const commandBasenames = fs
+    .readdirSync(path.join(repoRoot, "commands"))
+    .filter((f) => f.endsWith(".md") && f !== "help.md")
+    .map((f) => f.replace(/\.md$/, ""));
+
+  test("Q2-007: every commands/*.md appears in /help index", () => {
+    const missing = commandBasenames.filter((cmd) => !indexedSlashes.has(cmd));
+    if (missing.length > 0) {
+      throw new Error(
+        `commands/help.md Step 3 index is missing these commands: ${missing.join(", ")}. ` +
+          `Add a row under the appropriate lifecycle section. Without it, new users ` +
+          `cannot discover the command from /help.`
+      );
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("Q2-007: every command listed in /help resolves to a commands/*.md file or allowlisted arg form", () => {
+    const dangling = Array.from(indexedSlashes).filter((slash) => {
+      // Direct command file?
+      if (commandBasenames.includes(slash) || slash === "help") return false;
+      // Allowlisted arg-form (e.g., "status awaiting" is /status with arg)
+      if (HELP_INDEX_ARG_FORM_ALLOWLIST.includes(slash)) return false;
+      return true;
+    });
+    if (dangling.length > 0) {
+      throw new Error(
+        `commands/help.md Step 3 index lists commands that don't exist on disk: ${dangling.join(", ")}. ` +
+          `Either add the missing commands/<name>.md file, or remove the rows from /help. ` +
+          `Allowlist arg-form variants in HELP_INDEX_ARG_FORM_ALLOWLIST if intentional.`
+      );
+    }
+    expect(dangling).toEqual([]);
+  });
+
+  test("Q2-007: docs/empty-states.md audit table has a row per commands/*.md", () => {
+    const auditPath = path.join(repoRoot, "docs", "empty-states.md");
+    if (!fs.existsSync(auditPath)) {
+      throw new Error(`docs/empty-states.md is missing — empty-state audit registry not found.`);
+    }
+    const audit = readContent(auditPath);
+    // Match `/<name>` cell in the table. Strip arg forms; only count base commands.
+    const auditedSlashes = new Set(
+      Array.from(audit.matchAll(/\|\s*`\/([a-z][a-z0-9-]*)/g)).map((m) => m[1])
+    );
+    const missing = commandBasenames.filter(
+      (cmd) => !auditedSlashes.has(cmd) && cmd !== "help"
+    );
+    // help.md is allowed to be self-referential (the audit IS its surface).
+    if (missing.length > 0) {
+      throw new Error(
+        `docs/empty-states.md audit table is missing rows for: ${missing.join(", ")}. ` +
+          `Per the "Adding a new command" checklist, each commands/*.md needs a row.`
+      );
+    }
+    expect(missing).toEqual([]);
+  });
+});
+
+// ── Test group 8: /status triage gate threshold (Q2-008) — issue #41 ─────
+//
+// The triage gate threshold (≥5 tagged tasks) is a load-bearing magic
+// number. Without a pin, a future edit silently changes the threshold and
+// users see behavior flip without explanation. This contract enforces that
+// the spec documents the threshold + a rationale, so any tweak is
+// intentional and accompanied by reasoning.
+
+describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
+  const statusPath = path.join(repoRoot, "commands", "status.md");
+
+  test("Q2-008: /status spec pins the ≥5 tagged threshold", () => {
+    const content = readContent(statusPath);
+    // Threshold must appear in Step 3 (triage) context. Match any phrasing
+    // that names "5" alongside "tagged" within a ~120-char window so a
+    // reword that drops one or the other surfaces here.
+    const hasThreshold = /≥\s*5\s+[^\n]{0,80}tagged|5\s+non-Done\s+tasks?\s+WITH\s+a\s+`Project:`\s+tag/i.test(
+      content
+    );
+    if (!hasThreshold) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate does not document the ≥5 ` +
+          `tagged-tasks threshold in the expected form. A magic number ` +
+          `without a documented rationale produces silent behavior flips.`
+      );
+    }
+    expect(hasThreshold).toBe(true);
+  });
+
+  test("Q2-008: /status spec includes triage gate rationale", () => {
+    const content = readContent(statusPath);
+    // Rationale must explain WHY the gate exists — first-run hostility.
+    const hasRationale = /first run.*untagged|hostile empty-state|enough signal to\s+group|enough tagged tasks/i.test(
+      content
+    );
+    if (!hasRationale) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate is missing a rationale for ` +
+          `the threshold. Without a "why" comment, a future tweak to 3 or 10 ` +
+          `looks arbitrary.`
+      );
+    }
+    expect(hasRationale).toBe(true);
+  });
 });
