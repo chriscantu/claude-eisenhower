@@ -24,11 +24,93 @@ directly from that source rather than requiring manual intake.
 
 | Tool | Status | How it works |
 |------|--------|-------------|
-| Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by /scan-email. Configured account/inbox only — see `config/email-config.md`. |
-| Mac Calendar | ✅ Active | Read-only availability checks via osascript. Used during /schedule and /scan-email for Q2→Q1 escalation logic. Configured calendar — see `config/calendar-config.md`. |
-| Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of /schedule. Pushes Q1/Q2/Q3 tasks to configured list. Swappable — see `config/task-output-config.md` and `adapters/`. |
+| Mac Calendar (EventKit) | ✅ Active | Read-only availability checks via the **calendar-query dispatcher** (`scripts/calendar-query.ts`). Dispatcher routes to `adapters/calendar/eventkit.ts` which wraps `cal_query.swift`. Used during `/schedule`, `/scan-email`, `/today`, `/plan-week`, `/review-week`. Configured calendar — see `config/calendar-config.md`. |
+| Apple Mail | ✅ Active | Read-only email scanning via osascript. Triggered by `/scan-email`. Configured account/inbox only — see `config/email-config.md`. The `email-scan.ts` dispatcher and `adapters/email/apple-mail.ts` adapter exist as the foundation for cross-provider routing; full `/scan-email` rewire to the dispatcher path is tracked separately (see Open Foundation Gaps below). |
+| Mac Reminders (`~~task_output`) | ✅ Active (v1) | Write-only task push via osascript. Triggered at end of `/schedule`. Pushes Q1/Q2/Q3 tasks to configured list. Swappable via task-output dispatcher — see `config/task-output-config.md` and `scripts/adapters/task-output/`. |
+| Google Calendar (#64) | 🚧 Stub | Provider stub registered in calendar dispatcher; throws "not implemented" on use. Real adapter lands in [#64](https://github.com/chriscantu/claude-eisenhower/issues/64). Shares OAuth foundation with Gmail / Tasks stubs. |
+| Gmail (#65) | 🚧 Stub | Provider stub registered in email dispatcher; throws "not implemented". Real adapter lands in [#65](https://github.com/chriscantu/claude-eisenhower/issues/65). |
+| Google Tasks (#66) | 🚧 Stub | Provider stub registered in task-output dispatcher; throws "not implemented". Real adapter lands in [#66](https://github.com/chriscantu/claude-eisenhower/issues/66). |
 | TASKS.md | ✅ Active | Local task board in your workspace folder — source of truth |
 | Stakeholder Graph (`stakeholders.yaml`) | ✅ Active (v0.4.0) | Local YAML file — gitignored, PII-safe. Powers `/delegate` matching. See `config/stakeholders.yaml.example` for schema. |
+
+## Source-Adapter Architecture (#67 foundation)
+
+As of #67, three adapter families share the same dispatcher pattern:
+
+| Family | Dispatcher | Adapters (current + planned) | Config |
+|---|---|---|---|
+| calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — stub) | `config/calendar-config.md` `provider:` |
+| email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — stub) | `config/email-config.md` `provider:` |
+| task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — stub) | `config/task-output-config.md` `active_adapter:` |
+
+Commands route through a dispatcher — no command invokes `cal_query.swift` or
+an adapter file directly. Adapters return shared contract shapes
+(`CalendarQueryResult`, `EmailScanResult`, `PushResult`/`CompleteResult`)
+defined in `scripts/adapter-types.ts`.
+
+## Google OAuth setup (one-time, shared across #64 / #65 / #66)
+
+The three Google adapter issues share a single OAuth refresh-token lifecycle
+implemented in `scripts/google-auth.ts`. Setup is identical for all three.
+
+### 1. Create a Google Cloud Console OAuth client
+
+1. Go to https://console.cloud.google.com/apis/credentials.
+2. Create OAuth 2.0 Client ID, application type **Desktop app**.
+3. Download `client_secret.json`. Save it outside the repo (e.g.,
+   `~/.claude-eisenhower/google-client-secret.json`). Mode 0600 recommended.
+4. Enable APIs you intend to use:
+   - Google Calendar API (for #64)
+   - Gmail API (for #65)
+   - Tasks API (for #66)
+
+### 2. Configure the relevant config file
+
+Set `provider: google` and point at the credential + token paths. Examples
+live in `config/calendar-config.md.example`, `config/email-config.md.example`,
+and (when #66 ships) `config/task-output-config.md.example`.
+
+### 3. Run the loopback OAuth flow
+
+The first call into any Google adapter will:
+
+1. Bind a loopback HTTP server on `127.0.0.1` to an OS-assigned ephemeral port.
+2. Print an auth URL to stdout: `Open this URL in your browser to authorize: <url>`.
+3. After you grant consent in the browser, Google redirects to the loopback
+   port with an authorization code + CSRF state parameter.
+4. The adapter validates state, exchanges the code for an access + refresh
+   token, persists `{refresh_token, scopes, created_at}` to the configured
+   `google_token_path` (mode 0600), and proceeds with the original request.
+
+Subsequent calls reuse the cached refresh token. The token file is gitignored.
+
+### 4. Scopes used
+
+| Adapter | Scope |
+|---|---|
+| Google Calendar (#64) | `https://www.googleapis.com/auth/calendar.readonly` |
+| Gmail (#65) | `https://www.googleapis.com/auth/gmail.readonly` |
+| Google Tasks (#66) | `https://www.googleapis.com/auth/tasks` |
+
+If you start with one adapter and later enable another whose scope is not in
+the persisted refresh token, `google-auth.ts` throws with instructions to
+re-run the initial flow with the expanded scope union — it does NOT silently
+re-auth.
+
+### 5. Revoking access
+
+Revoke at https://myaccount.google.com/permissions or delete the
+refresh-token file. The plugin keeps no other auth state.
+
+## Open Foundation Gaps
+
+Scoped follow-ups to #67's foundation, deliberately deferred:
+
+- `/scan-email` command rewire — the email-scan dispatcher + apple-mail
+  adapter exist; the command still drives Mail via inline AppleScript blocks.
+  Tracked as a follow-up to #67.
+- CLAUDE.md "Reliability" code-review checklist still mentions
+  `scripts/cal_query.swift` directly; the dispatcher now owns that surface.
 
 ## How to Enable Future Integrations
 
