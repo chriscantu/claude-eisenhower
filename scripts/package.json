@@ -9,7 +9,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build": "tsc --target ES2020 --module CommonJS --lib ES2020 --strict --esModuleInterop --skipLibCheck --outDir ../dist --resolveJsonModule --declaration --sourceMap delegate-core.ts match-delegate.ts date-helpers.ts tasks-parser.ts briefing-render.ts briefing-events.ts session-briefing.ts",
+    "build": "tsc --target ES2020 --module CommonJS --lib ES2020 --strict --esModuleInterop --skipLibCheck --outDir ../dist --resolveJsonModule --declaration --sourceMap delegate-core.ts match-delegate.ts date-helpers.ts tasks-parser.ts tasks-store.ts briefing-render.ts briefing-events.ts session-briefing.ts",
     "typecheck": "tsc --noEmit",
     "package": "node build-plugin.js",
     "package:dev": "node build-plugin.js --skip-dirty-check",

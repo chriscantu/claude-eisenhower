@@ -253,6 +253,8 @@ scripts/
   match-delegate.ts            -- CLI entry point -- file I/O, argument parsing, human-readable output
   adapter-types.ts             -- TypeScript interfaces for adapter contract
   date-helpers.ts              -- business day arithmetic helpers
+  tasks-parser.ts              -- pure parser + renderer for TASKS.md (no I/O)
+  tasks-store.ts               -- I/O + advisory-lock layer over tasks-parser (issue #24)
   build-plugin.js              -- packaging script -- produces claude-eisenhower-{version}.plugin
   install-hooks.sh             -- installs git hooks from scripts/hooks/
   package.json                 -- Node.js deps + npm scripts (test, build, package, release)
