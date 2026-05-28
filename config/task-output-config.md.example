@@ -7,7 +7,21 @@ Edit this file to switch adapters or change target list/project settings.
 
 ## Plugin Root
 
-plugin_root: ~/repos/claude-eisenhower
+<!--
+  Auto-populated by /setup — do NOT hand-type this value.
+
+  Why this exists: `${CLAUDE_PLUGIN_ROOT}` is injected by Claude Code only into
+  `command:`-type hook entries (hooks/hooks.json). It is NOT present in the
+  Bash tool / osascript MCP environment that command prompts use to invoke
+  scripts/cal_query.swift, scripts/match-delegate.ts, and the AppleScript
+  adapters. Until that platform gap closes, commands resolve the install
+  location via this field.
+
+  /setup auto-detects the path on first install. Leave the placeholder below
+  if you are reading this template manually — running /setup will replace it.
+-->
+
+plugin_root: YOUR_PLUGIN_INSTALL_PATH
 
 ---
 
@@ -55,8 +69,10 @@ project_id:  ~~linear_project
 ## How to Set Up
 
 1. Copy this file: `cp task-output-config.md.example task-output-config.md`
-2. Set `plugin_root` to the absolute path where this plugin is installed.
-   Default is `~/repos/claude-eisenhower` — update if you cloned elsewhere.
+2. Run `/setup` — it auto-detects the install location and rewrites the
+   `plugin_root:` placeholder. Do not hand-type the path; the placeholder
+   value `YOUR_PLUGIN_INSTALL_PATH` is intentionally invalid so a missing
+   /setup run fails loudly the first time a script is invoked.
 3. Set `list_name` under `### reminders` to the name of your Reminders list.
    It will be created automatically if it doesn't exist.
 4. The actual `task-output-config.md` is gitignored — never committed.

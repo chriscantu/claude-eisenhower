@@ -70,10 +70,13 @@ Before creating a reminder:
 
 ## AppleScript Execution
 
+Resolve `plugin_root` per `skills/core/references/plugin-root-resolution.md` and
+substitute it into the call sites below — do NOT hardcode an install path.
+
 **Push (create)** — called by `/schedule`:
 
 ```applescript
-do shell script "osascript ~/repos/claude-eisenhower/scripts/push_reminder.applescript " & ¬
+do shell script "osascript " & quoted form of (pluginRoot & "/scripts/push_reminder.applescript") & " " & ¬
     quoted form of title & " " & ¬
     quoted form of description & " " & ¬
     quoted form of due_date & " " & ¬
@@ -84,7 +87,7 @@ do shell script "osascript ~/repos/claude-eisenhower/scripts/push_reminder.apple
 **Complete** — called by `/execute` when marking a task done:
 
 ```applescript
-do shell script "osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript " & ¬
+do shell script "osascript " & quoted form of (pluginRoot & "/scripts/complete_reminder.applescript") & " " & ¬
     quoted form of title & " " & ¬
     quoted form of list_name
 ```
