@@ -266,23 +266,42 @@ Read `config/task-output-config.md` for the active adapter.
 
 If the adapter is not configured (`~~task_output` or missing), skip this step silently.
 
-If configured, push via `scripts/push_reminder.applescript`:
-- **Title**: `"Check in: {alias} re: {task title}"`
-- **Due date**: check-in date (YYYY-MM-DD)
-- **Priority**: medium
-- **Quadrant**: Q3
+If configured, push via the dispatcher — never invoke an adapter's script directly.
+Resolve `plugin_root` per `skills/core/references/plugin-root-resolution.md`, write
+the prepared `task_output_record` to a temp JSON file, then run:
 
-On success: update the task record with:
-```
-Synced: Reminders (Eisenhower List) — {today's date}
-```
-
-On failure:
-```
-Synced: failed — {reason}
+```applescript
+do shell script "node " & quoted form of (pluginRoot & "/scripts/task-output.ts") & " push " & ¬
+    quoted form of pluginRoot & " " & ¬
+    quoted form of configFile & " " & ¬
+    quoted form of recordJsonPath
 ```
 
-Show a one-line result: `✓ Check-in pushed to Reminders` or `⚠ Reminder push failed — [reason]. TASKS.md entry is saved.`
+The record uses:
+- **title**: `"Check in: {alias} re: {task title}"`
+- **due_date**: check-in date (YYYY-MM-DD)
+- **priority**: `medium`
+- **quadrant**: `Q3`
+- **list_name**: read from the matching `### <adapter>` block (Markdown File ignores it).
+
+Stdout is one line of JSON: `{"ok":true,"mode":"push","result":{"status":"...","reason":"...","id":"..."}}`.
+
+On `result.status: success`: update the task record with:
+```
+Synced: {adapter} ({list_name}) — {today's date}
+```
+
+On `result.status: skipped`:
+```
+Synced: skipped (already exists)
+```
+
+On `result.status: error` or `ok:false`:
+```
+Synced: failed — {reason or error}
+```
+
+Show a one-line result: `✓ Check-in pushed to {adapter}` or `⚠ {adapter} push failed — [reason]. TASKS.md entry is saved.`
 
 ---
 

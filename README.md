@@ -188,7 +188,7 @@ Your task board (`TASKS.md`) is created automatically on first use. From there, 
 | **Apple Mail** | `/scan-email` reads your inbox and classifies emails into Q1–Q3. Read-only — never marks messages read or moves them | `email-config.md` |
 | **Mac Reminders** | After `/schedule` confirms a plan, tasks are pushed to Reminders automatically. Q3 tasks appear as check-in reminders with a delegate and due date | `task-output-config.md` |
 
-The Reminders integration uses a swappable adapter — when you're ready to move to Jira, Asana, or Linear, the adapter handles the switch without changing how the rest of the plugin works. See `adapters/`.
+The Reminders integration uses a swappable adapter — proven by a second shipped target, the cross-platform `markdown-file` adapter (`adapters/markdown-file.md`), which appends to a plain `.md` file with checkbox lines and works without Apple Reminders. Switching adapters means changing one line in `config/task-output-config.md`; commands call a single dispatcher (`scripts/task-output.ts`) and never touch adapter internals. Jira, Asana, and Linear are tracked as future targets in `adapters/README.md`.
 
 ---
 
