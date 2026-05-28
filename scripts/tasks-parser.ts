@@ -83,3 +83,84 @@ export function parseTasks(markdown: string): ParsedTasks {
   flush();
   return result;
 }
+
+/**
+ * Canonical field order for serialized records.
+ *
+ * Mirrors `docs/specs/tasks-schema-spec.md` § Task Record Schema → Fields.
+ * Fields outside this list are appended in insertion order after the
+ * canonical ones, so unknown / future fields round-trip without loss.
+ */
+const FIELD_ORDER: readonly string[] = [
+  "Title",
+  "Description",
+  "Source",
+  "Requester",
+  "Urgency",
+  "Due date",
+  "Priority",
+  "State",
+  "Owner",
+  "Check-by",
+  "Scheduled",
+  "Action",
+  "Note",
+  "Done",
+  "Synced",
+  "Project",
+] as const;
+
+function renderRecord(fields: Record<string, string>): string {
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const key of FIELD_ORDER) {
+    if (key in fields) {
+      lines.push(`${key}: ${fields[key]}`);
+      seen.add(key);
+    }
+  }
+  for (const key of Object.keys(fields)) {
+    if (!seen.has(key)) {
+      lines.push(`${key}: ${fields[key]}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Serializes `ParsedTasks` back to a TASKS.md string.
+ *
+ * Output shape (per `docs/specs/tasks-schema-spec.md`):
+ *
+ *   # Task Board
+ *
+ *   ## Inbox
+ *   ---
+ *   Title: ...
+ *   ...
+ *   ---
+ *
+ *   ## Active
+ *   ...
+ *
+ * Round-trip contract: `parseTasks(renderTasks(parseTasks(s)))` equals
+ * `parseTasks(s)`. Byte-identity with the original `s` is NOT promised —
+ * the parser is lossy (drops free-form prose, normalizes whitespace, drops
+ * `[ INTAKE — date ]` headers). Records survive in full, in section order,
+ * in canonical field order.
+ */
+export function renderTasks(tasks: ParsedTasks): string {
+  const out: string[] = ["# Task Board", ""];
+  for (const section of SECTION_NAMES) {
+    out.push(`## ${section}`);
+    out.push("");
+    for (const record of tasks[section]) {
+      out.push("---");
+      out.push(renderRecord(record.fields));
+      out.push("---");
+      out.push("");
+    }
+  }
+  // Trailing newline; collapse consecutive blanks at EOF to exactly one.
+  return out.join("\n").replace(/\n+$/, "\n");
+}
