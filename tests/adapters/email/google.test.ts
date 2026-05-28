@@ -18,6 +18,10 @@
  *   GMAIL-008  base64url decode round-trip — handles - and _ replacements
  *   GMAIL-009  missing config — returns graceful error, never throws
  *   GMAIL-010  PII safety — adapter does not log sender / subject / body
+ *   GMAIL-011  snippet truncated to ≤200 chars per EmailMessage contract
+ *   GMAIL-012  no-arg factory reads credentials from email-config.md
+ *   GMAIL-013  max_messages=0 short-circuits before API call
+ *   GMAIL-014  PII not leaked through err.message on Gmail API error
  *
  * Issue: #65
  */
@@ -335,12 +339,66 @@ describe("Gmail adapter — error paths", () => {
   });
 
   test("GMAIL-009: missing config returns graceful error", async () => {
-    const adapter = createGoogleGmailAdapter();
+    // Point at a config path that does not exist on disk so file fallback
+    // also fails. Adapter must return error, not throw.
+    const adapter = createGoogleGmailAdapter({
+      config_path: "/tmp/does-not-exist-9d4e3f2a.md",
+    });
     const res = await adapter.scan(BASE_REQ);
 
     expect(res.status).toBe("error");
     expect(res.reason).toContain("missing config");
     expect(res.messages).toEqual([]);
+  });
+
+  test("GMAIL-013: max_messages=0 short-circuits before API call", async () => {
+    const adapter = createGoogleGmailAdapter(VALID_CONFIG);
+    const res = await adapter.scan({ ...BASE_REQ, max_messages: 0 });
+
+    expect(res.status).toBe("success");
+    expect(res.messages).toEqual([]);
+    expect(getAccessTokenMock).not.toHaveBeenCalled();
+    expect(labelsListMock).not.toHaveBeenCalled();
+    expect(messagesListMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Gmail adapter — config-file path", () => {
+  test("GMAIL-012: no `auth` arg reads credentials_path/token_path from email-config.md", async () => {
+    const fs = require("fs") as typeof import("fs");
+    const os = require("os") as typeof import("os");
+    const path = require("path") as typeof import("path");
+    const cfgPath = path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), "gmail-cfg-")),
+      "email-config.md",
+    );
+    fs.writeFileSync(
+      cfgPath,
+      [
+        "provider: google",
+        "google_credentials_path: /tmp/from-file-creds.json",
+        "google_token_path: /tmp/from-file-token.json",
+      ].join("\n"),
+    );
+
+    labelsListMock.mockResolvedValue({
+      data: { labels: [{ id: "INBOX", name: "INBOX" }] },
+    });
+    messagesListMock.mockResolvedValue({ data: { messages: [] } });
+
+    const adapter = createGoogleGmailAdapter({
+      config_path: cfgPath,
+      gmailClientFactory: () => fakeGmailClient as unknown as never,
+    });
+    const res = await adapter.scan(BASE_REQ);
+
+    expect(res.status).toBe("success");
+    expect(getAccessTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        credentials_path: "/tmp/from-file-creds.json",
+        token_path: "/tmp/from-file-token.json",
+      }),
+    );
   });
 });
 
@@ -399,5 +457,71 @@ describe("Gmail adapter — PII safety", () => {
     stderrSpy.mockRestore();
     consoleLogSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+  });
+
+  test("GMAIL-014: PII inside thrown err.message is preserved in reason but not stdout/stderr", async () => {
+    // Adapter MUST NOT log to stdout/stderr; what surfaces in `reason` is the
+    // SDK's err.message (callers may choose to forward / suppress). Verify
+    // the non-log invariant — same posture as GMAIL-010.
+    const stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(() => true);
+    const stderrSpy = jest.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const piiInError = "secret@example.com";
+    labelsListMock.mockRejectedValue(new Error(`GET .../labels?user=${piiInError} 403`));
+
+    const adapter = createGoogleGmailAdapter(VALID_CONFIG);
+    const res = await adapter.scan(BASE_REQ);
+
+    expect(res.status).toBe("error");
+
+    const allWrites = [
+      ...stdoutSpy.mock.calls,
+      ...stderrSpy.mock.calls,
+      ...consoleLogSpy.mock.calls,
+      ...consoleErrorSpy.mock.calls,
+    ]
+      .flat()
+      .map((x) => String(x))
+      .join("\n");
+
+    expect(allWrites).not.toContain(piiInError);
+
+    stdoutSpy.mockRestore();
+    stderrSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+});
+
+describe("Gmail adapter — contract conformance", () => {
+  test("GMAIL-011: snippet truncated to 200 chars per EmailMessage contract", async () => {
+    const longSnippet = "x".repeat(350);
+    labelsListMock.mockResolvedValue({
+      data: { labels: [{ id: "INBOX", name: "INBOX" }] },
+    });
+    messagesListMock.mockResolvedValue({
+      data: { messages: [{ id: "msg-1" }] },
+    });
+    messagesGetMock.mockResolvedValue({
+      data: {
+        id: "msg-1",
+        threadId: "t",
+        internalDate: String(Date.UTC(2026, 4, 15)),
+        snippet: longSnippet,
+        payload: { headers: [], mimeType: "text/plain", body: { data: "" } },
+      },
+    });
+
+    const adapter = createGoogleGmailAdapter(VALID_CONFIG);
+    const res = await adapter.scan(BASE_REQ);
+
+    expect(res.status).toBe("success");
+    expect(res.messages).toHaveLength(1);
+    const msg = res.messages[0];
+    if (!msg) throw new Error("expected one message");
+    expect(msg.snippet.length).toBeLessThanOrEqual(200);
+    expect(msg.snippet).toBe("x".repeat(200));
   });
 });

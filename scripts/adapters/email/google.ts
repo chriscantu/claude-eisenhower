@@ -27,6 +27,9 @@
  * Issue: #65
  */
 
+import * as fs from "fs";
+import * as path from "path";
+
 import { google, type gmail_v1 } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 
@@ -41,11 +44,17 @@ import type {
 
 export interface GoogleGmailAdapterConfig {
   /**
-   * OAuth config passed through to google-auth.ts. Scope is forced to
-   * gmail.readonly regardless of what callers pass in `scopes` — the adapter
-   * is read-only by design.
+   * OAuth config passed through to google-auth.ts. When omitted, the adapter
+   * reads credentials_path + token_path from config/email-config.md.
+   * Scope is forced to gmail.readonly regardless — adapter is read-only by design.
    */
-  auth: Omit<GoogleAuthConfig, "scopes"> & { scopes?: string[] };
+  auth?: Omit<GoogleAuthConfig, "scopes"> & { scopes?: string[] };
+  /**
+   * Override the config-file path. Defaults to
+   * ${CLAUDE_PLUGIN_ROOT}/config/email-config.md. Used by the no-arg
+   * dispatcher path and by tests.
+   */
+  config_path?: string;
   /**
    * Test injection: override the gmail client factory. When omitted, the
    * adapter builds a real OAuth2 client + gmail_v1.Gmail.
@@ -62,7 +71,57 @@ export interface GoogleGmailAdapter {
 
 const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
+const MAX_PARALLEL_FETCHES = 5;
+const SNIPPET_MAX_LEN = 200;
+
 // ── Private helpers ───────────────────────────────────────────────────────────
+
+function defaultConfigPath(): string {
+  const root = process.env["CLAUDE_PLUGIN_ROOT"];
+  if (root) return path.join(root, "config", "email-config.md");
+  return path.join(__dirname, "..", "..", "..", "config", "email-config.md");
+}
+
+/**
+ * Parse a `key: value` style line out of email-config.md. Returns undefined
+ * when the key is absent. Lines beginning with `#` (commented examples) are
+ * ignored.
+ */
+function readConfigField(configPath: string, key: string): string | undefined {
+  if (!fs.existsSync(configPath)) return undefined;
+  const raw = fs.readFileSync(configPath, "utf-8");
+  const pattern = new RegExp(`^\\s*${key}\\s*:\\s*(.+?)\\s*$`);
+  for (const line of raw.split("\n")) {
+    if (line.trim().startsWith("#")) continue;
+    const m = line.match(pattern);
+    if (m && m[1]) return m[1].trim();
+  }
+  return undefined;
+}
+
+function expandHome(p: string): string {
+  if (p.startsWith("~/") || p === "~") {
+    const home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "";
+    return path.join(home, p.slice(1));
+  }
+  return p;
+}
+
+/**
+ * Resolve OAuth paths from email-config.md when caller did not pass `auth`.
+ * Returns null when the config file or required fields are missing.
+ */
+function readAuthFromConfig(
+  configPath: string,
+): { credentials_path: string; token_path: string } | null {
+  const creds = readConfigField(configPath, "google_credentials_path");
+  const token = readConfigField(configPath, "google_token_path");
+  if (!creds || !token) return null;
+  return {
+    credentials_path: expandHome(creds),
+    token_path: expandHome(token),
+  };
+}
 
 /** YYYY-MM-DD → YYYY/MM/DD (Gmail search query date format). */
 function isoDateToGmailQueryDate(iso: string): string {
@@ -162,7 +221,8 @@ function mapMessage(msg: gmail_v1.Schema$Message): EmailMessage {
   const from = headerValue(headers, "From");
   const subject = headerValue(headers, "Subject");
   const received_at = internalDateToIso(msg.internalDate);
-  const snippet = msg.snippet ?? "";
+  // Contract: EmailMessage.snippet ≤ 200 chars. Gmail returns variable length.
+  const snippet = (msg.snippet ?? "").slice(0, SNIPPET_MAX_LEN);
   const body_text = extractTextBody(msg.payload ?? undefined);
   const thread_id = msg.threadId ?? "";
   return {
@@ -174,6 +234,30 @@ function mapMessage(msg: gmail_v1.Schema$Message): EmailMessage {
     body_text,
     thread_id,
   };
+}
+
+/** Bounded parallel map. Runs at most `limit` promises in flight at once. */
+async function mapWithConcurrency<T, U>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<U>,
+): Promise<U[]> {
+  const out: U[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      // Non-null: i is bounded by items.length above.
+      out[i] = await fn(items[i] as T, i);
+    }
+  }
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return out;
 }
 
 /** Default factory: build a real Gmail client from an access token. */
@@ -191,26 +275,37 @@ export function createGoogleGmailAdapter(
   return {
     name: "google",
     async scan(req: EmailScanRequest): Promise<EmailScanResult> {
-      // Config-required path. When called from the dispatcher without explicit
-      // config (the historical stub signature), we cannot proceed because
-      // there is no credentials_path to read from. Surface that gracefully.
-      if (!cfg) {
-        return {
-          status: "error",
-          reason:
-            "Gmail adapter missing config: pass credentials_path and token_path via createGoogleGmailAdapter({ auth: {...} }).",
-          messages: [],
-        };
-      }
-
       try {
+        // Resolve auth. Caller-provided `auth` wins; otherwise read from
+        // config/email-config.md so the dispatcher's no-arg registration
+        // path works for end users with a populated config.
+        let auth = cfg?.auth;
+        if (!auth) {
+          const configPath = cfg?.config_path ?? defaultConfigPath();
+          const fromFile = readAuthFromConfig(configPath);
+          if (!fromFile) {
+            return {
+              status: "error",
+              reason: `Gmail adapter missing config: set google_credentials_path and google_token_path in ${configPath}, or pass auth to createGoogleGmailAdapter().`,
+              messages: [],
+            };
+          }
+          auth = fromFile;
+        }
+
+        // max_messages = 0 → caller wants nothing back; short-circuit before
+        // the API call. (Gmail's maxResults: 0 returns the default page size.)
+        if (Math.floor(req.max_messages) <= 0) {
+          return { status: "success", reason: "OK", messages: [] };
+        }
+
         const authCfg: GoogleAuthConfig = {
-          ...cfg.auth,
+          ...auth,
           scopes: [GMAIL_READONLY_SCOPE],
         };
 
         const { token } = await getAccessToken(authCfg);
-        const factory = cfg.gmailClientFactory ?? defaultGmailClientFactory;
+        const factory = cfg?.gmailClientFactory ?? defaultGmailClientFactory;
         const gmail = factory(token);
 
         // 1. Resolve label name → label ID.
@@ -229,7 +324,7 @@ export function createGoogleGmailAdapter(
           userId: "me",
           labelIds: [labelId],
           q,
-          maxResults: Math.max(0, Math.floor(req.max_messages)),
+          maxResults: Math.floor(req.max_messages),
         });
         const ids = (listRes.data.messages ?? [])
           .map((m) => m.id ?? "")
@@ -239,16 +334,19 @@ export function createGoogleGmailAdapter(
           return { status: "success", reason: "OK", messages: [] };
         }
 
-        // 3. Fetch each message in full and map.
-        const messages: EmailMessage[] = [];
-        for (const id of ids) {
-          const getRes = await gmail.users.messages.get({
-            userId: "me",
-            id,
-            format: "full",
-          });
-          messages.push(mapMessage(getRes.data));
-        }
+        // 3. Fetch each message in full and map (bounded parallel).
+        const messages = await mapWithConcurrency(
+          ids,
+          MAX_PARALLEL_FETCHES,
+          async (id) => {
+            const getRes = await gmail.users.messages.get({
+              userId: "me",
+              id,
+              format: "full",
+            });
+            return mapMessage(getRes.data);
+          },
+        );
 
         // 4. Sort newest-first per contract.
         messages.sort((a, b) =>
