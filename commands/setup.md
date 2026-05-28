@@ -235,10 +235,32 @@ case-insensitively:
 Anything else → re-prompt: "yes (add another) or done?" Do NOT infer.
 
 **Duplicate alias guard** — before accepting a new entry, compare its
-display alias (case-insensitively) against entries collected so far this
-session. On collision:
-> "You already added '[alias]'. Overwrite the previous entry, or use a
-> different display alias? (overwrite / [type new alias])"
+display alias (case-insensitively) against BOTH (a) entries collected so
+far this session AND (b) entries already present in `config/stakeholders.yaml`
+on disk (if the file exists — load it at the start of the loop and seed an
+"existing aliases" set from the `alias[0]` of each entry, case-insensitive).
+
+On collision:
+> "Alias '[alias]' already exists ([in this session / in
+> stakeholders.yaml]). Overwrite the existing entry, skip, or use a
+> different display alias? (overwrite / skip / [type new alias])"
+
+- `overwrite`: replace the existing entry on write (see Merge-vs-replace
+  contract below).
+- `skip`: discard the new entry, continue the loop.
+- new alias: re-validate against the existing set.
+
+**Merge-vs-replace contract for Step 5 write.** When the bootstrap finishes
+and Step 5 commits, the YAML write MERGES collected entries into the
+existing `config/stakeholders.yaml` rather than overwriting the whole file:
+
+- Pre-existing entries NOT touched in this session → preserved verbatim.
+- New entries (no collision) → appended under `stakeholders:`.
+- Overwrite collisions → existing entry replaced in place with the new one.
+- Skip collisions → no-op (existing entry preserved).
+
+Only the placeholder template path (Option 2) ever overwrites the whole
+file, and only when the user explicitly chose Option 2 on a clean install.
 
 **Empty-name guard** — if the user says `yes` to "Add another?" but then
 provides no name or a name that is whitespace only, re-prompt once:
@@ -255,10 +277,15 @@ substitution all break naive output.
    `alias[]`, `role`. Example: `role: "Director of Engineering"`.
 2. **Escape embedded double quotes** as `\"`. Example:
    `name: "Ada \"Curly\" Lovelace"`.
-3. **Reject smart quotes** — if the user input contains `‘ ’ “ ”` (curly
-   quotes that macOS autocorrects from straight quotes), normalize to
-   straight `'` / `"` before quoting. Surface a one-line note: "Normalized
-   smart quotes in '[field]'."
+3. **Reject smart quotes** — if the user input contains EXACTLY these
+   four codepoints `‘` (U+2018) `’` (U+2019) `“` (U+201C) `”` (U+201D),
+   normalize to straight `'` / `"` before quoting. Surface a one-line note:
+   "Normalized smart quotes in '[field]'."
+   Other Unicode quote lookalikes (`′` U+2032, `‵` U+2035, guillemets
+   `«»` U+00AB/U+00BB, German `„` U+201E, etc.) PASS THROUGH unchanged —
+   they're not autocorrect artifacts and the user likely typed them
+   intentionally. Do NOT invent further normalization. This keeps the rule
+   deterministic across LLM runs.
 4. **`domains` is required by the schema** — write `domains: []` literally
    when the user leaves it blank. Do NOT omit the key. The scoring CLI's
    stakeholder type declares `domains: string[]` as non-optional in
@@ -303,7 +330,7 @@ Show a completion summary of everything that was written this session:
   Calendar:     [calendar_name]
   Email:        [account_name] / [inbox_name]
   Reminders:    [list_name]
-  Stakeholders: [created with placeholders / skipped]
+  Stakeholders: [N entries collected / placeholder template / skipped]
 
 Config files are saved to config/ (gitignored — never committed).
 ```

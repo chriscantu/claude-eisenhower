@@ -129,7 +129,7 @@ describe("Stakeholder cold-start: loop normalization + guards (TEST-STK-COLD-004
 
   test("TEST-STK-COLD-004b: duplicate-alias guard prompts overwrite-or-rename", () => {
     expect(c).toMatch(/Duplicate alias guard/);
-    expect(c).toMatch(/Overwrite the previous entry/);
+    expect(c).toMatch(/Overwrite the (existing|previous) entry/);
   });
 
   test("TEST-STK-COLD-004c: empty-name guard re-prompts", () => {
@@ -162,11 +162,57 @@ describe("Stakeholder cold-start: Step 5c pipe-escape + idempotency (TEST-STK-CO
   });
 
   test("TEST-STK-COLD-005e: extraction non-determinism explicitly acknowledged", () => {
-    expect(c).toMatch(/Determinism note/);
-    expect(c).toMatch(/may produce different suggestion sets/);
+    expect(c).toMatch(/heuristic, intentionally non-deterministic/);
   });
 
   test("TEST-STK-COLD-005f: concrete stop-word floor list present", () => {
     expect(c).toMatch(/the, a, an, and, or, but/);
+  });
+});
+
+describe("Stakeholder cold-start: second-pass review fixes (TEST-STK-COLD-006)", () => {
+  const setupContent = readFile("commands/setup.md");
+  const delegateContent = readFile("commands/delegate.md");
+
+  test("TEST-STK-COLD-006a: duplicate-alias guard checks BOTH session entries AND existing yaml", () => {
+    expect(setupContent).toMatch(/entries collected so\s+far this session AND[\s\S]{0,80}stakeholders\.yaml/);
+  });
+
+  test("TEST-STK-COLD-006b: merge-vs-replace contract makes Step 5 write a MERGE not overwrite", () => {
+    expect(setupContent).toMatch(/Merge-vs-replace contract for Step 5 write/);
+    expect(setupContent).toMatch(/MERGES collected entries into the\s+existing/);
+  });
+
+  test("TEST-STK-COLD-006c: collision options include skip in addition to overwrite/rename", () => {
+    expect(setupContent).toMatch(/`overwrite`:/);
+    expect(setupContent).toMatch(/`skip`:/);
+  });
+
+  test("TEST-STK-COLD-006d: Step 5 summary template gains entries-collected slot", () => {
+    expect(setupContent).toMatch(/\[N entries collected \/ placeholder template \/ skipped\]/);
+  });
+
+  test("TEST-STK-COLD-006e: smart-quote rule pins exactly four codepoints; others pass through", () => {
+    expect(setupContent).toMatch(/EXACTLY these\s+four codepoints/);
+    expect(setupContent).toMatch(/PASS THROUGH unchanged/);
+  });
+
+  test("TEST-STK-COLD-006f: idempotency compares POST-ESCAPE values, not raw", () => {
+    expect(delegateContent).toMatch(/Apply escape rules 1–4 FIRST, then compare/);
+    expect(delegateContent).toMatch(/POST-ESCAPE/);
+  });
+
+  test("TEST-STK-COLD-006g: stop-word floor extension capped at 10 tokens", () => {
+    expect(delegateContent).toMatch(/Cap on stop-word floor extension/);
+    expect(delegateContent).toMatch(/AT MOST 10 additional tokens per run/);
+  });
+
+  test("TEST-STK-COLD-006h: escape rule generalized to 'user-content columns' with Date exempted", () => {
+    expect(delegateContent).toMatch(/USER-CONTENT column/);
+    expect(delegateContent).toMatch(/`Date` is plugin-generated[\s\S]{0,30}exempt/);
+  });
+
+  test("TEST-STK-COLD-006i: silent-skip pathology surfaced after threshold", () => {
+    expect(delegateContent).toMatch(/has had ≥5 such silent skips/);
   });
 });

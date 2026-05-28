@@ -248,11 +248,10 @@ editing the stakeholders file. The plugin proposes; the user promotes.
    — the user filters at promotion time.
 5. Cap the suggestion list at 5 keywords per delegation; surface the
    highest-signal tokens (longest, lowest stop-word affinity).
-
-**Determinism note** — extraction is heuristic. Two runs on the same task
-may produce different suggestion sets. Acceptable because the user is the
-filter via the `Promoted?` checkbox; the spec biases toward "surface noise,
-let the user prune" over "surface only certainties."
+6. **Cap on stop-word floor extension.** The LLM may extend the floor list
+   above by AT MOST 10 additional tokens per run. An over-extended floor
+   that silences every delegation is the failure mode of "may extend with
+   judgment" — keep the cap visible and enforce it.
 
 If the extracted list is empty after the rules above, skip this step
 silently — nothing to suggest.
@@ -280,10 +279,13 @@ Append one row per confirmed delegation:
 ### Markdown-table escape rules (MANDATORY)
 
 Pipe characters and newlines in user content silently corrupt markdown
-tables. Apply these rules to every column value before writing the row:
+tables. Apply these rules to every USER-CONTENT column value before writing
+the row. "User-content columns" are `Alias`, `Task`, and `Suggested
+domains` in the current table; `Date` is plugin-generated `YYYY-MM-DD` and
+exempt; `Promoted?` is plugin-controlled and exempt. If a future schema
+adds a column carrying user-provided text, apply the same rules.
 
-1. Replace every `|` in `Alias` / `Task` / `Suggested domains` cells with
-   `\|` (backslash-escaped).
+1. Replace every `|` in user-content cells with `\|` (backslash-escaped).
 2. Collapse `\n`, `\r`, and `\r\n` to a single space.
 3. Trim leading/trailing whitespace.
 4. Truncate the `Task` cell to 80 characters; if truncated, append `…`. The
@@ -291,12 +293,25 @@ tables. Apply these rules to every column value before writing the row:
 
 ### Idempotency
 
-Before appending, check the existing log for a row matching
-`(Date, Alias, Task)` (case-insensitive on Alias + Task, exact on Date).
+Apply escape rules 1–4 FIRST, then compare. Before appending, check the
+existing log for a row matching the POST-ESCAPE
+`(Date, Alias, Task)` tuple (case-insensitive on Alias + Task, exact on
+Date). This catches whitespace drift (`"Review PR "` vs `"Review PR"`),
+pipe-escape drift, and newline drift — without normalizing first, a
+mechanically equivalent task would append a duplicate.
+
 If found, do NOT append a duplicate — same-day re-delegation of the same
 task is a no-op for the suggestion log. Cross-day re-delegation of the
 same task DOES append (the date differs) — that's signal about repeated
 work, not duplication.
+
+If extraction produced ZERO candidates (Step 5c's "skip silently" path)
+AND the user has had ≥5 such silent skips in this log file, surface a
+one-line note ONCE: "Heads up — Step 5c has skipped suggestion logging
+on N delegations in a row. If you want richer suggestions, consider
+tightening the stop-word floor cap or adding domain seeds to
+stakeholders.yaml." Prevents silent-loop pathology if the floor extension
+got over-aggressive.
 
 Set `Promoted?` to `☐` always — the user manually flips to `☑` after editing
 `stakeholders.yaml`. The plugin never modifies the `Promoted?` column.
