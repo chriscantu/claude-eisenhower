@@ -9,10 +9,10 @@
 --   4. priority    — integer: 1 (High), 5 (Medium), 9 (Low)
 --   5. list_name   — target Reminders list name
 --
--- Returns (stdout):
---   "success: [title]"   — reminder created
---   "skipped: [title]"   — reminder already exists (dedup)
---   "error: [message]"   — something went wrong
+-- Returns (stdout, single-line JSON):
+--   {"status":"success","title":"...","id":"x-coredata://..."}
+--   {"status":"skipped","title":"...","reason":"already_exists","id":"x-coredata://..."}
+--   {"status":"error","title":"...","reason":"..."}
 --
 -- Usage:
 --   osascript push_reminder.applescript "Title" "Description" "2026-02-25" "5" "Eisenhower List"
@@ -39,7 +39,7 @@ on run argv
             try
                 set targetList to make new list with properties {name: listName}
             on error errMsg
-                return "error: Could not create list '" & listName & "' — " & errMsg
+                return my jsonError(taskTitle, "list_create_failed: " & errMsg)
             end try
         end if
 
@@ -47,7 +47,7 @@ on run argv
         set existingReminders to every reminder of targetList
         repeat with r in existingReminders
             if (my lowerTrim(name of r)) is (my lowerTrim(taskTitle)) then
-                return "skipped: " & taskTitle
+                return my jsonSkipped(taskTitle, "already_exists", id of r as string)
             end if
         end repeat
 
@@ -60,7 +60,6 @@ on run argv
 
             -- Set due date if provided (not "none")
             if dueDateStr is not "none" then
-                -- Parse ISO date "YYYY-MM-DD" into AppleScript date
                 set yr to (text 1 thru 4 of dueDateStr) as integer
                 set mo to (text 6 thru 7 of dueDateStr) as integer
                 set dy to (text 9 thru 10 of dueDateStr) as integer
@@ -69,7 +68,6 @@ on run argv
                 set year of dueDate to yr
                 set month of dueDate to mo
                 set day of dueDate to dy
-                -- Set time to midnight (no specific alarm time per spec decision #3)
                 set hours of dueDate to 0
                 set minutes of dueDate to 0
                 set seconds of dueDate to 0
@@ -77,23 +75,56 @@ on run argv
                 set due date of newReminder to dueDate
             end if
 
-            return "success: " & taskTitle
+            set newId to id of newReminder as string
+            return my jsonSuccess(taskTitle, newId)
 
         on error errMsg
-            return "error: " & errMsg
+            return my jsonError(taskTitle, errMsg)
         end try
 
     end tell
 end run
 
+-- JSON emitters. Single-line output. Strings are escaped via jsonEscape.
+on jsonSuccess(t, idStr)
+    return "{\"status\":\"success\",\"title\":\"" & my jsonEscape(t) & "\",\"id\":\"" & my jsonEscape(idStr) & "\"}"
+end jsonSuccess
+
+on jsonSkipped(t, reasonCode, idStr)
+    return "{\"status\":\"skipped\",\"title\":\"" & my jsonEscape(t) & "\",\"reason\":\"" & my jsonEscape(reasonCode) & "\",\"id\":\"" & my jsonEscape(idStr) & "\"}"
+end jsonSkipped
+
+on jsonError(t, msg)
+    return "{\"status\":\"error\",\"title\":\"" & my jsonEscape(t) & "\",\"reason\":\"" & my jsonEscape(msg) & "\"}"
+end jsonError
+
+on jsonEscape(str)
+    set out to ""
+    repeat with c in every character of str
+        set ch to contents of c
+        if ch is "\"" then
+            set out to out & "\\\""
+        else if ch is "\\" then
+            set out to out & "\\\\"
+        else if ch is (ASCII character 10) then
+            set out to out & "\\n"
+        else if ch is (ASCII character 13) then
+            set out to out & "\\r"
+        else if ch is (ASCII character 9) then
+            set out to out & "\\t"
+        else
+            set out to out & ch
+        end if
+    end repeat
+    return out
+end jsonEscape
+
 -- Helper: lowercase and trim whitespace from a string
 on lowerTrim(str)
     set str to my lower(str)
-    -- Trim leading spaces
     repeat while str begins with " "
         set str to text 2 thru -1 of str
     end repeat
-    -- Trim trailing spaces
     repeat while str ends with " "
         set str to text 1 thru -2 of str
     end repeat
