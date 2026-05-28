@@ -30,51 +30,67 @@ Apply the full extraction rules from `commands/intake.md` to `$ARGUMENTS`:
 Track `(stated)` vs `(inferred)` for each field — these markers MUST appear in
 the confirmation block.
 
-## Step 2: Default Q from urgency keywords
+## Step 2: Tentative Q (two-pass — confirmed at Step 3)
 
-Pick a default quadrant from the parsed urgency + due-date + source. The user
-will see this and can override in the single confirmation:
+Q assignment is two-pass. Step 2 picks a TENTATIVE Q from the parsed text
+alone (no CLI calls); Step 3 may demote a tentative Q3 to Q1/Q2/Q4 based
+on the `match-delegate.ts` result. The user sees only the final Q in the
+Step 4 confirmation block.
 
-| Signal in parsed input                                                    | Default Q |
-|---------------------------------------------------------------------------|-----------|
-| `today`, `EOD`, `urgent`, `now`, `asap`, due date = today                 | Q1        |
-| `this week`, `by Friday`, due date within 7 days from today               | Q2        |
-| Requester ≠ Self AND match found by `scripts/match-delegate.ts` (status = `match`) AND no authority signal | Q3        |
-| No timing AND Requester = Self AND no `match-delegate` hit                | Q4        |
+**Authority check (runs UNCONDITIONALLY, before the table below).** Pass
+the task title + description through `hasAuthorityFlag()` in
+`scripts/delegate-core.ts` (canonical pattern list `AUTHORITY_PATTERNS`
+lives there — do NOT restate it here; drift risk). If any pattern matches,
+short-circuit: tentative Q = Q1, label as `authority-promoted`, capture
+the matched phrase for the confirmation block, skip the table. The user
+can still override at confirmation. This check is independent of the Q3
+CLI path — it MUST run for Q1/Q2/Q4 inputs too, otherwise authority
+detection silently misses everything that doesn't reach Step 3.
 
-Match the rows top-to-bottom and take the first that fires. The Q3 row
-defers the domain-match decision to the canonical scoring CLI rather than
-re-implementing keyword extraction here — same source of truth `/delegate`
-and `/prioritize` use.
+**Tentative-Q table** (when the authority check didn't fire):
 
-**Authority flag** — canonical pattern list lives in `AUTHORITY_PATTERNS` in
-`scripts/delegate-core.ts`. Pass the task title + description through
-`hasAuthorityFlag()` (called automatically by the scoring CLI in the Q3
-path). If any pattern matches, do NOT default to Q3 — promote to Q1 and
-surface the matched phrase in the confirmation block (label as
-`authority-promoted`). The user can still override at confirmation time.
-Do NOT restate the pattern list here — drift risk; canonical source is
-`scripts/delegate-core.ts:AUTHORITY_PATTERNS`.
+| Signal in parsed input                                          | Tentative Q |
+|-----------------------------------------------------------------|-------------|
+| `today`, `EOD`, `urgent`, `now`, `asap`, due date = today       | Q1          |
+| `this week`, `by Friday`, due date within 7 days from today     | Q2          |
+| Requester ≠ Self AND no Q1/Q2 signal                            | Q3 (candidate) |
+| No timing AND Requester = Self                                  | Q4          |
+
+Match top-to-bottom; take the first that fires. The Q3 row is a
+**candidate** — Step 3 confirms via `match-delegate.ts`.
 
 When NONE of the four rows fires (genuine ambiguity), default to Q2 and
 mark the Q value as `(inferred)`. Never silently pick Q4 for work the user
 explicitly captured — `/quick` is for capture, not elimination.
 
-## Step 3: Default schedule per Q
+## Step 3: Confirm Q + assign schedule
 
-| Q  | Default schedule                                                          |
-|----|---------------------------------------------------------------------------|
-| Q1 | TODAY (use `# currentDate` ISO)                                            |
-| Q2 | Next focus block this week — pick a weekday ≥ TODAY+1 in `# currentDate`'s week. If today is Friday, roll to next Monday. |
-| Q3 | Suggest delegate via `scripts/match-delegate.ts` per `prioritize.md` Step 4b. Confirm-by date = Due date or TODAY+3 if no due date. |
-| Q4 | No schedule — eliminate on confirm.                                        |
+This step resolves the Step 2 tentative Q into a final Q and computes the
+scheduled date.
 
-For Q3, run the scoring CLI exactly as `prioritize.md` Step 4b describes
-(resolve plugin_root via `skills/core/references/plugin-root-resolution.md`,
-invoke `npx ts-node match-delegate.ts`, parse the `MatchResult` JSON). Show
-the top candidate's `alias` + one-line breakdown in the confirmation block.
-If the graph is missing/empty, show `[not yet assigned — see stakeholders.yaml]`
-and continue.
+**If tentative Q == Q3 (candidate):** run the scoring CLI exactly as
+`prioritize.md` Step 4b describes (resolve plugin_root via
+`skills/core/references/plugin-root-resolution.md`, invoke
+`npx ts-node match-delegate.ts`, parse the `MatchResult` JSON).
+
+- `status: match` → final Q = Q3. Show the top candidate's `alias` + one-line
+  breakdown in the confirmation block.
+- `status: no_match` / `empty_graph` / `no_graph` / `invalid_graph` /
+  `internal_error` → DEMOTE the tentative Q3. If due date is set OR urgency
+  signal present, final Q = Q2; otherwise final Q = Q4. Surface a one-line
+  note: "No clear delegate — keeping this on your plate."
+
+**If tentative Q ∈ {Q1, Q2, Q4}:** no CLI call needed; use the tentative
+value as final.
+
+**Default schedule per final Q:**
+
+| Final Q | Default schedule                                                          |
+|---------|---------------------------------------------------------------------------|
+| Q1      | TODAY (use `# currentDate` ISO)                                            |
+| Q2      | Next focus block this week — pick a weekday ≥ TODAY+1 in `# currentDate`'s week. If today is Friday, roll to next Monday. |
+| Q3      | Delegate suggested by `match-delegate.ts`. Check-by date = Due date or TODAY+3 if no due date. |
+| Q4      | No schedule — eliminate on confirm.                                        |
 
 ## Step 4: Single confirmation block
 
@@ -119,7 +135,10 @@ Respond:
 > "/quick has already written this task. To change it, run `/prioritize
 > [title]` to reclassify, `/schedule [title]` to move the date, or
 > hand-edit the entry in TASKS.md. To remove it entirely, delete the entry
-> from TASKS.md (and run the adapter's delete path if you pushed it)."
+> from TASKS.md; if it was pushed to your adapter, mark it complete via
+> `/execute [title]` (uses the adapter's `completeTask` path) and then
+> delete the Reminder / output by hand. The adapter contract does not
+> currently expose a `deleteTask` operation."
 
 Only PRE-confirm `edit` re-renders the block.
 
@@ -172,8 +191,15 @@ no-op. The task still lives in TASKS.md.
 
 Q3 carve-out rationale: the active delegate needs the visibility (their
 Slack / email / their Reminders, not yours). Auto-pushing a Q3 to the
-user's list adds noise without changing who owns the work. If the user
-explicitly types `push Q3` at the `Push to:` edit step, honor it.
+user's list adds noise without changing who owns the work.
+
+**Override grammar for `Push to:` at edit time** — any edit that changes
+the `Push to:` value away from `skip (...)` honors the override and
+pushes. Example tokens the LLM should treat as override: `push`,
+`push anyway`, `push to [adapter]`, `push it`, `yes push`. The literal
+token doesn't matter as long as the resulting `Push to:` value is the
+adapter name and not a `skip (…)` string. Re-draw the Step 4 block with
+the new value and re-confirm before writing.
 
 ---
 
@@ -182,12 +208,22 @@ explicitly types `push Q3` at the `Push to:` edit step, honor it.
 `/quick` is one-task. Multi-task detection — fires when ALL of:
 
 - `$ARGUMENTS` contains ≥2 imperative verbs (e.g. `review`, `write`,
-  `follow up`, `send`, `update`, `schedule`, `delegate`) AND
-- Those verbs are joined by `and`, `then`, `,`, `;`, `&`, or a newline AND
+  `follow up`, `send`, `update`, `draft`, `prep`, `ship`, `respond to`,
+  `merge`, `approve`). Excluded from the verb list on purpose:
+  `schedule`, `delegate`, `prioritize`, `intake`, `execute` — those are
+  command names and frequently appear as Q-defaults metadata in user
+  phrasing ("schedule my PR review for Thursday" is one task, not two).
+  AND
+- Those verbs are joined by `and`, `then`, `,`, `;`, `&`, or a newline.
+  Joiner `for` and prepositions like `to`, `by`, `with` are NOT joiners
+  for this rule — they typically introduce arguments to the same verb.
+  AND
 - Each verb has a distinct direct object (different nouns / different
   subjects)
 
 "Review PR and merge it" → one task (same object — the PR). Pass through.
+"Schedule my PR review for Thursday" → one task (`schedule` excluded from
+verb list). Pass through.
 "Review PR and write status doc and follow up with Jordan" → three tasks.
 Refuse:
 

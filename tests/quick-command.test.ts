@@ -180,3 +180,42 @@ describe("Quick command: failure-mode fallbacks (TEST-QUICK-009)", () => {
     expect(c).toMatch(/invalid_graph[\s\S]{0,200}surface[\s\S]{0,40}`message`/i);
   });
 });
+
+describe("Quick command: second-pass review fixes (TEST-QUICK-010)", () => {
+  const c = readFile("commands/quick.md");
+
+  test("TEST-QUICK-010a: Q assignment is two-pass — tentative at Step 2, confirmed at Step 3", () => {
+    expect(c).toMatch(/## Step 2: Tentative Q \(two-pass — confirmed at Step 3\)/);
+    expect(c).toMatch(/use the tentative[\s\S]{0,10}value as final/);
+  });
+
+  test("TEST-QUICK-010b: authority check runs UNCONDITIONALLY before the Q-table", () => {
+    expect(c).toMatch(/runs UNCONDITIONALLY[\s\S]{0,200}before the table/i);
+    expect(c).toMatch(/MUST run for Q1\/Q2\/Q4 inputs too/);
+  });
+
+  test("TEST-QUICK-010c: Q3 candidate demotes to Q2/Q4 on CLI failure rather than orphan", () => {
+    expect(c).toMatch(/DEMOTE the tentative Q3/);
+    expect(c).toMatch(/final Q = Q2.*final Q = Q4|final Q = Q4[\s\S]{0,40}final Q = Q2/);
+  });
+
+  test("TEST-QUICK-010d: post-write block names completeTask, disclaims missing deleteTask", () => {
+    expect(c).toMatch(/`completeTask`/);
+    expect(c).toMatch(/does not[\s\S]{0,10}currently expose a `deleteTask`/);
+  });
+
+  test("TEST-QUICK-010e: Push to: override grammar generalized away from literal 'push Q3'", () => {
+    expect(c).toMatch(/Override grammar for `Push to:`/);
+    expect(c).toMatch(/any edit that changes\s+the `Push to:` value away from `skip/);
+  });
+
+  test("TEST-QUICK-010f: multi-task verb list excludes command names (schedule/delegate/prioritize)", () => {
+    expect(c).toMatch(/Excluded from the verb list on purpose:[\s\S]{0,100}`schedule`/);
+    expect(c).toMatch(/`delegate`/);
+    expect(c).toMatch(/`prioritize`/);
+  });
+
+  test("TEST-QUICK-010g: 'for' and prepositions are not multi-task joiners", () => {
+    expect(c).toMatch(/Joiner `for`[\s\S]{0,80}NOT joiners/);
+  });
+});
