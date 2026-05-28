@@ -7,6 +7,25 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [Unreleased] — Remove sync-prep skill
+
+The `sync-prep` meeting-preparation skill was originally copied into this repo
+by mistake — its remit (1:1 / supervisor sync briefs) is outside the
+Eisenhower task-prioritization scope of claude-eisenhower. A maintained
+version lives in the `claude-config` project.
+
+**Removed:**
+- `skills/sync-prep/` (SKILL.md + dir)
+- `docs/specs/sync-prep-spec.md`
+- `skills/memory-manager/SKILL.md` caller list — drops the `sync-prep` entry
+- `docs/STRUCTURE.md` and `docs/PRINCIPLES.md` skill inventory — now lists 3
+  skills (core, memory-manager, skill-enhancer) instead of 4
+
+No user-facing functionality is affected — `sync-prep` was not invoked by any
+of the 11 slash commands.
+
+---
+
 ## [Unreleased] — Plugin Root Cleanup (#23)
 
 Eliminates user-typing of the plugin install path during `/setup`. The path
