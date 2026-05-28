@@ -17,6 +17,7 @@
     "install-hooks": "bash install-hooks.sh"
   },
   "dependencies": {
+    "googleapis": "^172.0.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
@@ -31,9 +32,16 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["../tests"],
-    "testMatch": ["**/*.test.ts"],
-    "moduleDirectories": ["node_modules", "<rootDir>/node_modules"],
+    "roots": [
+      "../tests"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>/node_modules"
+    ],
     "globals": {
       "ts-jest": {
         "tsconfig": "./tsconfig.json"
