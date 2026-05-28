@@ -37,8 +37,11 @@ jobs:
         # postinstall creates tests/node_modules → scripts/node_modules symlink
 
       - name: Run tests
-        run: npx jest --no-coverage --ci
+        run: npx jest --no-coverage --ci --runInBand
         working-directory: scripts
         # Runs jest directly (not npm test) to bypass pretest re-running postinstall,
         # which would hit EEXIST on the already-created symlink.
         # --ci: fail on snapshot mismatches, disable interactive watch mode.
+        # --runInBand: serial execution. Workaround for tasks-store STORE-CON-002
+        # flake under parallel load (and similar contention in child-process tests).
+        # Local --runInBand: 612/612 pass clean in ~13s. Parallel hangs cross-suite.
