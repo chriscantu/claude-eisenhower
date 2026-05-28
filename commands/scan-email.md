@@ -1,12 +1,16 @@
 ---
-description: Scan a configured Apple Mail inbox for actionable emails and add them to your task board
+description: Scan a configured email inbox for actionable emails and add them to your task board
 argument-hint: [optional: category to scan — admin, escalations, surveys, or all]
-allowed-tools: Read, Write, Edit, mcp__Control_your_Mac__osascript
+allowed-tools: Read, Write, Edit
 ---
 
 You are running the SCAN EMAIL phase of the Engineering Task Flow.
 
-This command reads emails from a configured Apple Mail account and inbox using the Mac osascript MCP tool. It is strictly read-only — it never marks emails as read, moves them, or modifies them in any way.
+This command reads emails from a configured email account and inbox via the
+`email-scan.ts` dispatcher (`scripts/email-scan.ts`), which routes through the
+provider named in `config/email-config.md` (default: `apple-mail`). It is
+strictly read-only — it never marks emails as read, moves them, or modifies
+them in any way.
 
 ## Config check
 
@@ -17,16 +21,32 @@ If it does not exist → stop and say:
 Then run the `/setup` command (email step only), and resume `/scan-email` when complete.
 
 **Before doing anything else**, read `config/email-config.md` to get:
-- `account_name` — the mail account to scan
-- `inbox_name` — the inbox within that account
+- `account_name` — the email account to scan
+- `inbox_name` — the inbox / label within that account
 
 Use these values everywhere below in place of hardcoded account or mailbox names.
 
-## Key constraints for osascript calls
-- **Never loop over more than 10 messages in a single osascript call** — larger loops time out
-- **Fetch subjects/senders/dates first** — fetch body previews only for matched emails
-- **One targeted call per email body** — never batch body fetches
-- **Calendar checks must be a single scoped call** — never loop over multiple days in one call
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+
+## Why the dispatcher
+
+`email-scan.ts` owns the provider seam — Apple Mail today, Gmail (#65) when
+the user configures `provider: google`. This command does NOT spawn provider
+clients directly. All email I/O routes through:
+
+- `node ${plugin_root}/scripts/email-scan.ts list-mailboxes <account>` —
+  enumerate mailbox / label names under the account
+- `node ${plugin_root}/scripts/email-scan.ts scan <account> <inbox> <since> <unread_only> <max_messages>` —
+  fetch matching messages with subject + body in one call
+
+Each invocation prints a single line of JSON to stdout:
+`{ok: true, result: <provider result>}` on success or
+`{ok: false, error: "..."}` on dispatcher-level failure. Parse with normal
+JSON handling — do NOT regex the raw stdout.
+
+The dispatcher honors a 30s per-call timeout in the underlying adapter, so
+the previous "10 messages at a time" workaround is no longer needed: a
+single `scan` call returns up to `max_messages` records.
 
 ---
 
@@ -38,61 +58,45 @@ If TASKS.md does not exist, proceed — it will be created when tasks are saved.
 
 ## Step 2: Verify the configured account and mailbox name
 
-Using the `account_name` from `config/email-config.md`, confirm the account exists and get the exact mailbox name:
+Using the `account_name` from `config/email-config.md`, list the mailboxes
+the dispatcher exposes for that account:
 
-```applescript
-tell application "Mail"
-  set matchingAccounts to {}
-  repeat with acct in accounts
-    if name of acct contains "{account_name}" then
-      set end of matchingAccounts to name of acct
-    end if
-  end repeat
-  return matchingAccounts
-end tell
+```bash
+node ${plugin_root}/scripts/email-scan.ts list-mailboxes "{account_name}"
 ```
 
-Then list mailboxes to confirm the exact inbox name (it may differ from `inbox_name` in the config — use whatever the account actually has):
+Parse the JSON output. On `ok: true`, `result.mailboxes` is an array of
+mailbox / label names visible to the configured provider. Use the first name
+that matches `inbox_name` from `config/email-config.md`, or fall back to the
+first name in the array if `inbox_name` is not present.
 
-```applescript
-tell application "Mail"
-  set targetAccount to first account whose name contains "{account_name}"
-  set boxNames to {}
-  repeat with mb in mailboxes of targetAccount
-    set end of boxNames to name of mb
-  end repeat
-  return boxNames
-end tell
+If `ok: false`, OR if `result.status` is `"error"`, surface the reason to the
+user verbatim and stop. Common reasons: "Account not found" (the configured
+account could not be matched), `"binary not found"` (running from a
+non-mac host with provider `apple-mail`), or a provider-specific permission
+error. Suggest the user check `config/email-config.md` and that the email
+application is open / authenticated.
+
+## Step 3: Scan the inbox in a single call
+
+Fetch matching messages — subject, sender, date, and body all in one pass:
+
+```bash
+node ${plugin_root}/scripts/email-scan.ts scan "{account_name}" "{inbox_name}" "{since_date}" "{unread_only}" {max_messages}
 ```
 
-If no matching account is found, inform the user: "I couldn't find an account matching '{account_name}' in Apple Mail. Update `config/email-config.md` with the correct account name, or check that Apple Mail is open and the account is configured."
+Where:
+- `{since_date}` = ISO date (YYYY-MM-DD); `today - 14 days` is a reasonable default
+- `{unread_only}` = `true` to limit to unread messages, `false` for all
+- `{max_messages}` = `50` is a reasonable default
 
-## Step 3: Scan for subjects, senders, and dates — 10 messages at a time
+Parse the JSON. On `ok: true`, `result.messages` is an array of
+`EmailMessage` records (see `scripts/adapter-types.ts` for the contract):
+`{id, from, subject, received_at, snippet, body_text, thread_id}`. `body_text`
+contains the full plain-text body — no separate fetch is needed.
 
-Fetch in batches of 10. Use the exact mailbox name found in Step 2 (e.g., "INBOX"). For each batch, extract subject, sender, and date only — no body content yet.
-
-```applescript
-tell application "Mail"
-  set targetAccount to first account whose name contains "{account_name}"
-  set targetMailbox to mailbox "{inbox_name}" of targetAccount
-  set results to {}
-  repeat with i from {START} to {END}
-    set msg to message i of targetMailbox
-    set msgSubject to subject of msg
-    set msgSender to sender of msg
-    set msgDate to (date received of msg) as string
-    set msgIndex to i
-    set end of results to msgSubject & "|||" & msgSender & "|||" & msgDate & "|||" & msgIndex
-  end repeat
-  return results
-end tell
-```
-
-For each result, parse the four fields: subject, sender, date, and message index.
-The message index captured here is the stable reference for the Step 5 body fetch.
-Do NOT re-derive the index from the list position in Step 5 — always use the stored index value.
-
-Scan batches 1–10, 11–20, 21–30, 31–40, 41–50 sequentially. After each batch, apply the category filter from Step 4 before fetching the next batch. Stop scanning when you have enough matched candidates or have scanned 50 messages.
+If `ok: false` or `result.status === "error"`, surface the reason verbatim
+and stop.
 
 ## Step 4: Filter for actionable emails
 
@@ -102,71 +106,52 @@ Determine scope from $ARGUMENTS:
 - "surveys" → Company Surveys only
 - no argument or "all" → all three categories
 
-Apply detection rules from `skills/core/references/email-patterns.md`. Match on subject and sender alone first — body fetch happens only for confirmed candidates. Skip any email matching an existing TASKS.md entry (same subject + received date).
+Apply detection rules from `skills/core/references/email-patterns.md`. Match
+first on subject + sender; consult `body_text` / `snippet` only for borderline
+candidates. Skip any email matching an existing TASKS.md entry (same
+subject + received date).
 
-## Step 5: Fetch body preview for matched emails only
+## Step 5: Extract due-date signals from body_text for matched emails
 
-For each matched email, fetch the body in a single targeted call using its message index:
+For each matched candidate, scan `body_text` for deadline language, due
+dates, urgency signals, and compliance escalation signals. The body is
+already in hand from Step 3 — no extra call is needed.
 
-```applescript
-tell application "Mail"
-  set targetAccount to first account whose name contains "{account_name}"
-  set targetMailbox to mailbox "{inbox_name}" of targetAccount
-  set msg to message {INDEX} of targetMailbox
-  set preview to ""
-  try
-    set c to content of msg
-    set charLimit to 500
-    if length of c < charLimit then set charLimit to length of c
-    -- Strip non-printable and non-ASCII characters (including U+FFFC object replacement char
-    -- from embedded images) to prevent JSON serialization errors in the tool response pipeline
-    set safeText to ""
-    repeat with i from 1 to charLimit
-      set ch to character i of c
-      set cp to id of ch
-      if cp >= 32 and cp <= 126 then
-        set safeText to safeText & ch
-      end if
-    end repeat
-    set preview to safeText
-  on error errMsg
-    return "BODY_UNAVAILABLE: " & errMsg
-  end try
-  return preview
-end tell
-```
-
-If the returned value begins with "BODY_UNAVAILABLE:", the body could not be
-retrieved. In the confirmation table (Step 8), add a note for that email:
-"body unavailable — classified on subject only". Still log the task to TASKS.md (non-blocking).
-
-One call per matched email. Extract: any deadline language, due dates, urgency signals, and compliance escalation signals.
+If `body_text` is empty for a particular message (provider could not deliver
+it), note it in the confirmation table (Step 8) as
+"body unavailable — classified on subject only". Still log the task to
+TASKS.md (non-blocking).
 
 ## Step 6: Check Mac Calendar for Admin/Compliance emails with due dates
 
-For each Admin/Compliance match that has a detectable due date, run a fast calendar query using the calendar-query dispatcher. This avoids AppleScript's slow `whose` clause which times out on large calendars (7000+ events).
-
-Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+For each Admin/Compliance match that has a detectable due date, run a fast
+calendar query via the calendar-query dispatcher. This avoids AppleScript's
+slow `whose` clause which times out on large calendars (7000+ events).
 
 Calculate the number of days from today to the due date, then run:
 
-```applescript
-do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " " & quoted form of (daysAhead as text) & " summary 2>&1"
+```bash
+node ${plugin_root}/scripts/calendar-query.ts query "{calendarName}" {daysAhead} summary
 ```
 
 Where `calendarName` is read from `config/calendar-config.md`.
 
 Where `daysAhead` is the integer number of days from today to the due date.
 
-The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability). Extract the `AVAILABLE_DAYS` count from the `reason` text.
+The command returns JSON. Parse the `reason` field (a block of bullet text
+summarising business day availability). Extract the `AVAILABLE_DAYS` count
+from the `reason` text.
 
 Use the `AVAILABLE_DAYS` value for escalation logic:
 - If available days ≤ 3 → Q1
 - If available days > 3 → Q2
 
-A day is "available" if it is a business day (not weekend), not PTO/OOO, has < 7h of meetings, and has ≥ 2h free.
+A day is "available" if it is a business day (not weekend), not PTO/OOO, has
+< 7h of meetings, and has ≥ 2h free.
 
-If the dispatcher returns an error (e.g., "Calendar access not granted"), fall back to raw business day count from today to the due date and note: "Calendar check unavailable — escalation based on date only."
+If the dispatcher returns an error (e.g., "Calendar access not granted"),
+fall back to raw business day count from today to the due date and note:
+"Calendar check unavailable — escalation based on date only."
 
 If no due date found → assign Q2 and note: "No deadline found — defaulting to Q2. Confirm or adjust."
 

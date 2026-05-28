@@ -234,6 +234,22 @@ export interface EmailScanResult {
   messages: EmailMessage[];
 }
 
+/** Output returned by an email-source adapter after a listMailboxes attempt. */
+export interface ListMailboxesResult {
+  /** Outcome of the lookup. */
+  status: "success" | "error";
+  /**
+   * Human-readable explanation.
+   * Examples: "OK", "Account not found", "Permission denied".
+   */
+  reason: string;
+  /**
+   * Mailbox / label names found under the named account.
+   * Empty array when status="error" OR the account exposes no mailboxes.
+   */
+  mailboxes: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Dispatcher adapter interfaces
 //
@@ -256,9 +272,18 @@ export interface CalendarSourceAdapter {
 /**
  * Email-source adapter contract. Implemented by adapters/email/*.ts and
  * registered with the email-scan dispatcher.
+ *
+ * `listMailboxes` is optional — adapters whose underlying provider does not
+ * expose a separate mailbox-listing surface (e.g. stubs, or providers where
+ * mailboxes are implicit) may omit it. Callers MUST handle absence.
  */
 export interface EmailSourceAdapter {
   /** Provider name (e.g., "apple-mail", "google"). Matches config `provider:`. */
   name: string;
   scan(req: EmailScanRequest): Promise<EmailScanResult>;
+  /**
+   * Enumerate mailbox / label names under the named account.
+   * Apple Mail: returns mailbox display names. Gmail: returns label names.
+   */
+  listMailboxes?(account: string): Promise<ListMailboxesResult>;
 }

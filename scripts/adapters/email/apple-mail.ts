@@ -32,6 +32,7 @@ import type {
   EmailScanRequest,
   EmailScanResult,
   EmailMessage,
+  ListMailboxesResult,
 } from "../../adapter-types";
 
 export interface AppleMailAdapterConfig {
@@ -179,8 +180,115 @@ function parseLine(line: string): EmailMessage | null {
   };
 }
 
+/**
+ * Build the AppleScript text that enumerates mailbox names of the named
+ * account. Output: one mailbox name per line, written via the linefeed text
+ * item delimiter so the adapter can parse with a simple split.
+ *
+ * Mailbox names in Mail.app are short user-facing labels — they don't
+ * ordinarily contain pipes or newlines, so no field-level escaping is needed
+ * for this surface (unlike the scan() body fetch).
+ */
+function buildListMailboxesScript(account: string, timeoutSec: number): string {
+  const safeAccount = escapeAppleScriptString(account);
+  return `
+tell application "Mail"
+  with timeout of ${timeoutSec} seconds
+    set acct to first account whose name contains "${safeAccount}"
+    set boxNames to {}
+    repeat with mb in mailboxes of acct
+      set end of boxNames to name of mb
+    end repeat
+    set AppleScript's text item delimiters to linefeed
+    return boxNames as text
+  end timeout
+end tell
+`.trim();
+}
+
+/** Normalized outcome of a single osascript invocation. */
+interface OsascriptOutcome {
+  /**
+   * "spawn-sync-throw" — cp.spawn itself threw (binary missing on PATH at sync time).
+   * "spawn-async-error" — child emitted an "error" event after spawn returned.
+   * "timeout" — killed after timeout_ms elapsed.
+   * "exit" — child exited; check exitCode.
+   */
+  kind: "spawn-sync-throw" | "spawn-async-error" | "timeout" | "exit";
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  /** Populated for "spawn-sync-throw" and "spawn-async-error". */
+  error: NodeJS.ErrnoException | null;
+}
+
+/**
+ * Run an osascript invocation with bounded timeout and stream collection.
+ * Shared between scan() and listMailboxes() so the lifecycle / timeout /
+ * ENOENT handling lives in exactly one place (DRY).
+ */
+async function runOsascript(
+  osascriptPath: string,
+  scriptText: string,
+  timeoutMs: number,
+): Promise<OsascriptOutcome> {
+  let child: cp.ChildProcess;
+  try {
+    child = cp.spawn(osascriptPath, ["-e", scriptText], { shell: false });
+  } catch (err: unknown) {
+    return {
+      kind: "spawn-sync-throw",
+      stdout: "",
+      stderr: "",
+      exitCode: null,
+      error: err as NodeJS.ErrnoException,
+    };
+  }
+
+  // ENOENT can surface as an error event rather than a thrown exception.
+  const spawnErrorPromise = new Promise<NodeJS.ErrnoException | null>((resolve) => {
+    child.on("error", (err: NodeJS.ErrnoException) => resolve(err));
+    child.on("close", () => resolve(null));
+  });
+
+  const stdoutPromise = collectStream(child.stdout!);
+  const stderrPromise = collectStream(child.stderr!);
+
+  const exitPromise = new Promise<number | null>((resolve) => {
+    child.on("close", (code) => resolve(code));
+  });
+
+  let timedOut = false;
+  const timeoutHandle = setTimeout(() => {
+    timedOut = true;
+    child.kill("SIGTERM");
+  }, timeoutMs);
+
+  const [spawnError, stdout, stderr, exitCode] = await Promise.all([
+    spawnErrorPromise.then((err) => { clearTimeout(timeoutHandle); return err; }),
+    stdoutPromise,
+    stderrPromise,
+    exitPromise.then((code) => { clearTimeout(timeoutHandle); return code; }),
+  ]);
+
+  if (spawnError !== null) {
+    return {
+      kind: "spawn-async-error",
+      stdout,
+      stderr,
+      exitCode,
+      error: spawnError,
+    };
+  }
+  if (timedOut) {
+    return { kind: "timeout", stdout, stderr, exitCode, error: null };
+  }
+  return { kind: "exit", stdout, stderr, exitCode, error: null };
+}
+
 export function createAppleMailAdapter(cfg?: AppleMailAdapterConfig): {
   scan(req: EmailScanRequest): Promise<EmailScanResult>;
+  listMailboxes(account: string): Promise<ListMailboxesResult>;
 } {
   const osascriptPath = cfg?.osascript_path ?? "osascript";
   const timeoutMs = cfg?.timeout_ms ?? DEFAULT_TIMEOUT_MS;
@@ -189,52 +297,29 @@ export function createAppleMailAdapter(cfg?: AppleMailAdapterConfig): {
   return {
     async scan(req: EmailScanRequest): Promise<EmailScanResult> {
       const scriptText = buildScript(req, timeoutSec);
+      const outcome = await runOsascript(osascriptPath, scriptText, timeoutMs);
 
-      let child: cp.ChildProcess;
-      try {
-        child = cp.spawn(osascriptPath, ["-e", scriptText], { shell: false });
-      } catch (err: unknown) {
-        const e = err as NodeJS.ErrnoException;
-        if (e.code === "ENOENT") {
+      if (outcome.kind === "spawn-sync-throw") {
+        const err = outcome.error;
+        if (err?.code === "ENOENT") {
           return { status: "error", reason: "osascript binary not found", messages: [] };
         }
-        return { status: "error", reason: String((e as Error).message ?? err), messages: [] };
+        return {
+          status: "error",
+          reason: String(err?.message ?? err ?? "osascript spawn failed"),
+          messages: [],
+        };
       }
 
-      // ENOENT can surface as an error event rather than a thrown exception.
-      const spawnErrorPromise = new Promise<NodeJS.ErrnoException | null>((resolve) => {
-        child.on("error", (err: NodeJS.ErrnoException) => resolve(err));
-        child.on("close", () => resolve(null));
-      });
-
-      const stdoutPromise = collectStream(child.stdout!);
-      const stderrPromise = collectStream(child.stderr!);
-
-      const exitPromise = new Promise<number | null>((resolve) => {
-        child.on("close", (code) => resolve(code));
-      });
-
-      let timedOut = false;
-      const timeoutHandle = setTimeout(() => {
-        timedOut = true;
-        child.kill("SIGTERM");
-      }, timeoutMs);
-
-      const [spawnError, stdout, stderr, exitCode] = await Promise.all([
-        spawnErrorPromise.then((err) => { clearTimeout(timeoutHandle); return err; }),
-        stdoutPromise,
-        stderrPromise,
-        exitPromise.then((code) => { clearTimeout(timeoutHandle); return code; }),
-      ]);
-
-      if (spawnError !== null) {
-        if (spawnError.code === "ENOENT") {
+      if (outcome.kind === "spawn-async-error") {
+        const err = outcome.error;
+        if (err?.code === "ENOENT") {
           return { status: "error", reason: "osascript binary not found", messages: [] };
         }
-        return { status: "error", reason: spawnError.message, messages: [] };
+        return { status: "error", reason: err?.message ?? "osascript error", messages: [] };
       }
 
-      if (timedOut) {
+      if (outcome.kind === "timeout") {
         return {
           status: "error",
           reason: `osascript timed out after ${timeoutSec} seconds`,
@@ -242,13 +327,14 @@ export function createAppleMailAdapter(cfg?: AppleMailAdapterConfig): {
         };
       }
 
-      if (exitCode !== 0) {
-        const reason = stderr.trim() || `osascript exited ${exitCode ?? "null"}`;
+      if (outcome.exitCode !== 0) {
+        const reason =
+          outcome.stderr.trim() || `osascript exited ${outcome.exitCode ?? "null"}`;
         return { status: "error", reason, messages: [] };
       }
 
       const messages: EmailMessage[] = [];
-      for (const line of stdout.split("\n")) {
+      for (const line of outcome.stdout.split("\n")) {
         const trimmed = line.trim();
         if (!trimmed) continue;
         const msg = parseLine(trimmed);
@@ -258,6 +344,53 @@ export function createAppleMailAdapter(cfg?: AppleMailAdapterConfig): {
       }
 
       return { status: "success", reason: "OK", messages };
+    },
+
+    async listMailboxes(account: string): Promise<ListMailboxesResult> {
+      const scriptText = buildListMailboxesScript(account, timeoutSec);
+      const outcome = await runOsascript(osascriptPath, scriptText, timeoutMs);
+
+      if (outcome.kind === "spawn-sync-throw") {
+        const err = outcome.error;
+        if (err?.code === "ENOENT") {
+          return { status: "error", reason: "osascript binary not found", mailboxes: [] };
+        }
+        return {
+          status: "error",
+          reason: String(err?.message ?? err ?? "osascript spawn failed"),
+          mailboxes: [],
+        };
+      }
+
+      if (outcome.kind === "spawn-async-error") {
+        const err = outcome.error;
+        if (err?.code === "ENOENT") {
+          return { status: "error", reason: "osascript binary not found", mailboxes: [] };
+        }
+        return { status: "error", reason: err?.message ?? "osascript error", mailboxes: [] };
+      }
+
+      if (outcome.kind === "timeout") {
+        return {
+          status: "error",
+          reason: `osascript timed out after ${timeoutSec} seconds`,
+          mailboxes: [],
+        };
+      }
+
+      if (outcome.exitCode !== 0) {
+        const reason =
+          outcome.stderr.trim() || `osascript exited ${outcome.exitCode ?? "null"}`;
+        return { status: "error", reason, mailboxes: [] };
+      }
+
+      const mailboxes: string[] = [];
+      for (const line of outcome.stdout.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed) mailboxes.push(trimmed);
+      }
+
+      return { status: "success", reason: "OK", mailboxes };
     },
   };
 }
