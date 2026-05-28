@@ -233,3 +233,70 @@ describe("Prompt Contracts: command files mention canonical fields (Q2-003)", ()
     }
   }
 });
+
+// ── Test group 6: /memory + /forget contracts (Q2-006) — issue #42 ───────
+//
+// /memory is the user-facing inspection surface for everything under
+// memory/. /forget is the correction surface that mutates that state.
+// Pin: the three /memory show forms, and the three /forget scopes with
+// their confirmation gates. Silent erosion of any of these is the failure
+// mode issue #42 closes.
+
+describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
+  const memoryPath = path.join(repoRoot, "commands", "memory.md");
+  const forgetPath = path.join(repoRoot, "commands", "forget.md");
+
+  test("Q2-006: commands/memory.md exists", () => {
+    expect(fs.existsSync(memoryPath)).toBe(true);
+  });
+
+  test("Q2-006: commands/forget.md exists", () => {
+    expect(fs.existsSync(forgetPath)).toBe(true);
+  });
+
+  const memoryTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "index view (show with no arg)", pattern: /show.*no arg|no arg.*show|Step\s*2A/ },
+    { name: "alias detail view", pattern: /Step\s*2B|alias detail/i },
+    { name: "analytics view", pattern: /Step\s*2C|analytics view|show analytics/i },
+    { name: "reads memory/glossary.md", pattern: /memory\/glossary\.md/ },
+    { name: "reads memory/people/", pattern: /memory\/people\// },
+    { name: "writes nothing", pattern: /writes nothing|It writes nothing/i },
+  ];
+
+  for (const tok of memoryTokens) {
+    test(`Q2-006: commands/memory.md mentions "${tok.name}"`, () => {
+      const content = readContent(memoryPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/memory.md is missing required token "${tok.name}" ` +
+            `(pattern ${tok.pattern}). Issue #42: silent state surface ` +
+            `requires the three view forms + read-only guarantee.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
+
+  const forgetTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "forget alias scope", pattern: /Step\s*2A|Forget alias/i },
+    { name: "forget task scope", pattern: /Step\s*2B|Forget task/i },
+    { name: "forget all scope", pattern: /Step\s*2C|Forget all|forget all/i },
+    { name: "confirmation gate", pattern: /confirmation|confirm/i },
+    { name: "TASKS.md not modified", pattern: /TASKS\.md.*(not be touched|was not touched|never modified|is never modified)/i },
+    { name: "irreversible warning", pattern: /irreversible/i },
+  ];
+
+  for (const tok of forgetTokens) {
+    test(`Q2-006: commands/forget.md mentions "${tok.name}"`, () => {
+      const content = readContent(forgetPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/forget.md is missing required token "${tok.name}" ` +
+            `(pattern ${tok.pattern}). Issue #42: correction loop requires ` +
+            `all three scopes + confirmation gate + TASKS.md invariant.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
+});

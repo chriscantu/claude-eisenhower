@@ -67,6 +67,29 @@ Cross-reference the results against the TASKS.md overdue/due-today list (Section
 If the same alias + task title appears in both, suppress the memory-only entry.
 TASKS.md is the authoritative source for that entry.
 
+**Diff surfacing (issue #42)**
+After dedup, detect disagreements between memory and TASKS.md and surface them
+explicitly — do NOT silently prefer one source. A disagreement is any of:
+
+1. **Memory says Pending, TASKS.md says Done.** Same alias + task title, but
+   TASKS.md `State: Done` and memory `Status: Pending`. → "TASKS.md says
+   {title} for {alias} is Done ({date}); memory still shows it Pending. Run
+   `/forget task {title}` to clean up memory, or `/execute done {title}` was
+   never run."
+2. **Memory says Resolved, TASKS.md says Delegated (still in flight).** Same
+   alias + title, memory `Status: Resolved — {date}` but TASKS.md still in
+   `## Delegated`. → "Memory shows {title} for {alias} resolved {date}, but
+   it's still in TASKS.md ## Delegated. Confirm: did {alias} actually finish,
+   or was the memory entry stale?"
+3. **Check-by dates disagree.** Same alias + title in both, but `Check-by:`
+   differs. → "Check-by mismatch for {alias} / {title}: TASKS.md says
+   {date_a}, memory says {date_b}. TASKS.md wins for /today purposes."
+
+Render each disagreement inline as a one-line callout in Section 1 (Needs
+Attention) with a `⚠️ Memory:` prefix so the user can see what's drifted
+without losing the briefing flow. If no disagreements exist, render nothing
+about memory state.
+
 ---
 
 ## Step 4: Query today's calendar

@@ -192,6 +192,35 @@ The Reminders integration uses a swappable adapter — proven by a second shippe
 
 ---
 
+## Local data the plugin writes
+
+Everything stays on disk in the workspace. Nothing is sent anywhere. The plugin
+writes to these locations:
+
+| Path | Written by | Purpose |
+|------|-----------|---------|
+| `TASKS.md` | `/intake`, `/prioritize`, `/schedule`, `/delegate`, `/execute`, `/scan-email`, `/quick` | The task board itself. |
+| `memory/glossary.md` | `memory-manager` skill (called from `/delegate`, `/execute`, `/schedule`) | `## Stakeholder Follow-ups` table — one row per delegation. |
+| `memory/people/<alias>.md` | `memory-manager` skill | Per-delegate delegation log. Created on first delegation to that alias. |
+| `memory/today-log.md` | `/today` | One line per `/today` run with counts: overdue, inbox, on-plate, completed. PII-free (no aliases, titles, or emails). |
+| `memory/plan-log.md` | `/plan-week` | One line per `/plan-week` run with counts: committed, carryover, checkins, inbox, deferred. PII-free. |
+| `memory/review-log.md` | `/review-week` | One line per `/review-week` run with counts: inbox, active, delegated, overdue, calendar grade. PII-free. |
+
+The three `*-log.md` files are appended silently as a side-effect of running
+`/today`, `/plan-week`, and `/review-week`. They accumulate behavioral
+analytics that `/trends` (issue #43) reads to surface 4-week patterns.
+Listing them here addresses issue #42: silent writes to a user's workspace
+are a trust violation if undocumented, even when local-only.
+
+Inspect or correct memory anytime:
+
+- `/memory show` — alias list with pending counts + log summary
+- `/memory show <alias>` — render that delegate's file
+- `/memory show analytics` — summary of the three `*-log.md` files
+- `/forget <alias|task|all>` — clean correction loop (confirmation required)
+
+---
+
 ## What's coming
 
 - **Slack / Chat capture** — pull tasks directly from DMs and channel mentions instead of copy-pasting
