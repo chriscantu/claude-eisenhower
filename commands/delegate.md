@@ -219,6 +219,62 @@ this file — it does not, today.
 
 ---
 
+## Step 5c: Inferred-domain suggestion log
+
+After the user confirms the suggested delegate (Step 5 yes-path — NOT the
+override path which is already handled in Step 5b), extract candidate domain
+keywords from the task title + description and log them for later promotion
+into `config/stakeholders.yaml`.
+
+This implements the "learn-by-doing" loop from issue #39 without silently
+editing the stakeholders file. The plugin proposes; the user promotes.
+
+**Extraction rule:**
+
+1. Tokenize task title + description, lowercase, strip punctuation.
+2. Drop English stop-words and the words already present in the alias's
+   current `domains:` list in `config/stakeholders.yaml`.
+3. Keep only multi-character tokens that look like domain-of-work nouns
+   (skip pronouns, verbs of motion, common adjectives). When in doubt, keep
+   — the user filters at promotion time.
+4. Cap the suggestion list at 5 keywords per delegation; surface the highest-
+   signal tokens (longest, lowest stop-word affinity).
+
+If the extracted list is empty, skip this step silently — nothing to suggest.
+
+**Write to `memory/domain-suggestions.md`** (create with this header on
+first write):
+
+```
+# Domain suggestions — confirmed delegations
+
+Tasks you confirmed for each delegate, with inferred keywords. Review
+periodically and promote good keywords into config/stakeholders.yaml
+under the alias's `domains:` list.
+
+| Date       | Alias    | Task                       | Suggested domains             | Promoted? |
+|------------|----------|----------------------------|-------------------------------|-----------|
+```
+
+Append one row per confirmed delegation:
+
+```
+| 2026-05-28 | Jordan V.| Review API contract spec   | api, contract, spec, review   | ☐         |
+```
+
+Set `Promoted?` to `☐` always — the user manually flips to `☑` after editing
+`stakeholders.yaml`. The plugin never modifies the `Promoted?` column.
+
+**Do NOT edit `config/stakeholders.yaml`.** The file is PII-bearing and
+user-owned. The learn-by-doing loop is markdown-log + manual promotion,
+matching the existing override-learning pattern in Step 5b. If the user
+wants direct YAML writeback in the future, that's a follow-up issue with
+explicit consent prompts and a safe YAML mutator.
+
+`memory/` is gitignored, so this log stays local.
+
+---
+
 ## Step 6: Write the Delegated task record to TASKS.md
 
 Read TASKS.md from the workspace root. If the file does not exist, create it with

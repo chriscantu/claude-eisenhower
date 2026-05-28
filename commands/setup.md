@@ -182,20 +182,73 @@ Interpret the result:
 
 ---
 
-## Step 4: Stakeholders starter (optional)
+## Step 4: Stakeholders bootstrap (conversational)
+
+`/delegate` is the headline differentiator vs Things / Todoist / Sunsama — but
+it needs a populated `config/stakeholders.yaml`. Hand-editing
+name/alias/role/relationship/domains/capacity_signal/anti_domains for every
+report and peer is a 30–60 minute cold-start tax that gates the feature.
+
+This step replaces the manual edit with a one-person-at-a-time conversation
+that collects only the minimum fields needed to unblock `/delegate`. Domains
+fill in over time via the learn-by-doing log written by `/delegate` itself
+(see `commands/delegate.md` Step 5c).
 
 **Ask:**
-> "Do you want me to create a starter stakeholders file for /delegate? It'll have placeholder entries — you fill in your team's names, roles, and domains after setup. You can skip this and do it later.
+> "Want to add your team now so /delegate works on day one? I'll ask one
+> person at a time — name + role is enough to start. Or skip and I'll seed
+> a placeholder file you can edit later.
 >
-> 1. Yes, create a starter file
-> 2. No, skip for now"
+> 1. Add stakeholders now (recommended)
+> 2. Use placeholder template (edit yourself later)
+> 3. Skip — no /delegate yet"
 
-**If yes:**
+### Option 1 — Conversational bootstrap
+
+Loop one person at a time. For each, collect minimum-viable fields:
+
+1. **Name and display alias.** "Who's first? Give me a name (e.g. `Jordan
+   Vargas`) and how you refer to them in conversation (e.g. `Jordan V.`,
+   `Vargas`)."
+   - Parse into `name` (full) + `alias` list (display first, shorthand
+     after). Single string is allowed; expand to `["Display"]` if the user
+     only gives one form.
+2. **Relationship.** "Direct report, peer, vendor, or partner?"
+3. **Role (optional).** "Job title? (Enter to skip — I'll write `Unknown`.)"
+4. **Capacity signal (optional).** "High, medium, low, or unknown?"
+   Default `medium` if skipped.
+5. **Domains — leave blank.** Tell the user explicitly:
+   > "I'll leave domains blank for now. `/delegate` will suggest keywords
+   > from real tasks you assign — review them in
+   > `memory/domain-suggestions.md` and promote the ones that fit."
+
+After each person:
+> "Got [Display Alias] — [role or "no role"], [relationship]. Add another? (yes / done)"
+
+Loop until the user says `done`. Then write the collected entries to
+`config/stakeholders.yaml` using the schema in
+`config/stakeholders.yaml.example` — preserve the example file's leading
+comment block verbatim (it documents the schema), then write only the
+stakeholders the user named. Skip `notes`, `contact_hint`, and `anti_domains`
+fields on bootstrap; the user adds them as needed.
+
+Hold the collected list until the user confirms the full setup summary
+(Step 5) — do NOT write `config/stakeholders.yaml` mid-loop. If a downstream
+preview-before-write step exists (see issue #34), it surfaces the roster
+count ("Stakeholders: 4 entries collected") before the write commits.
+
+### Option 2 — Placeholder template
+
 - Read `config/stakeholders.yaml.example`
-- Write its full contents as-is to `config/stakeholders.yaml`
-- Say: "Created config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
+- Hold its full contents until the Step 5 confirmation, then write to
+  `config/stakeholders.yaml`
+- After write, say: "Created config/stakeholders.yaml with placeholder
+  entries. Edit it with your team's real information before using /delegate."
 
-**If no:** skip silently.
+### Option 3 — Skip
+
+Skip silently. `/delegate` will surface "no stakeholder graph" on first use
+and offer to bootstrap then.
 
 ---
 
