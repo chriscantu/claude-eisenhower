@@ -107,7 +107,7 @@ describe("Quick command: write contract (TEST-QUICK-005)", () => {
   });
 
   test("TEST-QUICK-005c: Q3 delegated entries do NOT auto-push to adapter", () => {
-    expect(c).toMatch(/Q3[\s\S]{0,200}(SHOULD NOT auto-push|Skip Step 6)/i);
+    expect(c).toMatch(/Q3[\s\S]{0,200}(skip \(Q3|delegate needs visibility)/i);
   });
 });
 
@@ -121,5 +121,62 @@ describe("Quick command: multi-task fallback (TEST-QUICK-006)", () => {
 
   test("TEST-QUICK-006b: empty $ARGUMENTS prompts the user, does not crash", () => {
     expect(c).toMatch(/Empty `\$ARGUMENTS`|empty arguments/i);
+  });
+
+  test("TEST-QUICK-006c: multi-task heuristic is concrete (verbs + joiners + distinct objects)", () => {
+    expect(c).toMatch(/≥2 imperative verbs/i);
+    expect(c).toMatch(/joined by `and`/);
+    expect(c).toMatch(/distinct direct object/i);
+  });
+});
+
+describe("Quick command: DRY — no AUTHORITY_PATTERNS restatement (TEST-QUICK-007)", () => {
+  const c = readFile("commands/quick.md");
+
+  test("TEST-QUICK-007a: does NOT inline the canonical authority phrases", () => {
+    expect(c).not.toMatch(/requires your sign-off/);
+    expect(c).not.toMatch(/sensitive communication on your behalf/);
+  });
+
+  test("TEST-QUICK-007b: cites scripts/delegate-core.ts as canonical source", () => {
+    expect(c).toMatch(/scripts\/delegate-core\.ts/);
+    expect(c).toMatch(/AUTHORITY_PATTERNS/);
+  });
+});
+
+describe("Quick command: single-confirmation contract preserved (TEST-QUICK-008)", () => {
+  const c = readFile("commands/quick.md");
+
+  test("TEST-QUICK-008a: Step 4 block includes Push to: line (push decision folded in)", () => {
+    expect(c).toMatch(/Push to:[\s\S]{0,160}adapter name/i);
+  });
+
+  test("TEST-QUICK-008b: Step 6 EXECUTES the declared decision, does NOT re-prompt", () => {
+    expect(c).toMatch(/EXECUTES that decision[\s\S]{0,60}does NOT re-prompt/i);
+  });
+
+  test("TEST-QUICK-008c: post-write edit requests do NOT unwind the write", () => {
+    expect(c).toMatch(/Post-write requests/i);
+    expect(c).toMatch(/does NOT retroactively unwind/i);
+  });
+});
+
+describe("Quick command: failure-mode fallbacks (TEST-QUICK-009)", () => {
+  const c = readFile("commands/quick.md");
+
+  test("TEST-QUICK-009a: malformed TASKS.md does NOT silently rewrite", () => {
+    expect(c).toMatch(/Malformed `TASKS\.md`[\s\S]{0,200}do NOT silently/i);
+  });
+
+  test("TEST-QUICK-009b: match-delegate non-zero exit falls back to manual prompt", () => {
+    expect(c).toMatch(/match-delegate\.ts[\s\S]{0,200}fall\s+back to a manual delegate prompt/i);
+  });
+
+  test("TEST-QUICK-009c: zero-parsed-fields input re-prompts, does not crash", () => {
+    expect(c).toMatch(/parses to zero task fields/i);
+  });
+
+  test("TEST-QUICK-009d: invalid_graph status surfaces message + manual fallback", () => {
+    expect(c).toMatch(/invalid_graph[\s\S]{0,200}surface[\s\S]{0,40}`message`/i);
   });
 });
