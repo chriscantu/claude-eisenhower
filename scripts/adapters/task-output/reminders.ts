@@ -24,7 +24,7 @@
  *   - SRP: only Reminders I/O via osascript
  *   - DI:  pluginRoot is injected; child_process is the only side-channel
  *
- * Spec: adapters/reminders.md
+ * Spec: adapters/task-output/reminders.md
  * Issues: #27, #38
  */
 
@@ -35,7 +35,7 @@ import type {
   PushResult,
   CompleteResult,
   TaskOutputAdapter,
-} from "../adapter-types";
+} from "../../adapter-types";
 
 export interface RemindersAdapterOptions {
   /** Plugin install root — used to locate the bundled AppleScripts. */

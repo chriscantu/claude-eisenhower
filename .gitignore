@@ -36,3 +36,9 @@ reports/
 
 # Claude Code local settings
 .claude/
+
+# Google OAuth credential + refresh-token files (#67 foundation)
+# Used by the calendar-source, email-source, and task-output Google adapters.
+google-client-secret*.json
+*-refresh-token.json
+.claude-eisenhower/

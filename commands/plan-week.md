@@ -122,12 +122,15 @@ Store these for output assembly. If the entry is older than 7 days, skip the bri
 Read `calendar_name` (from Step 1). If unavailable, skip to Step 5 with
 calendar = unavailable.
 
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+
 Run:
 ```applescript
-do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' 7 summary 2>&1"
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " 7 summary 2>&1"
 ```
 
-From the output, extract availability for each day in the planning window
+The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability).
+From the availability summary, extract availability for each day in the planning window
 (today through Friday, or Mon through Fri if running on Monday).
 
 Classify each day as:
@@ -138,7 +141,7 @@ Classify each day as:
 
 Count focus days: days rated `light` or `free`.
 
-Do NOT use AppleScript `whose` clause. Always use cal_query.swift.
+Do NOT use AppleScript `whose` clause. Always use the calendar-query dispatcher (it routes to EventKit by default on Mac).
 
 ---
 

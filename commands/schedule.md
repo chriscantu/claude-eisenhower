@@ -235,10 +235,11 @@ Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.m
 Read `calendar_name` from `config/calendar-config.md`, then run:
 
 ```applescript
-do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " " & quoted form of (daysAhead as text) & " summary 2>&1"
 ```
 
+The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability).
 This returns business day availability instantly regardless of calendar size.
-Do NOT use AppleScript's `whose` clause — it times out on large calendars.
+Do NOT use AppleScript's `whose` clause — it times out on large calendars. Always use the calendar-query dispatcher (it routes to EventKit by default on Mac).
 
 Offer: "Want me to check your calendar before committing to that day?"

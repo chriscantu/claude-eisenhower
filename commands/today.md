@@ -73,16 +73,19 @@ TASKS.md is the authoritative source for that entry.
 
 Read `calendar_name` (from Step 1). If unavailable, skip to Step 5 with calendar = unavailable.
 
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+
 Run:
 ```applescript
-do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' 1 full 2>&1"
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node calendar-query.ts query " & quoted form of calendarName & " 1 full 2>&1"
 ```
 
-From the output, extract today's events with start and end times.
+The command returns JSON. Parse the `events` array (each entry has `title`, `start`, `end`, `all_day`).
+From the events, extract today's events with start and end times.
 Identify the best available focus window: the largest gap between meetings
 (minimum 30 minutes to qualify as a window).
 
-Do NOT use AppleScript `whose` clause. Always use cal_query.swift.
+Do NOT use AppleScript `whose` clause. Always use the calendar-query dispatcher (it routes to EventKit by default on Mac).
 
 ---
 

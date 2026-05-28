@@ -26,11 +26,13 @@ config file from `config/`:
 **NEVER use AppleScript's `whose` clause to query any calendar.** It is O(n)
 on total event count and will time out on large calendars.
 
-Instead, always read `calendar_name` from `config/calendar-config.md`
-and use the EventKit-based Swift script:
+Instead, always route calendar queries through the dispatcher
+`scripts/calendar-query.ts`. The dispatcher reads the active provider from
+`config/calendar-config.md` and routes to the right adapter (EventKit on
+Mac default, Google Calendar when configured per #64).
 
 ```applescript
-do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '{calendar_name}' {DAYS} {FORMAT} 2>&1"
+do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query '{calendar_name}' {DAYS} {FORMAT} 2>&1"
 ```
 
 Where:
@@ -38,11 +40,18 @@ Where:
 - `{DAYS}` = number of days ahead to query (e.g., 7, 14, 90)
 - `{FORMAT}` = `full` (event list) or `summary` (business day availability)
 
+Output is JSON: `{status, reason, events[]}`. Parse with the LLM's JSON
+handling; do NOT regex the raw stdout.
+
 This applies to ALL calendar queries across all commands and skills, including:
 - `/scan-email` Step 6 (calendar availability check)
 - `/schedule` calendar integration
 - `/plan-week` from mac-calendar-planner
 - Any ad-hoc calendar lookups
+
+Do NOT call `scripts/cal_query.swift` directly — it is now an internal
+implementation detail of the EventKit adapter. The dispatcher is the
+single entry point.
 
 See `docs/adrs/calendar-performance-fix.md` for the full diagnosis and
 `docs/mac-calendar-planner-override.md` for mac-calendar-planner-specific usage.

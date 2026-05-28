@@ -13,7 +13,7 @@
  *   - REM-MAP-NNN field mapping (priority, due_date)
  *   - REM-TMO-NNN timeout / hung-osascript behavior
  *
- * Spec: adapters/reminders.md
+ * Spec: adapters/task-output/reminders.md
  * Issues: #27, #38
  */
 
@@ -24,7 +24,7 @@ jest.mock("child_process", () => ({
   spawnSync: (...args: unknown[]) => spawnSyncMock(...args),
 }));
 
-import { createRemindersAdapter } from "../../scripts/adapters/reminders";
+import { createRemindersAdapter } from "../../scripts/adapters/task-output/reminders";
 
 function mockOsascript(stdout: string, status = 0): void {
   spawnSyncMock.mockReturnValueOnce({

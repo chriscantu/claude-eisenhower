@@ -30,8 +30,9 @@ import type {
   CompleteResult,
 } from "./adapter-types";
 
-import { createMarkdownFileAdapter } from "./adapters/markdown-file";
-import { createRemindersAdapter } from "./adapters/reminders";
+import { createMarkdownFileAdapter } from "./adapters/task-output/markdown-file";
+import { createRemindersAdapter } from "./adapters/task-output/reminders";
+import { createGoogleTasksAdapter } from "./adapters/task-output/google";
 
 const registry = new Map<string, TaskOutputAdapter>();
 
@@ -124,6 +125,7 @@ export function bootstrapBuiltInAdapters(pluginRoot: string, configFile?: string
   registerAdapter(createRemindersAdapter({ pluginRoot }));
   const mdFile = resolveMarkdownFilePath(configFile);
   registerAdapter(createMarkdownFileAdapter({ file: mdFile }));
+  registerAdapter(createGoogleTasksAdapter());
 }
 
 function resolveMarkdownFilePath(configFile?: string): string {
