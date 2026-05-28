@@ -4,6 +4,9 @@ Covers `complete_reminder.applescript` and `push_reminder.applescript`.
 Run each test case from a terminal using `osascript`. All paths use the
 canonical repo location at `~/repos/claude-eisenhower/scripts/`.
 
+Both scripts emit single-line JSON on stdout. The `id` field carries the
+macOS Reminders x-coredata URI for the affected reminder.
+
 ---
 
 ## `complete_reminder.applescript`
@@ -12,11 +15,11 @@ Script arguments (positional):
 1. `title` — reminder name to find (case-insensitive)
 2. `list_name` — target Reminders list name
 
-Return values:
-- `"success: [title]"` — found and marked complete
-- `"success: [title] (already completed)"` — was already complete (idempotent)
-- `"skipped: [title] — not found in '[list]'"` — not found anywhere in the list
-- `"error: List '[name]' not found in Reminders"` — list does not exist
+Return values (single-line JSON on stdout):
+- `{"status":"success","title":"...","id":"x-coredata://..."}` — found and marked complete
+- `{"status":"success","title":"...","id":"x-coredata://...","note":"already_completed"}` — was already complete (idempotent)
+- `{"status":"skipped","title":"...","reason":"not_found"}` — not found anywhere in the list
+- `{"status":"error","title":"...","reason":"list_not_found: [list]"}` — list does not exist
 
 ---
 
@@ -33,9 +36,9 @@ osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript \
   "Eisenhower List"
 ```
 
-**Expected stdout**:
+**Expected stdout** (JSON; `id` value will vary):
 ```
-success: Fix deploy pipeline issue
+{"status":"success","title":"Fix deploy pipeline issue","id":"x-coredata://..."}
 ```
 
 **Teardown**: In Reminders, uncheck or delete the reminder if you want to
@@ -58,7 +61,7 @@ osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript \
 
 **Expected stdout**:
 ```
-success: Fix deploy pipeline issue (already completed)
+{"status":"success","title":"Fix deploy pipeline issue","id":"x-coredata://...","note":"already_completed"}
 ```
 
 **Teardown**: None required. The reminder stays in Reminders history.
@@ -79,7 +82,7 @@ osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript \
 
 **Expected stdout**:
 ```
-skipped: Nonexistent task title — not found in 'Eisenhower List'
+{"status":"skipped","title":"Nonexistent task title","reason":"not_found"}
 ```
 
 **Teardown**: None required.
@@ -100,7 +103,7 @@ osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript \
 
 **Expected stdout**:
 ```
-success: Check in: André re: API review
+{"status":"success","title":"Check in: André re: API review","id":"x-coredata://..."}
 ```
 
 **Teardown**: In Reminders, delete or uncheck the reminder if reuse is needed.
@@ -121,7 +124,7 @@ osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript \
 
 **Expected stdout**:
 ```
-error: List 'Does Not Exist List' not found in Reminders
+{"status":"error","title":"Any task title","reason":"list_not_found: Does Not Exist List"}
 ```
 
 **Teardown**: None required.
@@ -137,10 +140,10 @@ Script arguments (positional):
 4. `priority` — integer: `1` (High), `5` (Medium), `9` (Low)
 5. `list_name` — target Reminders list name
 
-Return values (raw stdout from the script):
-- `"success: [title]"` — reminder created
-- `"skipped: [title]"` — reminder already exists (dedup, case-insensitive)
-- `"error: [message]"` — something went wrong
+Return values (single-line JSON on stdout):
+- `{"status":"success","title":"...","id":"x-coredata://..."}` — reminder created
+- `{"status":"skipped","title":"...","reason":"already_exists","id":"x-coredata://..."}` — duplicate
+- `{"status":"error","title":"...","reason":"..."}` — something went wrong
 
 ---
 
@@ -161,7 +164,7 @@ osascript ~/repos/claude-eisenhower/scripts/push_reminder.applescript \
 
 **Expected stdout**:
 ```
-success: Review Q1 budget proposal
+{"status":"success","title":"Review Q1 budget proposal","id":"x-coredata://..."}
 ```
 
 **Teardown**: In Reminders, delete `"Review Q1 budget proposal"` from
@@ -187,7 +190,7 @@ osascript ~/repos/claude-eisenhower/scripts/push_reminder.applescript \
 
 **Expected stdout**:
 ```
-skipped: Review Q1 budget proposal
+{"status":"skipped","title":"Review Q1 budget proposal","reason":"already_exists","id":"x-coredata://..."}
 ```
 
 **Teardown**: Delete `"Review Q1 budget proposal"` from `"Eisenhower List"` in
@@ -212,7 +215,7 @@ osascript ~/repos/claude-eisenhower/scripts/push_reminder.applescript \
 
 **Expected stdout**:
 ```
-success: Auto-create list test task
+{"status":"success","title":"Auto-create list test task","id":"x-coredata://..."}
 ```
 
 **Verification**: Open the Mac Reminders app and confirm that a new list named
@@ -228,6 +231,11 @@ success: Auto-create list test task
 
 - All tests must be run from a macOS terminal with access to the Mac Reminders
   app. The app does not need to be open — `osascript` will launch it.
+- Stdout is single-line JSON. `id` values are macOS Reminders x-coredata URIs
+  and will differ between machines and reminder instances.
+- The adapter (`scripts/adapters/reminders.ts`) runs `osascript` with a 10s
+  timeout. On timeout the adapter returns `status: "error"` with reason
+  `"osascript timed out after 10000ms"` — handy when Reminders.app hangs.
 - The `complete_reminder.applescript` match is case-insensitive and
   whitespace-trimmed but the return value uses the original title string passed
   as argument 1, not the stored reminder name.

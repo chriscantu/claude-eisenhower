@@ -1,10 +1,9 @@
 /**
  * reminders.ts
  *
- * Mac Reminders task-output adapter. Thin wrapper around the existing
+ * Mac Reminders task-output adapter. Thin wrapper around the bundled
  * AppleScripts (`scripts/push_reminder.applescript`,
- * `scripts/complete_reminder.applescript`) — no behavior change for current
- * users; only the dispatch path changes.
+ * `scripts/complete_reminder.applescript`).
  *
  * Adapter contract:
  *   - `pushTask(record)` → osascript push_reminder.applescript
@@ -17,12 +16,16 @@
  * `due_date: null` is passed to AppleScript as the literal string "none",
  * matching the existing AppleScript contract.
  *
+ * Issue #38: AppleScripts emit single-line JSON on stdout; the adapter parses
+ * it deterministically. osascript runs under a 10s timeout so a hung
+ * Reminders.app cannot block /schedule indefinitely.
+ *
  * SOLID:
  *   - SRP: only Reminders I/O via osascript
  *   - DI:  pluginRoot is injected; child_process is the only side-channel
  *
  * Spec: adapters/reminders.md
- * Issue: #27
+ * Issues: #27, #38
  */
 
 import { spawnSync } from "child_process";
@@ -37,7 +40,11 @@ import type {
 export interface RemindersAdapterOptions {
   /** Plugin install root — used to locate the bundled AppleScripts. */
   pluginRoot: string;
+  /** osascript timeout in milliseconds. Default 10_000. */
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 function priorityToInt(priority: "high" | "medium"): string {
   return priority === "high" ? "1" : "5";
@@ -51,36 +58,56 @@ interface OsascriptOutcome {
   stdout: string;
   stderr: string;
   status: number | null;
+  timedOut: boolean;
 }
 
-function runOsascript(script: string, args: string[]): OsascriptOutcome {
-  const res = spawnSync("osascript", [script, ...args], { encoding: "buffer" });
+function runOsascript(
+  script: string,
+  args: string[],
+  timeoutMs: number
+): OsascriptOutcome {
+  const res = spawnSync("osascript", [script, ...args], {
+    encoding: "buffer",
+    timeout: timeoutMs,
+    killSignal: "SIGTERM",
+  });
+  // spawnSync sets `signal` (and clears `status`) when killed by timeout.
+  const timedOut =
+    res.status === null && (res.signal === "SIGTERM" || res.signal === "SIGKILL");
   return {
     stdout: res.stdout?.toString("utf-8") ?? "",
     stderr: res.stderr?.toString("utf-8") ?? "",
     status: res.status,
+    timedOut,
   };
 }
 
-/**
- * Parse the conventional `<status>: <message>` prefix used by both bundled
- * AppleScripts. Returns `{ kind, message }` with kind ∈ success|skipped|error.
- */
-function parseScriptStdout(stdout: string): {
-  kind: "success" | "skipped" | "error";
-  message: string;
-} {
+interface AppleScriptJson {
+  status: "success" | "skipped" | "error";
+  title?: string;
+  id?: string;
+  reason?: string;
+  note?: string;
+}
+
+function parseScriptJson(stdout: string): AppleScriptJson | null {
   const line = stdout.trim();
-  if (line.startsWith("success:")) {
-    return { kind: "success", message: line.slice("success:".length).trim() };
+  if (!line) return null;
+  try {
+    const parsed = JSON.parse(line);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      (parsed.status === "success" ||
+        parsed.status === "skipped" ||
+        parsed.status === "error")
+    ) {
+      return parsed as AppleScriptJson;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  if (line.startsWith("skipped:")) {
-    return { kind: "skipped", message: line.slice("skipped:".length).trim() };
-  }
-  if (line.startsWith("error:")) {
-    return { kind: "error", message: line.slice("error:".length).trim() };
-  }
-  return { kind: "error", message: line || "Unknown osascript outcome" };
 }
 
 export function createRemindersAdapter(
@@ -88,6 +115,7 @@ export function createRemindersAdapter(
 ): TaskOutputAdapter {
   const pushScript = `${opts.pluginRoot}/scripts/push_reminder.applescript`;
   const completeScript = `${opts.pluginRoot}/scripts/complete_reminder.applescript`;
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   return {
     name: "reminders",
@@ -100,47 +128,69 @@ export function createRemindersAdapter(
         priorityToInt(record.priority),
         record.list_name,
       ];
-      const out = runOsascript(pushScript, args);
-      if (out.status !== 0 && out.stdout.trim().length === 0) {
+      const out = runOsascript(pushScript, args, timeoutMs);
+      if (out.timedOut) {
         return {
           status: "error",
-          reason: out.stderr.trim() || `osascript exited ${out.status}`,
+          reason: `osascript timed out after ${timeoutMs}ms`,
           id: "",
         };
       }
-      const parsed = parseScriptStdout(out.stdout);
-      if (parsed.kind === "success") {
-        return { status: "success", reason: "Created", id: parsed.message };
+      const parsed = parseScriptJson(out.stdout);
+      if (!parsed) {
+        const reason =
+          out.stderr.trim() ||
+          out.stdout.trim() ||
+          `osascript exited ${out.status} with no parseable output`;
+        return { status: "error", reason, id: "" };
       }
-      if (parsed.kind === "skipped") {
-        return { status: "skipped", reason: "Already exists", id: "" };
+      if (parsed.status === "success") {
+        return { status: "success", reason: "Created", id: parsed.id ?? "" };
       }
-      return { status: "error", reason: parsed.message, id: "" };
+      if (parsed.status === "skipped") {
+        return {
+          status: "skipped",
+          reason: "Already exists",
+          id: parsed.id ?? "",
+        };
+      }
+      return {
+        status: "error",
+        reason: parsed.reason ?? "Unknown osascript error",
+        id: "",
+      };
     },
 
     async completeTask(
       title: string,
       list_name: string
     ): Promise<CompleteResult> {
-      const out = runOsascript(completeScript, [title, list_name]);
-      if (out.status !== 0 && out.stdout.trim().length === 0) {
+      const out = runOsascript(completeScript, [title, list_name], timeoutMs);
+      if (out.timedOut) {
         return {
           status: "error",
-          reason: out.stderr.trim() || `osascript exited ${out.status}`,
+          reason: `osascript timed out after ${timeoutMs}ms`,
         };
       }
-      const parsed = parseScriptStdout(out.stdout);
-      if (parsed.kind === "success") {
-        const alreadyCompleted = /\(already completed\)/i.test(parsed.message);
+      const parsed = parseScriptJson(out.stdout);
+      if (!parsed) {
+        const reason =
+          out.stderr.trim() ||
+          out.stdout.trim() ||
+          `osascript exited ${out.status} with no parseable output`;
+        return { status: "error", reason };
+      }
+      if (parsed.status === "success") {
         return {
           status: "success",
-          reason: alreadyCompleted ? "Already completed" : "Completed",
+          reason:
+            parsed.note === "already_completed" ? "Already completed" : "Completed",
         };
       }
-      if (parsed.kind === "skipped") {
-        return { status: "skipped", reason: parsed.message || "Not found" };
+      if (parsed.status === "skipped") {
+        return { status: "skipped", reason: parsed.reason ?? "Not found" };
       }
-      return { status: "error", reason: parsed.message };
+      return { status: "error", reason: parsed.reason ?? "Unknown osascript error" };
     },
   };
 }
