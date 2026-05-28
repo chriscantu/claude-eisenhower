@@ -81,12 +81,15 @@ TASKS.md is the authoritative source for that entry.
 
 Read `calendar_name` (from Step 1). If unavailable, skip to Step 5 with calendar = unavailable.
 
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+
 Run:
 ```applescript
-do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' 14 summary 2>&1"
+do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query " & quoted form of calendarName & " 14 summary 2>&1"
 ```
 
-From the output, extract availability for next Monday through Friday (the coming full
+The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability).
+From the availability summary, extract availability for next Monday through Friday (the coming full
 calendar week). Classify each day as:
 - `busy` — mostly committed, limited capacity
 - `moderate` — some meetings, room for focused work
@@ -99,9 +102,9 @@ Compute aggregate calendar grade for analytics:
 - `light` — 3 or more light/free days
 - `busy` — 3 or more busy days
 - `moderate` — otherwise
-- `unavailable` — if calendar config was missing or script errored
+- `unavailable` — if calendar config was missing or dispatcher errored
 
-Do NOT use AppleScript `whose` clause. Always use cal_query.swift.
+Do NOT use AppleScript `whose` clause. Always use the calendar-query dispatcher (it routes to EventKit by default on Mac).
 
 ---
 

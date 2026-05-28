@@ -144,30 +144,21 @@ One call per matched email. Extract: any deadline language, due dates, urgency s
 
 ## Step 6: Check Mac Calendar for Admin/Compliance emails with due dates
 
-For each Admin/Compliance match that has a detectable due date, run a fast calendar query using the EventKit-based Swift script. This avoids AppleScript's slow `whose` clause which times out on large calendars (7000+ events).
+For each Admin/Compliance match that has a detectable due date, run a fast calendar query using the calendar-query dispatcher. This avoids AppleScript's slow `whose` clause which times out on large calendars (7000+ events).
 
 Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
 
 Calculate the number of days from today to the due date, then run:
 
 ```applescript
-do shell script "swift {plugin_root}/scripts/cal_query.swift '{calendar_name}' {DAYS_AHEAD} summary 2>&1"
+do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query " & quoted form of calendarName & " " & quoted form of (daysAhead as text) & " summary 2>&1"
 ```
 
-Where `{calendar_name}` is read from `config/calendar-config.md`.
+Where `calendarName` is read from `config/calendar-config.md`.
 
-Where `{DAYS_AHEAD}` is the integer number of days from today to the due date.
+Where `daysAhead` is the integer number of days from today to the due date.
 
-The script returns a structured summary:
-```
-DAY_SUMMARY:
-2026-02-19|9.0h_busy|-1.0h_free|available
-2026-02-20|7.5h_busy|0.5h_free|PTO
-...
-BUSINESS_DAYS: 5
-PTO_DAYS: 1
-AVAILABLE_DAYS: 2
-```
+The command returns JSON. Parse the `reason` field (a block of bullet text summarising business day availability). Extract the `AVAILABLE_DAYS` count from the `reason` text.
 
 Use the `AVAILABLE_DAYS` value for escalation logic:
 - If available days ≤ 3 → Q1
@@ -175,7 +166,7 @@ Use the `AVAILABLE_DAYS` value for escalation logic:
 
 A day is "available" if it is a business day (not weekend), not PTO/OOO, has < 7h of meetings, and has ≥ 2h free.
 
-If the script returns an error (e.g., "Calendar access not granted"), fall back to raw business day count from today to the due date and note: "Calendar check unavailable — escalation based on date only."
+If the dispatcher returns an error (e.g., "Calendar access not granted"), fall back to raw business day count from today to the due date and note: "Calendar check unavailable — escalation based on date only."
 
 If no due date found → assign Q2 and note: "No deadline found — defaulting to Q2. Confirm or adjust."
 
