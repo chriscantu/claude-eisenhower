@@ -205,6 +205,8 @@ writes to these locations:
 | `memory/today-log.md` | `/today` | One line per `/today` run with counts: overdue, inbox, on-plate, completed. PII-free (no aliases, titles, or emails). |
 | `memory/plan-log.md` | `/plan-week` | One line per `/plan-week` run with counts: committed, carryover, checkins, inbox, deferred. PII-free. |
 | `memory/review-log.md` | `/review-week` | One line per `/review-week` run with counts: inbox, active, delegated, overdue, calendar grade. PII-free. |
+| `memory/briefing-events.jsonl` | `session-briefing` (auto, per session start) | One JSON line per briefing event. Used by `scripts/session-briefing.ts` for per-day dedup so the same briefing isn't re-shown. Gitignored, append-only. |
+| `{google_token_path}` (e.g., `config/google-token.json`) | `scripts/google-auth.ts` | OAuth refresh token cache for Google Calendar / Gmail providers. Written with file mode `0600`. Path is configured per integration in the relevant `config/*-config.md`. Only created if you opt into a Google provider via `/setup`. |
 
 The three `*-log.md` files are appended silently as a side-effect of running
 `/today`, `/plan-week`, and `/review-week`. They accumulate behavioral

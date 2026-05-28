@@ -49,11 +49,22 @@ to cancel:
 ```
 
 Wait for user response. If response does NOT match the alias name exactly
-(case-sensitive), render `Cancelled.` and stop. If it matches:
+(case-sensitive), render `Cancelled.` and stop. If it matches, execute in
+THIS exact order (glossary first, then unlink) so partial-state biases to
+the discoverable failure mode:
 
-1. Delete `memory/people/{alias-filename}.md`.
-2. Remove every row in `memory/glossary.md` `## Stakeholder Follow-ups`
-   table where the alias column matches.
+1. Remove every row in `memory/glossary.md` `## Stakeholder Follow-ups`
+   table where the alias column matches. If this write fails, surface
+   the error verbatim and STOP — the per-person file still exists, so
+   the next `/memory show {alias}` will surface the unchanged state for
+   the user to retry.
+2. Delete `memory/people/{alias-filename}.md`. If this delete fails
+   after step 1 succeeded, surface the error AND render: `Partial state:
+   glossary rows for "{alias}" were cleared, but
+   memory/people/{alias-filename}.md remains. Re-run /forget {alias} or
+   delete the file manually.` The orphan file is visible to
+   `/memory show {alias}` (Step 2B detects the absence-of-glossary-row
+   case), so the user can recover.
 3. Render: `Cleared {N} memory entries for "{alias}". TASKS.md was not
    touched — Delegated tasks still appear on the task board.`
 
@@ -77,13 +88,25 @@ This will delete this row:
 
 Also from memory/people/{alias-filename}.md.
 
-Type 'yes' to confirm, or press Enter to cancel:
+Type the task title exactly to confirm, or press Enter to cancel:
 ```
 
-If response is not literally `yes`, cancel. Otherwise:
+The confirmation token is the verbatim task title (case-sensitive) — NOT
+`yes`. A bare "yes" is the most likely conversational affirmative to
+appear by accident in a multi-turn loop or after an unrelated clarifying
+question, so it would create a destructive misfire path. Echoing the
+title forces an intentional action.
 
-1. Remove the row from `memory/glossary.md`.
-2. Remove the matching row from `memory/people/{alias-filename}.md`.
+If the response does NOT match the task title exactly, render `Cancelled.`
+and stop. If it matches, execute in this order (glossary first):
+
+1. Remove the row from `memory/glossary.md`. On failure: surface error,
+   stop.
+2. Remove the matching row from `memory/people/{alias-filename}.md`. On
+   failure after step 1: surface error AND render: `Partial state: the
+   glossary row was cleared, but the matching row in
+   memory/people/{alias-filename}.md remains. Re-run /forget task
+   "{title}" or remove the row manually.`
 3. Render: `Cleared the memory entry for "{task title}". TASKS.md was not
    touched.`
 
@@ -105,13 +128,23 @@ This is irreversible. Type 'forget all' exactly to confirm, or press Enter
 to cancel:
 ```
 
-If response is not literally `forget all`, cancel. Otherwise:
+If response is not literally `forget all`, cancel. Otherwise, execute in
+this order. Each step is independent — on any failure, surface the error
+verbatim and continue to the remaining steps (best-effort wipe; partial
+state is recoverable because the user can re-run `/forget all`):
 
 1. Delete `memory/glossary.md`.
 2. Delete every file under `memory/people/`.
 3. Delete `memory/today-log.md`, `memory/plan-log.md`, `memory/review-log.md`
    (skip silently if any is already absent).
-4. Render: `Memory cleared. TASKS.md was not touched.`
+4. Render: `Memory cleared. TASKS.md was not touched.` If any step
+   reported an error, append the list of paths that could not be
+   deleted so the user can clean up manually.
+
+Note: historical resolved delegation entries are lost permanently —
+glossary and per-person files can be partially reconstructed from
+TASKS.md `## Delegated` (current state) but historical resolved entries
+exist nowhere else.
 
 ---
 

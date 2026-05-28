@@ -284,6 +284,14 @@ describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
     { name: "confirmation gate", pattern: /confirmation|confirm/i },
     { name: "TASKS.md not modified", pattern: /TASKS\.md.*(not be touched|was not touched|never modified|is never modified)/i },
     { name: "irreversible warning", pattern: /irreversible/i },
+    // Defense-in-depth: each scope uses a DIFFERENT distinctive confirmation
+    // token (bare "yes" is too prone to conversational misfire — see code
+    // review of PR #91). Pin: task scope echoes the task title verbatim.
+    { name: "task scope echoes title (not 'yes')", pattern: /task title exactly/i },
+    // Atomicity contract: each multi-file scope must specify operation order
+    // that biases partial-state to discoverable failure (glossary first, then
+    // unlink) and surface errors verbatim rather than claiming success.
+    { name: "partial-state recovery path", pattern: /partial\s*state/i },
   ];
 
   for (const tok of forgetTokens) {
