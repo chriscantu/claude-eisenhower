@@ -274,3 +274,99 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
     });
   }
 });
+
+// ── Test group 7: /help index ↔ commands/ bijection (Q2-007) — issue #41 ─
+//
+// /help is the canonical command discovery surface. The Step 3 index hardcodes
+// a list of /command rows; if a new command ships without an index update, it
+// is silently undiscoverable. Conversely, if the index lists a command that
+// doesn't exist on disk, first-run users hit "command not found." This contract
+// enforces a bidirectional match between commands/*.md and /help's index.
+//
+// Allowlist captures arg-form variants (e.g., "/status awaiting" is the
+// `awaiting` keyword arg on /status, not a separate command file) so the
+// bidirection check doesn't flag legitimate sub-commands.
+
+const HELP_INDEX_ARG_FORM_ALLOWLIST: ReadonlyArray<string> = [
+  "status awaiting",
+];
+
+describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () => {
+  const helpPath = path.join(repoRoot, "commands", "help.md");
+  const helpContent = fs.existsSync(helpPath) ? readContent(helpPath) : "";
+
+  // Discover the Command index block — anchor on the Step 3 heading so casual
+  // prose mentions of "command index" elsewhere don't match. The fenced block
+  // immediately follows the step heading; capture between the opening and
+  // closing ``` markers.
+  const indexBlockMatch = helpContent.match(
+    /^##\s+Step\s+3:\s+Command\s+index[\s\S]*?```([\s\S]*?)```/im
+  );
+  const indexBlock = indexBlockMatch?.[1] ?? "";
+
+  // Extract every /token from index block. Token = leading slash + name +
+  // optional space-separated arg word(s).
+  const indexedSlashes = new Set(
+    Array.from(indexBlock.matchAll(/\s\/([a-z][a-z0-9-]*(?:\s+[a-z][a-z0-9-]*)?)\b/g))
+      .map((m) => m[1])
+  );
+
+  // Discover all commands/*.md basenames except help.md itself.
+  const commandBasenames = fs
+    .readdirSync(path.join(repoRoot, "commands"))
+    .filter((f) => f.endsWith(".md") && f !== "help.md")
+    .map((f) => f.replace(/\.md$/, ""));
+
+  test("Q2-007: every commands/*.md appears in /help index", () => {
+    const missing = commandBasenames.filter((cmd) => !indexedSlashes.has(cmd));
+    if (missing.length > 0) {
+      throw new Error(
+        `commands/help.md Step 3 index is missing these commands: ${missing.join(", ")}. ` +
+          `Add a row under the appropriate lifecycle section. Without it, new users ` +
+          `cannot discover the command from /help.`
+      );
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("Q2-007: every command listed in /help resolves to a commands/*.md file or allowlisted arg form", () => {
+    const dangling = Array.from(indexedSlashes).filter((slash) => {
+      // Direct command file?
+      if (commandBasenames.includes(slash) || slash === "help") return false;
+      // Allowlisted arg-form (e.g., "status awaiting" is /status with arg)
+      if (HELP_INDEX_ARG_FORM_ALLOWLIST.includes(slash)) return false;
+      return true;
+    });
+    if (dangling.length > 0) {
+      throw new Error(
+        `commands/help.md Step 3 index lists commands that don't exist on disk: ${dangling.join(", ")}. ` +
+          `Either add the missing commands/<name>.md file, or remove the rows from /help. ` +
+          `Allowlist arg-form variants in HELP_INDEX_ARG_FORM_ALLOWLIST if intentional.`
+      );
+    }
+    expect(dangling).toEqual([]);
+  });
+
+  test("Q2-007: docs/empty-states.md audit table has a row per commands/*.md", () => {
+    const auditPath = path.join(repoRoot, "docs", "empty-states.md");
+    if (!fs.existsSync(auditPath)) {
+      throw new Error(`docs/empty-states.md is missing — empty-state audit registry not found.`);
+    }
+    const audit = readContent(auditPath);
+    // Match `/<name>` cell in the table. Strip arg forms; only count base commands.
+    const auditedSlashes = new Set(
+      Array.from(audit.matchAll(/\|\s*`\/([a-z][a-z0-9-]*)/g)).map((m) => m[1])
+    );
+    const missing = commandBasenames.filter(
+      (cmd) => !auditedSlashes.has(cmd) && cmd !== "help"
+    );
+    // help.md is allowed to be self-referential (the audit IS its surface).
+    if (missing.length > 0) {
+      throw new Error(
+        `docs/empty-states.md audit table is missing rows for: ${missing.join(", ")}. ` +
+          `Per the "Adding a new command" checklist, each commands/*.md needs a row.`
+      );
+    }
+    expect(missing).toEqual([]);
+  });
+});

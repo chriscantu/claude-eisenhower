@@ -65,7 +65,6 @@ When you're ready for real work:
   - /intake to capture, or /scan-email to import from your inbox
   - /today for a daily briefing
   - /plan-week (Monday) and /review-week (Friday) for the weekly rhythm
-  - /trends for a 4-week behavioral retro
   - /help any time
 ```
 
@@ -114,8 +113,6 @@ below — these mirror the `description:` field of each command file:
 ─── Reflect ──────────────────────────────────────────────
   /review-week   Friday weekly review
   /status        Org-wide status — projects, delegates, risks
-  /status awaiting  External-blocker rollup
-  /trends        4-week behavioral retro
 
 ─── Setup ────────────────────────────────────────────────
   /setup         First-time configuration (stakeholders, adapters)
