@@ -142,6 +142,7 @@ const FIELD_ORDER: readonly string[] = [
   "Priority",
   "State",
   "Owner",
+  "Awaiting",
   "Check-by",
   "Scheduled",
   "Action",
@@ -280,4 +281,36 @@ export function renderTasks(tasks: ParsedTasks): string {
   }
   // Trailing newline; collapse consecutive blanks at EOF to exactly one.
   return out.join("\n").replace(/\n+$/, "\n");
+}
+
+/**
+ * Enforces record-level invariants from `docs/specs/tasks-schema-spec.md`.
+ *
+ * Currently enforced (issue #44):
+ *   - SCHEMA-010: Active task with Awaiting requires a YYYY-MM-DD Check-by
+ *   - SCHEMA-011: Awaiting field is invalid outside State: Active
+ *
+ * Throws an Error naming the violated rule. Callers writing records to
+ * TASKS.md SHOULD invoke this before serializing — the parser is lenient
+ * by design (renders unknown fields, tolerates partial records) so this
+ * validator is the enforcement seam.
+ */
+export function validateTaskRecord(fields: Record<string, string>): void {
+  const state = fields.State;
+  const hasAwaiting = "Awaiting" in fields && fields.Awaiting.trim().length > 0;
+
+  if (hasAwaiting && state !== "Active") {
+    throw new Error(
+      `SCHEMA-011: Awaiting field is only valid on State: Active (got State: ${state ?? "<unset>"}).`
+    );
+  }
+
+  if (hasAwaiting && state === "Active") {
+    const checkBy = fields["Check-by"]?.trim() ?? "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkBy)) {
+      throw new Error(
+        `SCHEMA-010: Active task with Awaiting requires Check-by as YYYY-MM-DD (got Check-by: ${checkBy || "<unset>"}).`
+      );
+    }
+  }
 }

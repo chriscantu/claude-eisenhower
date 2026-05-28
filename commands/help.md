@@ -65,6 +65,8 @@ When you're ready for real work:
   - /intake to capture, or /scan-email to import from your inbox
   - /today for a daily briefing
   - /plan-week (Monday) and /review-week (Friday) for the weekly rhythm
+  - /trends for a 4-week behavioral retro
+  - /memory show to inspect what's tracked, /forget to correct it
   - /help any time
 ```
 
@@ -113,6 +115,12 @@ below — these mirror the `description:` field of each command file:
 ─── Reflect ──────────────────────────────────────────────
   /review-week   Friday weekly review
   /status        Org-wide status — projects, delegates, risks
+  /status awaiting  External-blocker rollup
+  /trends        4-week behavioral retro
+
+─── Memory ───────────────────────────────────────────────
+  /memory        Inspect local memory (delegate logs, analytics)
+  /forget        Correct memory — clear by alias, task, or all
 
 ─── Setup ────────────────────────────────────────────────
   /setup         First-time configuration (stakeholders, adapters)

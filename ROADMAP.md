@@ -92,7 +92,7 @@ These were considered and deliberately excluded to keep the plugin focused.
 | Multi-delegate splitting of a single task | Adds coordination overhead; better to break the task at `/intake` |
 | Building stakeholder graph from task history | Interesting v2 idea; requires enough history to be useful — premature now |
 | Automatic follow-up scheduling (no user prompt) | Follow-up cadence is a judgment call; always ask before creating |
-| Blocked state | Anti-pattern — creates a holding area with no forcing function. Every stuck task needs an action decision (escalate / re-delegate / drop). |
+| Blocked state | Anti-pattern — creates a holding area with no forcing function. Every stuck task needs an action decision (escalate / re-delegate / drop). External-wait cases (vendor, security review, legal, peer's deliverable) are handled by the `Awaiting:` field on Active tasks with a required `Check-by:` date — same forcing function as Delegated. See `docs/specs/tasks-schema-spec.md` Decision 6 and issue #44. |
 | **R7** — Fix hardcoded `~/repos/claude-eisenhower/` paths in `docs/applescript-test-protocol.md` | Low impact: test protocol is a developer reference, not runtime code. Paths are illustrative; fixing them would require templating the doc at every install. Cost > benefit. |
 
 ---

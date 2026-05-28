@@ -41,6 +41,8 @@ the rules below. When you add or modify a command, update this audit in the same
 | `/quick` | Creates TASKS.md if absent | n/a (single-task pipeline) | Same as `/prioritize` for stakeholders; same as `/schedule` for adapter | One-shot capture+classify+schedule. |
 | `/setup` | n/a (setup writes initial config) | n/a | n/a — this IS the config bootstrap | First-run config command. |
 | `/trends` | "TASKS.md not found." renders for Pattern 3; other patterns continue from logs | "No analytics data yet." when all three log files missing; per-pattern "insufficient data" when partial | n/a | Issue #43. Read-only, degrades gracefully. |
+| `/memory` | "No memory entries yet. Delegations recorded by /delegate, /schedule, and /execute will appear here." | Per view: alias arg missing memory file → "No memory entries for '{arg}'"; analytics view marks each missing log as "not present yet" | n/a | Issue #42. Read-only inspection surface; writes nothing. |
+| `/forget` | "No memory entries for '{arg}'." for alias/task scope when no match | Confirmation gates fire even on empty matches; bad confirmation token → "Cancelled." | n/a | Issue #42. Destructive correction loop; TASKS.md never touched. |
 
 ## Triage-gate rule (issue #41 specific)
 

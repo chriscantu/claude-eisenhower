@@ -234,6 +234,58 @@ describe("Prompt Contracts: command files mention canonical fields (Q2-003)", ()
   }
 });
 
+// ── Test group 4: /trends source contract (Q2-004) — issue #43 ───────────
+//
+// /trends is a read-only command (writes nothing). Its value depends on
+// reading all three analytics logs PLUS TASKS.md. Dropping any source
+// silently degrades the report. This contract pins the source paths in the
+// spec so a maintainer cannot quietly remove a log read without the test
+// flagging it.
+
+describe("Prompt Contracts: /trends source contract (Q2-004)", () => {
+  const trendsPath = path.join(repoRoot, "commands", "trends.md");
+
+  test("Q2-004: commands/trends.md exists", () => {
+    expect(fs.existsSync(trendsPath)).toBe(true);
+  });
+
+  const requiredSources: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "today-log path", pattern: /memory\/today-log\.md/ },
+    { name: "plan-log path", pattern: /memory\/plan-log\.md/ },
+    { name: "review-log path", pattern: /memory\/review-log\.md/ },
+    { name: "TASKS.md", pattern: /TASKS\.md/ },
+    // Pattern headers anchored to H3 form. A rename like "Throughput" →
+    // "Velocity" produces a sharp failure rather than fuzzy substring drift.
+    { name: "Pattern 1 — Throughput trend (H3)", pattern: /^###\s+Pattern\s+1\s+—\s+Throughput\s+trend/m },
+    { name: "Pattern 2 — Defer/cut rate (H3)", pattern: /^###\s+Pattern\s+2\s+—\s+Defer\/cut\s+rate/m },
+    { name: "Pattern 3 — Overdue delegation rate by alias (H3)", pattern: /^###\s+Pattern\s+3\s+—\s+Overdue\s+delegation\s+rate\s+by\s+alias/m },
+    // Pin the field tokens /trends reads from each producer log. If a
+    // producer renames a field (e.g., /today changes "completed:" →
+    // "done:"), /trends silently degrades to "insufficient data" rather
+    // than failing loudly. This contract catches the consumer-side
+    // expectation; producer specs must keep the same tokens.
+    { name: "reads committed: from plan-log", pattern: /\bcommitted:/ },
+    { name: "reads completed: from today-log", pattern: /\bcompleted:/ },
+    { name: "reads deferred: from plan-log", pattern: /\bdeferred:/ },
+  ];
+
+  for (const src of requiredSources) {
+    test(`Q2-004: commands/trends.md references "${src.name}"`, () => {
+      const content = readContent(trendsPath);
+      if (!src.pattern.test(content)) {
+        throw new Error(
+          `commands/trends.md is missing the required source/section "${src.name}" ` +
+            `(pattern ${src.pattern}). /trends value depends on all three logs + ` +
+            `TASKS.md plus the three named patterns; dropping any one silently ` +
+            `degrades the report. If you intentionally removed it, update ` +
+            `requiredSources in tests/prompt-contracts.test.ts.`
+        );
+      }
+      expect(content).toMatch(src.pattern);
+    });
+  }
+});
+
 // ── Test group 5: /help first-run contract (Q2-005) — issue #41 ──────────
 //
 // /help is the first-run entry point. It MUST walk a new user through the
@@ -299,50 +351,84 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
   });
 });
 
-// ── Test group 8: /status triage gate threshold (Q2-008) — issue #41 ─────
+// ── Test group 6: /memory + /forget contracts (Q2-006) — issue #42 ───────
 //
-// The triage gate threshold (≥5 tagged tasks) is a load-bearing magic
-// number. Without a pin, a future edit silently changes the threshold and
-// users see behavior flip without explanation. This contract enforces that
-// the spec documents the threshold + a rationale, so any tweak is
-// intentional and accompanied by reasoning.
+// /memory is the user-facing inspection surface for everything under
+// memory/. /forget is the correction surface that mutates that state.
+// Pin: the three /memory show forms, and the three /forget scopes with
+// their confirmation gates. Silent erosion of any of these is the failure
+// mode issue #42 closes.
 
-describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
-  const statusPath = path.join(repoRoot, "commands", "status.md");
+describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
+  const memoryPath = path.join(repoRoot, "commands", "memory.md");
+  const forgetPath = path.join(repoRoot, "commands", "forget.md");
 
-  test("Q2-008: /status spec pins the ≥5 tagged threshold", () => {
-    const content = readContent(statusPath);
-    // Threshold must appear in Step 3 (triage) context. Match any phrasing
-    // that names "5" alongside "tagged" within a ~120-char window so a
-    // reword that drops one or the other surfaces here.
-    const hasThreshold = /≥\s*5\s+[^\n]{0,80}tagged|5\s+non-Done\s+tasks?\s+WITH\s+a\s+`Project:`\s+tag/i.test(
-      content
-    );
-    if (!hasThreshold) {
-      throw new Error(
-        `commands/status.md Step 3 triage gate does not document the ≥5 ` +
-          `tagged-tasks threshold in the expected form. A magic number ` +
-          `without a documented rationale produces silent behavior flips.`
-      );
-    }
-    expect(hasThreshold).toBe(true);
+  test("Q2-006: commands/memory.md exists", () => {
+    expect(fs.existsSync(memoryPath)).toBe(true);
   });
 
-  test("Q2-008: /status spec includes triage gate rationale", () => {
-    const content = readContent(statusPath);
-    // Rationale must explain WHY the gate exists — first-run hostility.
-    const hasRationale = /first run.*untagged|hostile empty-state|enough signal to\s+group|enough tagged tasks/i.test(
-      content
-    );
-    if (!hasRationale) {
-      throw new Error(
-        `commands/status.md Step 3 triage gate is missing a rationale for ` +
-          `the threshold. Without a "why" comment, a future tweak to 3 or 10 ` +
-          `looks arbitrary.`
-      );
-    }
-    expect(hasRationale).toBe(true);
+  test("Q2-006: commands/forget.md exists", () => {
+    expect(fs.existsSync(forgetPath)).toBe(true);
   });
+
+  const memoryTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "index view (show with no arg)", pattern: /show.*no arg|no arg.*show|Step\s*2A/ },
+    { name: "alias detail view", pattern: /Step\s*2B|alias detail/i },
+    { name: "analytics view", pattern: /Step\s*2C|analytics view|show analytics/i },
+    { name: "reads memory/glossary.md", pattern: /memory\/glossary\.md/ },
+    { name: "reads memory/people/", pattern: /memory\/people\// },
+    { name: "writes nothing", pattern: /writes nothing|It writes nothing/i },
+  ];
+
+  for (const tok of memoryTokens) {
+    test(`Q2-006: commands/memory.md mentions "${tok.name}"`, () => {
+      const content = readContent(memoryPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/memory.md is missing required token "${tok.name}" ` +
+            `(pattern ${tok.pattern}). Issue #42: silent state surface ` +
+            `requires the three view forms + read-only guarantee.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
+
+  // Anchor every scope token on the exact `## Step 2X:` heading. The
+  // previous disjunctive `/Step\s*2A|Forget alias/i` form would pass if
+  // EITHER the heading or the prose phrase survived a refactor — so a
+  // future PR could gut the Step entirely while still passing the test.
+  // Heading-anchored regexes make a deletion produce a sharp failure.
+  const forgetTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "forget alias scope (Step 2A heading)", pattern: /^##\s+Step\s+2A:\s+Forget\s+alias/m },
+    { name: "forget task scope (Step 2B heading)", pattern: /^##\s+Step\s+2B:\s+Forget\s+task/m },
+    { name: "forget all scope (Step 2C heading)", pattern: /^##\s+Step\s+2C:\s+Forget\s+all/m },
+    { name: "confirmation gate", pattern: /confirmation/i },
+    { name: "TASKS.md not modified", pattern: /TASKS\.md.*(not be touched|was not touched|never modified|is never modified)/i },
+    { name: "irreversible warning", pattern: /irreversible/i },
+    // Defense-in-depth: each scope uses a DIFFERENT distinctive confirmation
+    // token (bare "yes" is too prone to conversational misfire — see code
+    // review of PR #91). Pin: task scope echoes the task title verbatim.
+    { name: "task scope echoes title (not 'yes')", pattern: /task title exactly/i },
+    // Atomicity contract: each multi-file scope must specify operation order
+    // that biases partial-state to discoverable failure (glossary first, then
+    // unlink) and surface errors verbatim rather than claiming success.
+    { name: "partial-state recovery path", pattern: /partial\s*state/i },
+  ];
+
+  for (const tok of forgetTokens) {
+    test(`Q2-006: commands/forget.md mentions "${tok.name}"`, () => {
+      const content = readContent(forgetPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/forget.md is missing required token "${tok.name}" ` +
+            `(pattern ${tok.pattern}). Issue #42: correction loop requires ` +
+            `all three scopes + confirmation gate + TASKS.md invariant.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
 });
 
 // ── Test group 7: /help index ↔ commands/ bijection (Q2-007) — issue #41 ─
@@ -438,5 +524,51 @@ describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () =>
       );
     }
     expect(missing).toEqual([]);
+  });
+});
+
+// ── Test group 8: /status triage gate threshold (Q2-008) — issue #41 ─────
+//
+// The triage gate threshold (≥5 tagged tasks) is a load-bearing magic
+// number. Without a pin, a future edit silently changes the threshold and
+// users see behavior flip without explanation. This contract enforces that
+// the spec documents the threshold + a rationale, so any tweak is
+// intentional and accompanied by reasoning.
+
+describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
+  const statusPath = path.join(repoRoot, "commands", "status.md");
+
+  test("Q2-008: /status spec pins the ≥5 tagged threshold", () => {
+    const content = readContent(statusPath);
+    // Threshold must appear in Step 3 (triage) context. Match any phrasing
+    // that names "5" alongside "tagged" within a ~120-char window so a
+    // reword that drops one or the other surfaces here.
+    const hasThreshold = /≥\s*5\s+[^\n]{0,80}tagged|5\s+non-Done\s+tasks?\s+WITH\s+a\s+`Project:`\s+tag/i.test(
+      content
+    );
+    if (!hasThreshold) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate does not document the ≥5 ` +
+          `tagged-tasks threshold in the expected form. A magic number ` +
+          `without a documented rationale produces silent behavior flips.`
+      );
+    }
+    expect(hasThreshold).toBe(true);
+  });
+
+  test("Q2-008: /status spec includes triage gate rationale", () => {
+    const content = readContent(statusPath);
+    // Rationale must explain WHY the gate exists — first-run hostility.
+    const hasRationale = /first run.*untagged|hostile empty-state|enough signal to\s+group|enough tagged tasks/i.test(
+      content
+    );
+    if (!hasRationale) {
+      throw new Error(
+        `commands/status.md Step 3 triage gate is missing a rationale for ` +
+          `the threshold. Without a "why" comment, a future tweak to 3 or 10 ` +
+          `looks arbitrary.`
+      );
+    }
+    expect(hasRationale).toBe(true);
   });
 });
