@@ -311,31 +311,18 @@ Modified plugin artifacts detected on this branch:
 Run skill-enhancer before merging? [y/n]
 ```
 
-### Tier 2: Session Nudge (PostToolUse hook)
+### Tier 2: Session Nudge (PostToolUse hook) — REMOVED (#47)
 
-`hooks/hooks.json` addition:
-```json
-"PostToolUse": [
-  {
-    "matcher": "Write|Edit",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/enhance-nudge.sh",
-        "timeout": 5,
-        "async": true
-      }
-    ]
-  }
-]
-```
+Originally a `PostToolUse` hook (`hooks/enhance-nudge.sh`) nudged developers to
+run skill-enhancer after editing `commands/*.md` or `skills/*.md`. The hook
+gated on `git remote get-url origin` containing `claude-eisenhower`, which
+only fired for the maintainer; for every user install it was pure overhead.
+The dedup mechanism (`/tmp/skill-enhancer-nudge-<hash>.lock`) also did not
+clear per session, so the advertised "fires once per file per session"
+semantic was incorrect.
 
-`hooks/enhance-nudge.sh` logic:
-- Gate 1: file path matches `/(commands|skills)/.+\.md$` — else exit silently
-- Gate 2: running from source repo (git check + remote check) — else exit silently
-- Gate 3: session dedup via `/tmp/skill-enhancer-nudge-<md5>.lock` — one nudge per file per session
-- On pass: emit "You've modified `<filename>` this session. Consider running the
-  skill-enhancer on it before committing."
+The hook was removed in #47. Tier 1 (review checkpoint) and Tier 3 (explicit
+invocation) remain as the discovery paths.
 
 ### Tier 3: Explicit Invocation
 
