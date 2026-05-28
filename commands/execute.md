@@ -99,19 +99,29 @@ After explicit confirmation, proceed to Step 3 and run the action.
      `resolve-delegation — alias: [alias], task: [task title], resolved_date: [today's date]`
    - Do NOT create a new Reminder or follow-up task
    - Confirm: "Delegation closed — [alias]'s entry marked resolved."
-5. **Sync to task output adapter** (Reminders or configured system):
-   - Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`. Read `config/task-output-config.md` for: the active adapter and adapter settings
-   - If the active adapter is still a placeholder (`~~task_output`) → skip silently
-   - If the active adapter is `reminders`:
-     - Read `list_name` from the `### reminders` block
-     - Run: `osascript {plugin_root}/scripts/complete_reminder.applescript {title} {list_name}`
-     - **For Q3 tasks** that were pushed as check-in reminders, the title in Reminders was prefixed: "Check in: [delegate] re: [original title]". Use that prefixed form as the lookup title.
-     - Interpret the result:
-       - `success:` → append `Synced: Reminders completed — [today's date]` to the task record in TASKS.md
-       - `success: ... (already completed)` → append `Synced: Reminders already complete — [today's date]`
-       - `skipped:` → append `Synced: skipped — not found in Reminders (may not have been pushed)`
-       - `error:` → append `Synced: failed — [error message]` and show a non-blocking warning: "⚠ Could not mark reminder complete: [error message]"
-   - This step is **non-blocking** — a failed or skipped sync does not prevent task completion in TASKS.md
+5. **Sync to task output adapter** (Reminders, Markdown File, or any future adapter):
+   - Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`. Read `config/task-output-config.md` for the active adapter and its settings block.
+   - If the active adapter is still a placeholder (`~~task_output`) → skip silently.
+   - Otherwise, call the dispatcher — never invoke an adapter's script directly:
+
+     ```applescript
+     do shell script "node " & quoted form of (pluginRoot & "/scripts/task-output.ts") & " complete " & ¬
+         quoted form of pluginRoot & " " & ¬
+         quoted form of configFile & " " & ¬
+         quoted form of title & " " & ¬
+         quoted form of list_name
+     ```
+
+   - `title` is the title to look up. **For Q3 tasks** that were pushed as check-in reminders, the title was prefixed: "Check in: [delegate] re: [original title]". Use that prefixed form here.
+   - `list_name` is the adapter-specific list (read from the matching `### <adapter>` block; Markdown File ignores it).
+   - Stdout is one line of JSON: `{"ok":true,"mode":"complete","result":{"status":"...","reason":"..."}}`. Parse it.
+   - Interpret the `result`:
+     - `status: success`, `reason: "Completed"` → append `Synced: {adapter} completed — [today's date]`
+     - `status: success`, `reason: "Already completed"` → append `Synced: {adapter} already complete — [today's date]`
+     - `status: skipped` → append `Synced: skipped — not found in {adapter} (may not have been pushed)`
+     - `status: error` → append `Synced: failed — [reason]` and show a non-blocking warning: "⚠ Could not mark {adapter} complete: [reason]"
+   - On `ok:false` (dispatcher error), append `Synced: failed — [error]` and show the same non-blocking warning.
+   - This step is **non-blocking** — a failed or skipped sync does not prevent task completion in TASKS.md.
 6. If a non-delegate stakeholder was waiting on this, remind: "Was [requester] expecting a notification when this was done?"
 7. Offer to log a stakeholder update via the memory-manager skill
 

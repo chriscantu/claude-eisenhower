@@ -69,6 +69,9 @@ The briefing is also rate-limited per day: once it has run today (recorded in
 ### reminders
 list_name: YOUR_REMINDERS_LIST_NAME
 
+### markdown-file
+file: ./external-todo.md
+
 ### asana (future)
 workspace_id: ~~asana_workspace
 project_id:   ~~asana_project

@@ -64,21 +64,31 @@ Adapters receive the already-modified title and due_date. They do not need to re
 
 ## Available Adapters
 
-| Adapter | File | Status |
-|---------|------|--------|
-| Mac Reminders | `reminders.md` | ✅ Active (v1) |
-| Asana | `asana.md` | 🔲 Future |
-| Jira | `jira.md` | 🔲 Future |
-| Linear | `linear.md` | 🔲 Future |
+| Adapter | File | Code | Status | Platform |
+|---------|------|------|--------|----------|
+| Mac Reminders | `reminders.md` | `scripts/adapters/reminders.ts` | ✅ Shipped | macOS |
+| Markdown File | `markdown-file.md` | `scripts/adapters/markdown-file.ts` | ✅ Shipped | Cross-platform |
+| Asana | (future) | — | 🔲 Future | — |
+| Jira | (future) | — | 🔲 Future | — |
+| Linear | (future) | — | 🔲 Future | — |
+
+Two shipped implementations prove the dispatcher is real: swap by changing
+one line in `config/task-output-config.md` (`## Active Adapter`). The
+dispatcher lives in `scripts/task-output.ts` and is the single entry point
+commands use.
 
 ---
 
 ## Adding a New Adapter
 
-1. Copy the structure from `reminders.md`
-2. Replace the AppleScript section with the system-specific push mechanism (MCP call, REST API via bash, etc.)
-3. Implement the same deduplication check before writing
-4. Return a `push_result` in the standard format
-5. Register the adapter name in `config/task-output-config.md` under `## Active Adapter`
+1. Copy the structure from `reminders.md` or `markdown-file.md`.
+2. Add `scripts/adapters/[system].ts` implementing the `TaskOutputAdapter`
+   interface from `scripts/adapter-types.ts` (`pushTask`, `completeTask`,
+   and a string `name`).
+3. Implement the same deduplication check before writing.
+4. Register the adapter in `scripts/task-output.ts` `bootstrapBuiltInAdapters`.
+5. Set `## Active Adapter` in `config/task-output-config.md` to the new name.
 
-The adapter name in `task-output-config.md` must exactly match the filename (without `.md`).
+The adapter name in `task-output-config.md` must exactly match the
+`name` property the adapter exposes (and conventionally the filename
+without `.md`).

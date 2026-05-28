@@ -4,9 +4,10 @@
  * Machine-checkable TypeScript interfaces for the task-output adapter contract.
  * Formalizes the prose spec in adapters/README.md.
  *
- * Every adapter (reminders, asana, jira, linear, …) receives a TaskOutputRecord
- * and must return a PushResult. These types are the single source of truth for
- * that contract — adapters are validated against them at compile time.
+ * Every adapter (reminders, markdown-file, asana, jira, linear, …) receives a
+ * TaskOutputRecord and must return a PushResult for push, and a CompleteResult
+ * for completion. These types are the single source of truth for that contract
+ * — adapters are validated against them at compile time.
  *
  * Note: Q4 is intentionally absent from the quadrant union — /schedule never
  * pushes Q4 tasks to any external system (they are eliminated, not scheduled).
@@ -47,4 +48,43 @@ export interface PushResult {
    * Examples: Reminder x-coredata URI, Jira ticket key, Asana task GID.
    */
   id: string;
+}
+
+/** Output returned by every adapter after attempting to complete a task. */
+export interface CompleteResult {
+  /** Outcome of the complete attempt. */
+  status: "success" | "skipped" | "error";
+  /**
+   * Human-readable explanation.
+   * Examples: "Completed", "Not found", "Already completed".
+   */
+  reason: string;
+}
+
+/**
+ * The contract every adapter implementation must satisfy.
+ *
+ * Adapters own their own I/O (AppleScript, file writes, REST calls, …).
+ * The dispatcher (`task-output.ts`) only knows about this interface — it
+ * never reaches into any adapter's internals. This is the seam that makes
+ * adapters swappable.
+ */
+export interface TaskOutputAdapter {
+  /** Stable name matching the value in `config/task-output-config.md ## Active Adapter`. */
+  readonly name: string;
+  /**
+   * Push a single task to the external system.
+   * Adapters MUST be idempotent — repeated pushes of the same logical record
+   * should return `skipped` rather than creating duplicates.
+   */
+  pushTask(record: TaskOutputRecord): Promise<PushResult>;
+  /**
+   * Mark a task complete in the external system, looked up by title.
+   * `list_name` scopes the lookup for adapters that support multiple lists.
+   *
+   * For Q3 tasks the title is the prefixed form ("Check in: [alias] re: …")
+   * — matching what was pushed. The dispatcher does not re-prefix; the
+   * caller passes the exact title used at push time.
+   */
+  completeTask(title: string, list_name: string): Promise<CompleteResult>;
 }

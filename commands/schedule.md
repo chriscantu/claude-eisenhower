@@ -168,7 +168,29 @@ Prepare a `task_output_record`:
 - `requester` — from the task record (null if not known)
 - `list_name` — value of `list_name` from the adapter's settings block
 
-Call `scripts/push_reminder.applescript` via osascript for the reminders adapter (see `adapters/reminders.md` for full field mapping and error handling).
+Call the dispatcher for each prepared record. Resolve `plugin_root` per
+`skills/core/references/plugin-root-resolution.md`, write the prepared
+`task_output_record` to a temp JSON file, then run:
+
+```applescript
+do shell script "node " & quoted form of (pluginRoot & "/scripts/task-output.ts") & " push " & ¬
+    quoted form of pluginRoot & " " & ¬
+    quoted form of configFile & " " & ¬
+    quoted form of recordJsonPath
+```
+
+Where `configFile` is the absolute path to `config/task-output-config.md`
+and `recordJsonPath` points to the temp JSON file containing the record.
+The dispatcher reads the active adapter name from `## Active Adapter` in
+the config and forwards to that adapter's `pushTask`. Stdout is one line
+of JSON: `{"ok":true,"mode":"push","result":{"status":"...","reason":"...","id":"..."}}`.
+On `ok:false` the JSON carries an `error` field — surface it verbatim.
+
+Commands never invoke an adapter directly. To swap adapters, the user
+changes `## Active Adapter` in the config; no command edit is required.
+See `adapters/README.md` for the active adapter list (Reminders,
+Markdown File) and field mapping per adapter (`adapters/reminders.md`,
+`adapters/markdown-file.md`).
 
 **Collect all results** — do not surface errors mid-flow. Process all tasks first.
 
