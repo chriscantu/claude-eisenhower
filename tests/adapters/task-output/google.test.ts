@@ -17,6 +17,8 @@
  *   - GTASK-ERR-NNN API error / graceful-failure surface
  *   - GTASK-MAP-NNN field mapping (due, source/requester notes block)
  *   - GTASK-CFG-NNN config resolution
+ *   - GTASK-IDM-NNN idempotency (Already exists on duplicate push)
+ *   - GTASK-PAG-NNN pagination (tasklists + tasks beyond 100 entries)
  *
  * Spec: adapters/task-output/google.md
  * Issue: #66
@@ -575,5 +577,209 @@ describe("Google Tasks adapter — config resolution", () => {
 
   test("GTASK-CFG-006: readGoogleTasksConfig returns null for nonexistent file", () => {
     expect(readGoogleTasksConfig("/no/such/file.md")).toBeNull();
+  });
+});
+
+// ── per-record list_name routing + idempotency ───────────────────────────────
+
+describe("Google Tasks adapter — per-record list_name routing", () => {
+  test("GTASK-PSH-007: pushTask uses record.list_name (not cfg.list_name)", async () => {
+    const stub = makeStubClient({
+      taskListsResponse: {
+        data: {
+          items: [
+            { id: "list-eisenhower", title: "Eisenhower List" },
+            { id: "list-other", title: "Backlog" },
+          ],
+        },
+      },
+    });
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    // record.list_name overrides cfg.list_name (Eisenhower List).
+    const result = await adapter.pushTask(
+      sampleRecord({ list_name: "Backlog" })
+    );
+
+    expect(result.status).toBe("success");
+    const arg = stub.tasks.insert.mock.calls[0][0];
+    expect(arg.tasklist).toBe("list-other");
+  });
+
+  test("GTASK-PSH-008: empty record.list_name falls back to cfg.list_name", async () => {
+    const stub = makeStubClient();
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    await adapter.pushTask(sampleRecord({ list_name: "" }));
+
+    const arg = stub.tasks.insert.mock.calls[0][0];
+    expect(arg.tasklist).toBe("list-eisenhower");
+  });
+});
+
+describe("Google Tasks adapter — idempotency", () => {
+  test("GTASK-IDM-001: duplicate push returns 'skipped' / 'Already exists' with existing id", async () => {
+    const stub = makeStubClient({
+      tasksListResponse: {
+        data: {
+          items: [
+            {
+              id: "existing-task-007",
+              title: "[Q1] Fix deploy pipeline issue",
+              status: "needsAction",
+            },
+          ],
+        },
+      },
+    });
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    const result = await adapter.pushTask(sampleRecord());
+
+    expect(result.status).toBe("skipped");
+    expect(result.reason).toBe("Already exists");
+    expect(result.id).toBe("existing-task-007");
+    expect(stub.tasks.insert).not.toHaveBeenCalled();
+  });
+
+  test("GTASK-IDM-002: idempotency lookup tolerates [Qn] prefix on stored task", async () => {
+    const stub = makeStubClient({
+      tasksListResponse: {
+        data: {
+          items: [
+            { id: "dup-1", title: "[Q3] Check in: Bob re: rollout", status: "needsAction" },
+          ],
+        },
+      },
+    });
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    const result = await adapter.pushTask(
+      sampleRecord({ quadrant: "Q3", title: "Check in: Bob re: rollout" })
+    );
+
+    expect(result.status).toBe("skipped");
+    expect(result.id).toBe("dup-1");
+    expect(stub.tasks.insert).not.toHaveBeenCalled();
+  });
+
+  test("GTASK-IDM-003: idempotency check failure surfaces as error, not duplicate insert", async () => {
+    const stub = makeStubClient({
+      tasksListThrow: new Error("Tasks API temporarily unavailable"),
+    });
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    const result = await adapter.pushTask(sampleRecord());
+
+    expect(result.status).toBe("error");
+    expect(stub.tasks.insert).not.toHaveBeenCalled();
+  });
+});
+
+describe("Google Tasks adapter — pagination", () => {
+  test("GTASK-PAG-001: tasklists.list paginates via nextPageToken to find target list", async () => {
+    const taskListsListFn = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: "wrong-1", title: "Wrong A" }],
+          nextPageToken: "tok-page-2",
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: "list-eisenhower", title: "Eisenhower List" }],
+        },
+      });
+
+    const stub = {
+      tasklists: { list: taskListsListFn },
+      tasks: {
+        insert: jest.fn().mockResolvedValue({ data: { id: "new-id" } }),
+        list: jest.fn().mockResolvedValue({ data: { items: [] } }),
+        patch: jest.fn().mockResolvedValue({ data: {} }),
+      },
+    };
+
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    const result = await adapter.pushTask(sampleRecord());
+
+    expect(result.status).toBe("success");
+    expect(taskListsListFn).toHaveBeenCalledTimes(2);
+    expect(taskListsListFn.mock.calls[1][0]).toMatchObject({
+      pageToken: "tok-page-2",
+    });
+  });
+
+  test("GTASK-PAG-002: completeTask title-scan paginates tasks.list to find target", async () => {
+    const tasksListFn = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: "other-1", title: "[Q2] Unrelated", status: "needsAction" }],
+          nextPageToken: "tok-tasks-2",
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            { id: "match-99", title: "[Q1] Fix deploy pipeline issue", status: "needsAction" },
+          ],
+        },
+      });
+
+    const stub = {
+      tasklists: {
+        list: jest.fn().mockResolvedValue({
+          data: { items: [{ id: "list-eisenhower", title: "Eisenhower List" }] },
+        }),
+      },
+      tasks: {
+        insert: jest.fn(),
+        list: tasksListFn,
+        patch: jest.fn().mockResolvedValue({ data: {} }),
+      },
+    };
+
+    const adapter = createGoogleTasksAdapter({
+      config: fakeConfig(),
+      tasksClientFactory: () => stub as never,
+    });
+
+    const result = await adapter.completeTask(
+      "Fix deploy pipeline issue",
+      "Eisenhower List"
+    );
+
+    expect(result.status).toBe("success");
+    expect(result.reason).toBe("Completed");
+    expect(tasksListFn).toHaveBeenCalledTimes(2);
+    expect(tasksListFn.mock.calls[1][0]).toMatchObject({
+      pageToken: "tok-tasks-2",
+    });
+    expect(stub.tasks.patch).toHaveBeenCalledWith({
+      tasklist: "list-eisenhower",
+      task: "match-99",
+      requestBody: { status: "completed" },
+    });
   });
 });

@@ -201,20 +201,62 @@ export function createGoogleTasksAdapter(
     return google.tasks({ version: "v1", auth: oauth });
   }
 
-  /** Resolve a tasklist ID by title (case-insensitive trim). */
+  /**
+   * Resolve a tasklist ID by title (case-insensitive trim).
+   * Paginates via pageToken — Google Tasks accounts can exceed the 100-item
+   * single-page cap.
+   */
   async function resolveListId(
     client: tasks_v1.Tasks,
     list_name: string
   ): Promise<{ id: string } | { error: string }> {
     const target = normalize(list_name);
-    const res = await client.tasklists.list({ maxResults: 100 });
-    const items = res.data.items ?? [];
-    for (const tl of items) {
-      if (tl.title && normalize(tl.title) === target && tl.id) {
-        return { id: tl.id };
+    let pageToken: string | undefined;
+    do {
+      const res = await client.tasklists.list({
+        maxResults: 100,
+        ...(pageToken ? { pageToken } : {}),
+      });
+      const items = res.data.items ?? [];
+      for (const tl of items) {
+        if (tl.title && normalize(tl.title) === target && tl.id) {
+          return { id: tl.id };
+        }
       }
-    }
+      pageToken = res.data.nextPageToken ?? undefined;
+    } while (pageToken);
     return { error: `Google Tasks list not found: ${list_name}` };
+  }
+
+  /**
+   * Scan all tasks in a list for one matching `target` (post-prefix-strip,
+   * normalized). Returns the first match including its completion status.
+   * Paginates via pageToken — lists can exceed 100 open tasks.
+   */
+  async function findTaskByTitle(
+    client: tasks_v1.Tasks,
+    listId: string,
+    target: string,
+    options: { showCompleted: boolean }
+  ): Promise<{ id: string; completed: boolean } | null> {
+    let pageToken: string | undefined;
+    do {
+      const res = await client.tasks.list({
+        tasklist: listId,
+        maxResults: 100,
+        showCompleted: options.showCompleted,
+        ...(pageToken ? { pageToken } : {}),
+      });
+      const items = res.data.items ?? [];
+      for (const t of items) {
+        if (!t.title || !t.id) continue;
+        const stripped = stripQuadrantPrefix(t.title);
+        if (normalize(stripped) !== target) continue;
+        return { id: t.id, completed: t.status === "completed" };
+      }
+      pageToken = res.data.nextPageToken ?? undefined;
+    } while (pageToken);
+    return null;
   }
 
   return {
@@ -223,6 +265,14 @@ export function createGoogleTasksAdapter(
     async pushTask(record: TaskOutputRecord): Promise<PushResult> {
       const cfg = resolveConfig();
       if ("error" in cfg) return { status: "error", reason: cfg.error, id: "" };
+
+      // Honor caller-provided list_name (per TaskOutputRecord contract),
+      // fall back to configured default only when the record omits it.
+      // Mirrors completeTask's resolution rule.
+      const resolvedList =
+        record.list_name && record.list_name.trim().length > 0
+          ? record.list_name
+          : cfg.list_name;
 
       let client: tasks_v1.Tasks;
       try {
@@ -233,7 +283,7 @@ export function createGoogleTasksAdapter(
 
       const listResult = await (async () => {
         try {
-          return await resolveListId(client, cfg.list_name);
+          return await resolveListId(client, resolvedList);
         } catch (err) {
           return { error: errorMessage(err) };
         }
@@ -243,6 +293,27 @@ export function createGoogleTasksAdapter(
       }
 
       const titleWithPrefix = `${quadrantPrefix(record.quadrant)} ${record.title}`;
+
+      // Idempotency: TaskOutputAdapter contract (adapter-types.ts) requires
+      // repeated pushes of the same logical record to return `skipped`
+      // rather than create duplicates. Scan the list for a matching title
+      // first; if found, no-op.
+      const target = normalize(record.title);
+      try {
+        const existing = await findTaskByTitle(client, listResult.id, target, {
+          showCompleted: false,
+        });
+        if (existing) {
+          return {
+            status: "skipped",
+            reason: "Already exists",
+            id: existing.id,
+          };
+        }
+      } catch (err) {
+        return { status: "error", reason: errorMessage(err), id: "" };
+      }
+
       const body: tasks_v1.Schema$Task = {
         title: titleWithPrefix,
         notes: buildNotes(record),
@@ -307,25 +378,22 @@ export function createGoogleTasksAdapter(
       }
 
       // Title fallback. Tolerate the `[Qn]` prefix that pushTask added.
+      // Paginates via shared helper so lists with >100 tasks are covered.
       const target = normalize(title);
       try {
-        const list = await client.tasks.list({ tasklist: listId, maxResults: 100 });
-        const items = list.data.items ?? [];
-        for (const t of items) {
-          if (!t.title || !t.id) continue;
-          const stripped = stripQuadrantPrefix(t.title);
-          if (normalize(stripped) !== target) continue;
-          if (t.status === "completed") {
-            return { status: "success", reason: "Already completed" };
-          }
-          await client.tasks.patch({
-            tasklist: listId,
-            task: t.id,
-            requestBody: { status: "completed" },
-          });
-          return { status: "success", reason: "Completed" };
+        const match = await findTaskByTitle(client, listId, target, {
+          showCompleted: true,
+        });
+        if (!match) return { status: "skipped", reason: "Not found" };
+        if (match.completed) {
+          return { status: "success", reason: "Already completed" };
         }
-        return { status: "skipped", reason: "Not found" };
+        await client.tasks.patch({
+          tasklist: listId,
+          task: match.id,
+          requestBody: { status: "completed" },
+        });
+        return { status: "success", reason: "Completed" };
       } catch (err) {
         return { status: "error", reason: errorMessage(err) };
       }
