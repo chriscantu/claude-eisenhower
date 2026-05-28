@@ -101,3 +101,136 @@ export interface TaskOutputAdapter {
     externalId?: string
   ): Promise<CompleteResult>;
 }
+
+// ---------------------------------------------------------------------------
+// Calendar-source adapter contract
+//
+// Used by calendar-query dispatchers and adapter implementations under
+// scripts/adapters/calendar/*. Mirrors the cal_query.swift surface area so
+// that both the Mac-native and future Google Calendar adapters bind to the
+// same request/result shapes.
+// ---------------------------------------------------------------------------
+
+/** Parameters passed to a calendar-source adapter to retrieve events. */
+export interface CalendarQueryRequest {
+  /** Calendar to query. Value is provider-specific (e.g. Mac Calendar display name). */
+  calendar_name: string;
+  /** Query window: now → now + N days (inclusive). */
+  days_ahead: number;
+  /**
+   * Output format hint.
+   * - "full"    → structured event list (CalendarQueryResult.events populated)
+   * - "summary" → business-day availability bullets (events may be empty;
+   *               narrative is in CalendarQueryResult.reason or a separate
+   *               summary field added by the adapter)
+   */
+  format: "full" | "summary";
+}
+
+/** A single calendar event returned by a calendar-source adapter. */
+export interface CalendarEvent {
+  /** Event title / summary as stored in the calendar. */
+  title: string;
+  /** Start datetime in ISO 8601 format, including timezone offset or Z (e.g. 2026-05-28T09:00:00-07:00). */
+  start: string;
+  /** End datetime in ISO 8601 format, including timezone offset or Z. */
+  end: string;
+  /** True when the event occupies an entire day (no specific start/end time). */
+  all_day: boolean;
+}
+
+/** Output returned by a calendar-source adapter after a query attempt. */
+export interface CalendarQueryResult {
+  /** Outcome of the query. */
+  status: "success" | "error";
+  /**
+   * Human-readable explanation.
+   * Examples: "OK", "Permission denied", "Calendar not found".
+   */
+  reason: string;
+  /**
+   * Events within the requested window, ordered by start time ascending.
+   * Empty array when status="error" OR the window contains no events.
+   */
+  events: CalendarEvent[];
+}
+
+// ---------------------------------------------------------------------------
+// Email-source adapter contract
+//
+// Used by email-scan dispatchers and adapter implementations under
+// scripts/adapters/email/*. Covers both Apple Mail (account = display name,
+// inbox = mailbox name) and Gmail (account = email address, inbox = label).
+// ---------------------------------------------------------------------------
+
+/** Parameters passed to an email-source adapter to scan a mailbox. */
+export interface EmailScanRequest {
+  /**
+   * Account name — provider-specific.
+   * Apple Mail: account display name as shown in Mail.app.
+   * Gmail: account email address (e.g. user@gmail.com).
+   */
+  account: string;
+  /**
+   * Mailbox or label name to scan.
+   * Apple Mail: mailbox name (e.g. "INBOX").
+   * Gmail: label name; use "INBOX" for the default inbox.
+   */
+  inbox: string;
+  /**
+   * Inclusive lower bound on received_at, as an ISO date (YYYY-MM-DD).
+   * Messages received before this date are excluded.
+   */
+  since: string;
+  /** When true, only unread messages are returned. */
+  unread_only: boolean;
+  /**
+   * Maximum number of messages to return.
+   * Adapters MUST honor this cap — callers rely on it for bounded output.
+   */
+  max_messages: number;
+}
+
+/** A single email message returned by an email-source adapter. */
+export interface EmailMessage {
+  /**
+   * Provider-specific stable message identifier.
+   * Apple Mail: message id as surfaced by the Mail.app scripting bridge.
+   * Gmail: Gmail message id (not thread id).
+   */
+  id: string;
+  /** Sender address in RFC 5322 format, e.g. `"Alice Smith" <alice@example.com>`. */
+  from: string;
+  /** Message subject line. */
+  subject: string;
+  /** Time the message was received, in ISO 8601 format including timezone offset or Z. */
+  received_at: string;
+  /** Short preview of the message body, ≤200 characters. */
+  snippet: string;
+  /**
+   * Full plain-text body of the message.
+   * Adapters are responsible for stripping HTML before populating this field.
+   */
+  body_text: string;
+  /**
+   * Provider-specific thread identifier grouping related messages.
+   * Empty string ("") when the provider has no thread concept (e.g. Apple Mail).
+   */
+  thread_id: string;
+}
+
+/** Output returned by an email-source adapter after a scan attempt. */
+export interface EmailScanResult {
+  /** Outcome of the scan. */
+  status: "success" | "error";
+  /**
+   * Human-readable explanation.
+   * Examples: "OK", "Permission denied", "Account not found".
+   */
+  reason: string;
+  /**
+   * Messages matching the request, ordered by received_at descending (newest first).
+   * Empty array when status="error" OR no messages matched the filter criteria.
+   */
+  messages: EmailMessage[];
+}
