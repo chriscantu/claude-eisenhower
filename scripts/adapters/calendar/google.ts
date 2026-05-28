@@ -30,13 +30,17 @@
 import * as fs from "fs";
 import * as path from "path";
 import { google } from "googleapis";
-import type { OAuth2Client } from "google-auth-library";
-import { getAccessToken } from "../../google-auth";
+import {
+  buildAuthedClient,
+  getAccessToken,
+  type GoogleAuthConfig,
+} from "../../google-auth";
 import type {
   CalendarEvent,
   CalendarQueryRequest,
   CalendarQueryResult,
 } from "../../adapter-types";
+import type { GoogleAdapterOptions } from "../google-options";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -45,39 +49,8 @@ export interface GoogleCalendarAdapter {
   query(req: CalendarQueryRequest): Promise<CalendarQueryResult>;
 }
 
-/** Hooks for DI / testing. Production callers pass {} or omit. */
-export interface GoogleCalendarAdapterConfig {
-  /**
-   * Absolute path to calendar-config.md (the file that holds provider +
-   * google_credentials_path + google_token_path). Defaults to
-   * CLAUDE_PLUGIN_ROOT/config/calendar-config.md when omitted.
-   */
-  config_path?: string;
-  /**
-   * Pre-resolved credentials path. When set, skips reading config_path's
-   * google_credentials_path field. Used by tests.
-   */
-  credentials_path?: string;
-  /**
-   * Pre-resolved token path. When set, skips reading config_path's
-   * google_token_path field. Used by tests.
-   */
-  token_path?: string;
-  /**
-   * Override the access-token loader. Defaults to google-auth#getAccessToken.
-   * Tests inject a stub that returns a fixed string without disk I/O.
-   */
-  access_token_loader?: (cfg: {
-    scopes: string[];
-    credentials_path: string;
-    token_path: string;
-  }) => Promise<string>;
-  /**
-   * Override the calendar client builder. Defaults to google.calendar({v:'v3', auth}).
-   * Tests inject a stub that returns a mocked client.
-   */
-  calendar_client_builder?: (auth: OAuth2Client) => CalendarV3Like;
-}
+/** DI / testing options. Production callers pass {} or omit. See `google-options.ts`. */
+export type GoogleCalendarOptions = GoogleAdapterOptions<CalendarV3Like>;
 
 /**
  * Narrow shape of the googleapis calendar.v3 client used by this adapter.
@@ -257,34 +230,23 @@ function buildSummary(
 // ── Factory ──────────────────────────────────────────────────────────────────
 
 export function createGoogleCalendarAdapter(
-  cfg: GoogleCalendarAdapterConfig = {},
+  cfg: GoogleCalendarOptions = {},
 ): GoogleCalendarAdapter {
-  const accessTokenLoader =
-    cfg.access_token_loader ??
-    (async (c): Promise<string> => {
-      const t = await getAccessToken(c);
-      return t.token;
-    });
-
-  const clientBuilder =
-    cfg.calendar_client_builder ??
-    ((auth: OAuth2Client): CalendarV3Like => {
-      return google.calendar({ version: "v3", auth }) as unknown as CalendarV3Like;
-    });
-
   return {
     name: "google",
     async query(req: CalendarQueryRequest): Promise<CalendarQueryResult> {
       try {
+        // Resolve auth. Caller-provided `auth` wins; otherwise read from
+        // calendar-config.md so the dispatcher's no-arg path works.
         const configPath = cfg.config_path ?? defaultConfigPath();
         const credsPath =
-          cfg.credentials_path ??
+          cfg.auth?.credentials_path ??
           (() => {
             const v = readConfigField(configPath, "google_credentials_path");
             return v ? expandHome(v) : undefined;
           })();
         const tokenPath =
-          cfg.token_path ??
+          cfg.auth?.token_path ??
           (() => {
             const v = readConfigField(configPath, "google_token_path");
             return v ? expandHome(v) : undefined;
@@ -300,20 +262,35 @@ export function createGoogleCalendarAdapter(
           };
         }
 
-        // Acquire access token (refreshes if expired, throws on missing token).
-        const accessToken = await accessTokenLoader({
+        const authCfg: GoogleAuthConfig = {
           scopes: [SCOPE],
           credentials_path: credsPath,
           token_path: tokenPath,
-        });
+        };
 
-        // Build a per-call OAuth2 client carrying just the access token.
-        // We do not need client_id/client_secret here — googleapis will use
-        // the bearer access_token directly. Refresh is owned by google-auth.ts.
-        const oauthClient = new google.auth.OAuth2();
-        oauthClient.setCredentials({ access_token: accessToken });
+        // Always resolve the access token first so the same auth path runs
+        // in tests (with client_factory) and production (without). Tests
+        // bypass disk by injecting access_token_loader.
+        const accessToken = cfg.access_token_loader
+          ? await cfg.access_token_loader(authCfg)
+          : (await getAccessToken(authCfg)).token;
 
-        const calendar = clientBuilder(oauthClient as unknown as OAuth2Client);
+        let calendar: CalendarV3Like;
+        if (cfg.client_factory) {
+          calendar = cfg.client_factory(accessToken);
+        } else {
+          // Production: build a real client via the shared OAuth helper
+          // (#75). Pass a loader returning the already-resolved token so we
+          // don't acquire it twice.
+          const oauthClient = await buildAuthedClient(
+            authCfg,
+            async () => accessToken,
+          );
+          calendar = google.calendar({
+            version: "v3",
+            auth: oauthClient,
+          }) as unknown as CalendarV3Like;
+        }
 
         // Resolve calendar_name → calendar ID via calendarList.list (match by
         // `summary`). The user-facing name in Google Calendar UI is `summary`.

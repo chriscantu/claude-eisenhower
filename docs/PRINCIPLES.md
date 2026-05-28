@@ -101,6 +101,17 @@ Specs before code. Tests before shipping.
   gate. It must return 0 errors before any PR is merged. `npm test` runs via
   `ts-jest` and is a useful signal, but `tsc --noEmit` is the contract.
 
+**Google adapter Options convention (issue #76):**
+- All Google adapter factories accept `GoogleAdapterOptions<TClient>` from
+  `scripts/adapters/google-options.ts`. Suffix: `*Options`. Casing:
+  `snake_case`. Shared fields: `config_path`, `auth`, `access_token_loader`,
+  `client_factory`. Adapter-specific fields (e.g., `list_name` on
+  `GoogleTasksOptions`) extend the base interface.
+- OAuth2 client construction goes through `buildAuthedClient` in
+  `scripts/google-auth.ts` — never instantiate `new google.auth.OAuth2()`
+  or `new OAuth2Client()` in an adapter. If a fourth Google adapter lands,
+  it inherits both conventions for free.
+
 ---
 
 ## PII Safety

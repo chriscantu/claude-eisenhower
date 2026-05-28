@@ -31,36 +31,23 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { google, type gmail_v1 } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
 
-import { getAccessToken, type GoogleAuthConfig } from "../../google-auth";
+import {
+  buildAuthedClient,
+  getAccessToken,
+  type GoogleAuthConfig,
+} from "../../google-auth";
 import type {
   EmailMessage,
   EmailScanRequest,
   EmailScanResult,
 } from "../../adapter-types";
+import type { GoogleAdapterOptions } from "../google-options";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export interface GoogleGmailAdapterConfig {
-  /**
-   * OAuth config passed through to google-auth.ts. When omitted, the adapter
-   * reads credentials_path + token_path from config/email-config.md.
-   * Scope is forced to gmail.readonly regardless — adapter is read-only by design.
-   */
-  auth?: Omit<GoogleAuthConfig, "scopes"> & { scopes?: string[] };
-  /**
-   * Override the config-file path. Defaults to
-   * ${CLAUDE_PLUGIN_ROOT}/config/email-config.md. Used by the no-arg
-   * dispatcher path and by tests.
-   */
-  config_path?: string;
-  /**
-   * Test injection: override the gmail client factory. When omitted, the
-   * adapter builds a real OAuth2 client + gmail_v1.Gmail.
-   */
-  gmailClientFactory?: (accessToken: string) => gmail_v1.Gmail;
-}
+/** DI / testing options. Production callers pass {} or omit. See `google-options.ts`. */
+export type GoogleGmailOptions = GoogleAdapterOptions<gmail_v1.Gmail>;
 
 export interface GoogleGmailAdapter {
   name: "google";
@@ -260,17 +247,10 @@ async function mapWithConcurrency<T, U>(
   return out;
 }
 
-/** Default factory: build a real Gmail client from an access token. */
-function defaultGmailClientFactory(accessToken: string): gmail_v1.Gmail {
-  const oauth2 = new OAuth2Client();
-  oauth2.setCredentials({ access_token: accessToken });
-  return google.gmail({ version: "v1", auth: oauth2 });
-}
-
 // ── Public factory ────────────────────────────────────────────────────────────
 
 export function createGoogleGmailAdapter(
-  cfg?: GoogleGmailAdapterConfig,
+  cfg?: GoogleGmailOptions,
 ): GoogleGmailAdapter {
   return {
     name: "google",
@@ -304,9 +284,23 @@ export function createGoogleGmailAdapter(
           scopes: [GMAIL_READONLY_SCOPE],
         };
 
-        const { token } = await getAccessToken(authCfg);
-        const factory = cfg?.gmailClientFactory ?? defaultGmailClientFactory;
-        const gmail = factory(token);
+        // Always resolve the access token first so the same auth path runs
+        // in tests (with client_factory) and production (without). Tests can
+        // bypass disk by injecting access_token_loader.
+        const token = cfg?.access_token_loader
+          ? await cfg.access_token_loader(authCfg)
+          : (await getAccessToken(authCfg)).token;
+
+        let gmail: gmail_v1.Gmail;
+        if (cfg?.client_factory) {
+          gmail = cfg.client_factory(token);
+        } else {
+          // Production: build a real Gmail client via the shared OAuth
+          // helper (#75). Pass a loader that returns the already-resolved
+          // token so we don't acquire it twice.
+          const oauth = await buildAuthedClient(authCfg, async () => token);
+          gmail = google.gmail({ version: "v1", auth: oauth });
+        }
 
         // 1. Resolve label name → label ID.
         const labelId = await resolveLabelId(gmail, req.inbox);
