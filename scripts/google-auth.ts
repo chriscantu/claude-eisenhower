@@ -12,6 +12,7 @@ import * as fs from "fs";
 import * as http from "http";
 import { randomBytes } from "node:crypto";
 import { google } from "googleapis";
+import type { OAuth2Client } from "google-auth-library";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -131,6 +132,29 @@ function persistToken(
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Build an OAuth2-authenticated client carrying just the access token.
+ * Shared by every Google adapter so the OAuth construction surface lives in
+ * one place. Refresh / persistence is owned by getAccessToken; this helper
+ * exists so adapters never call `new google.auth.OAuth2()` directly.
+ *
+ * The returned client is typed as `OAuth2Client` (google-auth-library) so
+ * adapters can hand it to `google.calendar()` / `google.gmail()` /
+ * `google.tasks()` without each adapter re-deriving the cast.
+ *
+ * Tests inject the optional `accessTokenLoader` to bypass disk reads.
+ */
+export async function buildAuthedClient(
+  cfg: GoogleAuthConfig,
+  accessTokenLoader: (cfg: GoogleAuthConfig) => Promise<string> = async (c) =>
+    (await getAccessToken(c)).token,
+): Promise<OAuth2Client> {
+  const accessToken = await accessTokenLoader(cfg);
+  const oauth = new google.auth.OAuth2();
+  oauth.setCredentials({ access_token: accessToken });
+  return oauth as unknown as OAuth2Client;
+}
 
 /**
  * Returns a valid access token. Performs initial auth flow if no refresh token

@@ -45,7 +45,12 @@ import type {
   PushResult,
   CompleteResult,
 } from "../../adapter-types";
-import { getAccessToken, type GoogleAuthConfig } from "../../google-auth";
+import {
+  buildAuthedClient,
+  getAccessToken,
+  type GoogleAuthConfig,
+} from "../../google-auth";
+import type { GoogleAdapterOptions } from "../google-options";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -62,22 +67,16 @@ export interface GoogleTasksResolvedConfig {
   list_name: string;
 }
 
-export interface GoogleTasksAdapterOptions {
-  /**
-   * Override the resolved config entirely. When supplied, no config file is
-   * read. Primary injection seam for tests.
-   */
-  config?: GoogleTasksResolvedConfig;
-  /**
-   * Path to the task-output-config.md to read when `config` is not supplied.
-   * Defaults to `<plugin_root>/config/task-output-config.md`.
-   */
-  configPath?: string;
-  /**
-   * Factory for the Tasks API client. Defaults to `google.tasks({version:"v1", auth})`.
-   * Tests inject a stub here.
-   */
-  tasksClientFactory?: (accessToken: string) => tasks_v1.Tasks;
+/**
+ * DI / testing options. Production callers pass {} or omit. See
+ * `google-options.ts` for the shared shape. Tasks-specific extension:
+ *   - `list_name` — override the configured tasks list name (tests use this
+ *     to point at fixtures without editing the config file).
+ */
+export interface GoogleTasksOptions
+  extends GoogleAdapterOptions<tasks_v1.Tasks> {
+  /** Override the configured tasks list. Tests use this. */
+  list_name?: string;
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -169,12 +168,20 @@ function errorMessage(err: unknown): string {
 // ── Adapter factory ───────────────────────────────────────────────────────────
 
 export function createGoogleTasksAdapter(
-  opts: GoogleTasksAdapterOptions = {}
+  opts: GoogleTasksOptions = {}
 ): TaskOutputAdapter {
-  const configPath = opts.configPath ?? DEFAULT_CONFIG_PATH;
+  const configPath = opts.config_path ?? DEFAULT_CONFIG_PATH;
 
   function resolveConfig(): GoogleTasksResolvedConfig | { error: string } {
-    if (opts.config) return opts.config;
+    // Inline auth + list_name override: build a resolved config without
+    // touching disk. Mirrors Calendar/Gmail's `auth` override semantics.
+    if (opts.auth && opts.list_name) {
+      return {
+        credentials_path: opts.auth.credentials_path,
+        token_path: opts.auth.token_path,
+        list_name: opts.list_name,
+      };
+    }
     const cfg = readGoogleTasksConfig(configPath);
     if (!cfg) {
       return {
@@ -183,7 +190,12 @@ export function createGoogleTasksAdapter(
           `Expected ### google block with credentials_path, token_path, list_name.`,
       };
     }
-    return cfg;
+    // Allow partial overrides on top of the file-read config.
+    return {
+      credentials_path: opts.auth?.credentials_path ?? cfg.credentials_path,
+      token_path: opts.auth?.token_path ?? cfg.token_path,
+      list_name: opts.list_name ?? cfg.list_name,
+    };
   }
 
   async function buildTasksClient(
@@ -194,10 +206,18 @@ export function createGoogleTasksAdapter(
       credentials_path: cfg.credentials_path,
       token_path: cfg.token_path,
     };
-    const access = await getAccessToken(authCfg);
-    if (opts.tasksClientFactory) return opts.tasksClientFactory(access.token);
-    const oauth = new google.auth.OAuth2();
-    oauth.setCredentials({ access_token: access.token });
+    // Always resolve the access token first so the same auth path runs in
+    // tests (with client_factory) and production (without). Tests bypass
+    // disk by injecting access_token_loader.
+    const token = opts.access_token_loader
+      ? await opts.access_token_loader(authCfg)
+      : (await getAccessToken(authCfg)).token;
+
+    if (opts.client_factory) return opts.client_factory(token);
+
+    // Production: shared OAuth helper (#75). Reuse the already-resolved
+    // token via a passthrough loader.
+    const oauth = await buildAuthedClient(authCfg, async () => token);
     return google.tasks({ version: "v1", auth: oauth });
   }
 

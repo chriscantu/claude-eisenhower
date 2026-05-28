@@ -47,15 +47,24 @@ jest.mock("googleapis", () => ({
   },
 }));
 
-jest.mock("google-auth-library", () => ({
-  OAuth2Client: jest.fn().mockImplementation(() => ({
-    setCredentials: jest.fn(),
-  })),
-}));
-
 const getAccessTokenMock = jest.fn();
 jest.mock("../../../scripts/google-auth", () => ({
   getAccessToken: (...args: unknown[]) => getAccessTokenMock(...args),
+  // Mirror the real buildAuthedClient: pull a token (via injected loader or
+  // the mocked getAccessToken) and hand back a placeholder OAuth client. The
+  // adapter only forwards this to google.gmail() which is itself mocked, so
+  // the placeholder is never dereferenced.
+  buildAuthedClient: async (
+    cfg: { credentials_path: string; token_path: string; scopes: string[] },
+    loader?: (c: typeof cfg) => Promise<string>,
+  ) => {
+    if (loader) {
+      await loader(cfg);
+    } else {
+      await getAccessTokenMock(cfg);
+    }
+    return { setCredentials: jest.fn() } as unknown;
+  },
 }));
 
 import { createGoogleGmailAdapter } from "../../../scripts/adapters/email/google";
@@ -86,7 +95,7 @@ const VALID_CONFIG = {
     credentials_path: "/tmp/test-credentials.json",
     token_path: "/tmp/test-token.json",
   },
-  gmailClientFactory: () => fakeGmailClient as unknown as never,
+  client_factory: () => fakeGmailClient as unknown as never,
 };
 
 function setupAuthMock(): void {
@@ -388,7 +397,7 @@ describe("Gmail adapter — config-file path", () => {
 
     const adapter = createGoogleGmailAdapter({
       config_path: cfgPath,
-      gmailClientFactory: () => fakeGmailClient as unknown as never,
+      client_factory: () => fakeGmailClient as unknown as never,
     });
     const res = await adapter.scan(BASE_REQ);
 

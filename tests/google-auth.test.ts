@@ -52,6 +52,7 @@ jest.mock("googleapis", () => ({
 // Imported once; in-process cache reset via _resetCacheForTesting() per test.
 
 import {
+  buildAuthedClient,
   getAccessToken,
   runInitialAuthFlow,
   _resetCacheForTesting,
@@ -396,6 +397,81 @@ describe("runInitialAuthFlow", () => {
       const newResult = await getAccessToken(cfg);
       expect(newResult.token).toBe("new-access-token");
       expect(newResult.token).not.toBe("mock-cached-token");
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+});
+
+describe("buildAuthedClient", () => {
+  // Issue #75: every Google adapter (Calendar, Gmail, Tasks) previously
+  // hand-built its own `new OAuth2()` + `setCredentials({access_token})`
+  // block. This helper centralizes the construction so the surface lives in
+  // exactly one place.
+
+  beforeEach(() => {
+    _resetCacheForTesting();
+    mockSetCredentials.mockClear();
+    MockOAuth2.mockClear();
+  });
+
+  test("GAUTH-009: calls accessTokenLoader and forwards the token to setCredentials", async () => {
+    const cfg: GoogleAuthConfig = {
+      scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+      credentials_path: "/tmp/does-not-need-to-exist.json",
+      token_path: "/tmp/does-not-need-to-exist.json",
+    };
+    const loader = jest.fn().mockResolvedValue("injected-test-token");
+
+    await buildAuthedClient(cfg, loader);
+
+    expect(loader).toHaveBeenCalledTimes(1);
+    expect(loader).toHaveBeenCalledWith(cfg);
+    expect(MockOAuth2).toHaveBeenCalledTimes(1);
+    expect(mockSetCredentials).toHaveBeenCalledWith({
+      access_token: "injected-test-token",
+    });
+  });
+
+  test("GAUTH-010: default loader delegates to getAccessToken when no loader is passed", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gauth-buildauthed-"));
+    try {
+      const credsPath = path.join(dir, "credentials.json");
+      fs.writeFileSync(
+        credsPath,
+        JSON.stringify({
+          installed: {
+            client_id: "id",
+            client_secret: "secret",
+            redirect_uris: ["http://127.0.0.1:1/oauth2callback"],
+          },
+        }),
+      );
+
+      const tokenPath = path.join(dir, "token.json");
+      const futureExpiry = new Date(Date.now() + 3600 * 1000).toISOString();
+      fs.writeFileSync(
+        tokenPath,
+        JSON.stringify({
+          refresh_token: "rt",
+          scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+          created_at: new Date().toISOString(),
+          cached_token: "disk-cached-token",
+          expires_at: futureExpiry,
+        }),
+      );
+
+      const cfg: GoogleAuthConfig = {
+        scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+        credentials_path: credsPath,
+        token_path: tokenPath,
+      };
+
+      await buildAuthedClient(cfg);
+
+      expect(mockSetCredentials).toHaveBeenCalledWith({
+        access_token: "disk-cached-token",
+      });
     } finally {
       fs.rmSync(dir, { recursive: true });
     }

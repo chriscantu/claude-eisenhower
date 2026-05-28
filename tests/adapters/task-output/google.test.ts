@@ -7,7 +7,7 @@
  * Strategy:
  *   - Mock `googleapis` so no network call is ever made.
  *   - Mock `scripts/google-auth.ts` to short-circuit OAuth lifecycle.
- *   - Inject a `tasksClientFactory` returning a stub Tasks client whose
+ *   - Inject a `client_factory` returning a stub Tasks client whose
  *     `tasklists.list`, `tasks.insert`, `tasks.list`, and `tasks.patch`
  *     methods are jest.fn()s so we can assert call args / sequencing.
  *
@@ -45,6 +45,19 @@ jest.mock("googleapis", () => ({
 const mockGetAccessToken = jest.fn();
 jest.mock("../../../scripts/google-auth", () => ({
   getAccessToken: (...args: unknown[]) => mockGetAccessToken(...args),
+  // Mirror real buildAuthedClient — adapter only forwards to the mocked
+  // google.tasks(), so the returned client is never dereferenced.
+  buildAuthedClient: async (
+    cfg: { credentials_path: string; token_path: string; scopes: string[] },
+    loader?: (c: typeof cfg) => Promise<string>,
+  ) => {
+    if (loader) {
+      await loader(cfg);
+    } else {
+      await mockGetAccessToken(cfg);
+    }
+    return { setCredentials: jest.fn() } as unknown;
+  },
 }));
 
 // ── module under test ─────────────────────────────────────────────────────────
@@ -123,6 +136,18 @@ function fakeConfig(): GoogleTasksResolvedConfig {
   };
 }
 
+/**
+ * Return the unified Options-shape fields equivalent to the legacy
+ * `{config: fakeConfig()}` form so test sites can spread it inline.
+ */
+function fakeOpts(): { auth: { credentials_path: string; token_path: string }; list_name: string } {
+  const c = fakeConfig();
+  return {
+    auth: { credentials_path: c.credentials_path, token_path: c.token_path },
+    list_name: c.list_name,
+  };
+}
+
 function sampleRecord(
   overrides: Partial<TaskOutputRecord> = {}
 ): TaskOutputRecord {
@@ -153,8 +178,8 @@ describe("Google Tasks adapter — pushTask", () => {
   test("GTASK-PSH-001: success returns id and 'Created' reason", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -168,8 +193,8 @@ describe("Google Tasks adapter — pushTask", () => {
   test("GTASK-PSH-002: Q1 record gets '[Q1] ' title prefix", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ quadrant: "Q1", title: "X task" }));
@@ -180,8 +205,8 @@ describe("Google Tasks adapter — pushTask", () => {
   test("GTASK-PSH-003: Q2 record gets '[Q2] ' title prefix", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ quadrant: "Q2", priority: "medium", title: "Plan Q3" }));
@@ -192,8 +217,8 @@ describe("Google Tasks adapter — pushTask", () => {
   test("GTASK-PSH-004: Q3 record gets '[Q3] ' title prefix", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ quadrant: "Q3", priority: "medium", title: "Check in: Alice re: budget" }));
@@ -204,8 +229,8 @@ describe("Google Tasks adapter — pushTask", () => {
   test("GTASK-PSH-005: resolves list_name to tasklist id", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord());
@@ -218,8 +243,8 @@ describe("Google Tasks adapter — pushTask", () => {
       taskListsResponse: { data: { items: [{ id: "x", title: "Other" }] } },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -237,8 +262,8 @@ describe("Google Tasks adapter — completeTask", () => {
   test("GTASK-CMP-001: externalId path patches by id, skips title scan", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask(
@@ -269,8 +294,8 @@ describe("Google Tasks adapter — completeTask", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask(
@@ -296,8 +321,8 @@ describe("Google Tasks adapter — completeTask", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask(
@@ -321,8 +346,8 @@ describe("Google Tasks adapter — completeTask", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask(
@@ -338,8 +363,8 @@ describe("Google Tasks adapter — completeTask", () => {
   test("GTASK-CMP-005: empty list_name falls back to configured default", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask("Fix deploy pipeline issue", "", "ext-id-7");
@@ -361,8 +386,8 @@ describe("Google Tasks adapter — API error surface", () => {
       tasksInsertThrow: new Error("Rate limit exceeded"),
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -377,8 +402,8 @@ describe("Google Tasks adapter — API error surface", () => {
       tasksPatchThrow: new Error("403 forbidden"),
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask("any", "Eisenhower List", "ext-1");
@@ -392,8 +417,8 @@ describe("Google Tasks adapter — API error surface", () => {
       taskListsThrow: new Error("Network unreachable"),
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -406,8 +431,8 @@ describe("Google Tasks adapter — API error surface", () => {
     mockGetAccessToken.mockRejectedValueOnce(new Error("Token refresh failed"));
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -424,8 +449,8 @@ describe("Google Tasks adapter — field mapping", () => {
   test("GTASK-MAP-001: notes block includes description, source, requester (labeled)", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(
@@ -445,8 +470,8 @@ describe("Google Tasks adapter — field mapping", () => {
   test("GTASK-MAP-002: null requester omitted from notes (no orphan 'Requester:' line)", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ requester: null }));
@@ -457,8 +482,8 @@ describe("Google Tasks adapter — field mapping", () => {
   test("GTASK-MAP-003: due_date maps to RFC3339 midnight UTC", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ due_date: "2026-03-02" }));
@@ -469,8 +494,8 @@ describe("Google Tasks adapter — field mapping", () => {
   test("GTASK-MAP-004: null due_date omits 'due' from request body", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ due_date: null }));
@@ -485,8 +510,8 @@ describe("Google Tasks adapter — field mapping", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -501,16 +526,16 @@ describe("Google Tasks adapter — field mapping", () => {
 describe("Google Tasks adapter — config resolution", () => {
   test("GTASK-CFG-001: adapter name is 'google'", () => {
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => makeStubClient() as never,
+      ...fakeOpts(),
+      client_factory: () => makeStubClient() as never,
     });
     expect(adapter.name).toBe("google");
   });
 
   test("GTASK-CFG-002: pushTask returns error when config file missing AND no inline config", async () => {
     const adapter = createGoogleTasksAdapter({
-      configPath: "/path/that/does/not/exist.md",
-      tasksClientFactory: () => makeStubClient() as never,
+      config_path: "/path/that/does/not/exist.md",
+      client_factory: () => makeStubClient() as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -522,8 +547,8 @@ describe("Google Tasks adapter — config resolution", () => {
 
   test("GTASK-CFG-003: completeTask returns error when config file missing", async () => {
     const adapter = createGoogleTasksAdapter({
-      configPath: "/path/that/does/not/exist.md",
-      tasksClientFactory: () => makeStubClient() as never,
+      config_path: "/path/that/does/not/exist.md",
+      client_factory: () => makeStubClient() as never,
     });
 
     const result = await adapter.completeTask("x", "Eisenhower List", "ext-1");
@@ -595,8 +620,8 @@ describe("Google Tasks adapter — per-record list_name routing", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     // record.list_name overrides cfg.list_name (Eisenhower List).
@@ -612,8 +637,8 @@ describe("Google Tasks adapter — per-record list_name routing", () => {
   test("GTASK-PSH-008: empty record.list_name falls back to cfg.list_name", async () => {
     const stub = makeStubClient();
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     await adapter.pushTask(sampleRecord({ list_name: "" }));
@@ -639,8 +664,8 @@ describe("Google Tasks adapter — idempotency", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -662,8 +687,8 @@ describe("Google Tasks adapter — idempotency", () => {
       },
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(
@@ -680,8 +705,8 @@ describe("Google Tasks adapter — idempotency", () => {
       tasksListThrow: new Error("Tasks API temporarily unavailable"),
     });
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -717,8 +742,8 @@ describe("Google Tasks adapter — pagination", () => {
     };
 
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.pushTask(sampleRecord());
@@ -761,8 +786,8 @@ describe("Google Tasks adapter — pagination", () => {
     };
 
     const adapter = createGoogleTasksAdapter({
-      config: fakeConfig(),
-      tasksClientFactory: () => stub as never,
+      ...fakeOpts(),
+      client_factory: () => stub as never,
     });
 
     const result = await adapter.completeTask(

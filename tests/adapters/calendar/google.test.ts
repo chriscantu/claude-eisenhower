@@ -8,7 +8,7 @@
  *   - `scripts/google-auth.ts` `getAccessToken` so no token file is required.
  *
  * The adapter exposes injection hooks (`access_token_loader`,
- * `calendar_client_builder`, `credentials_path`, `token_path`) — most tests
+ * `client_factory`, `auth.credentials_path`, `auth.token_path`) — most tests
  * use those directly. A single test exercises the module-level mocks to
  * confirm the default wiring still type-checks and resolves.
  *
@@ -59,6 +59,21 @@ jest.mock("googleapis", () => ({
 const getAccessTokenMock = jest.fn();
 jest.mock("../../../scripts/google-auth", () => ({
   getAccessToken: (arg: unknown) => getAccessTokenMock(arg),
+  // Mirror the real buildAuthedClient: pull a token (via injected loader or
+  // the mocked getAccessToken), construct a FakeOAuth2, seed the access
+  // token, and hand it back. Lets the adapter exercise the shared helper
+  // while preserving the existing oauth2Instances/setCredentials asserts.
+  buildAuthedClient: async (
+    cfg: { scopes: string[]; credentials_path: string; token_path: string },
+    loader?: (c: typeof cfg) => Promise<string>,
+  ) => {
+    const token = loader
+      ? await loader(cfg)
+      : (await getAccessTokenMock(cfg)).token;
+    const oauth = new FakeOAuth2();
+    oauth.setCredentials({ access_token: token });
+    return oauth;
+  },
 }));
 
 import { createGoogleCalendarAdapter } from "../../../scripts/adapters/calendar/google";
@@ -118,8 +133,10 @@ describe("Google Calendar adapter", () => {
     });
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       access_token_loader: async () => "fake-access-token",
     });
 
@@ -148,8 +165,10 @@ describe("Google Calendar adapter", () => {
     eventsListMock.mockRejectedValue(new Error("should-not-be-called"));
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       access_token_loader: async () => "fake-access-token",
     });
 
@@ -167,8 +186,10 @@ describe("Google Calendar adapter", () => {
     eventsListMock.mockRejectedValue(new Error("403 Forbidden"));
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       access_token_loader: async () => "fake-access-token",
     });
 
@@ -199,8 +220,10 @@ describe("Google Calendar adapter", () => {
     });
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       access_token_loader: async () => "fake-access-token",
     });
 
@@ -235,8 +258,10 @@ describe("Google Calendar adapter", () => {
     });
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       access_token_loader: async () => "fake-access-token",
     });
 
@@ -277,8 +302,10 @@ describe("Google Calendar adapter", () => {
     eventsListMock.mockResolvedValue({ data: { items: [] } });
 
     const adapter = createGoogleCalendarAdapter({
-      credentials_path: "/fake/creds.json",
-      token_path: "/fake/token.json",
+      auth: {
+        credentials_path: "/fake/creds.json",
+        token_path: "/fake/token.json",
+      },
       // Intentionally NOT overriding access_token_loader — exercises the
       // default getAccessToken path.
     });
