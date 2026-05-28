@@ -24,7 +24,7 @@
  *   - SRP: only filesystem I/O for the markdown file
  *   - DI:  the file path is injected via `createMarkdownFileAdapter({ file })`
  *
- * Spec: adapters/markdown-file.md
+ * Spec: adapters/task-output/markdown-file.md
  * Issue: #27
  */
 
@@ -36,7 +36,7 @@ import type {
   PushResult,
   CompleteResult,
   TaskOutputAdapter,
-} from "../adapter-types";
+} from "../../adapter-types";
 
 export interface MarkdownFileAdapterOptions {
   /** Absolute path to the markdown file the adapter appends to. */

@@ -30,8 +30,8 @@ import type {
   CompleteResult,
 } from "./adapter-types";
 
-import { createMarkdownFileAdapter } from "./adapters/markdown-file";
-import { createRemindersAdapter } from "./adapters/reminders";
+import { createMarkdownFileAdapter } from "./adapters/task-output/markdown-file";
+import { createRemindersAdapter } from "./adapters/task-output/reminders";
 
 const registry = new Map<string, TaskOutputAdapter>();
 

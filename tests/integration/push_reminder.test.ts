@@ -24,7 +24,7 @@
 import { spawnSync } from "child_process";
 import * as path from "path";
 
-import { createRemindersAdapter } from "../../scripts/adapters/reminders";
+import { createRemindersAdapter } from "../../scripts/adapters/task-output/reminders";
 import type { TaskOutputRecord } from "../../scripts/adapter-types";
 
 const RUN = process.env.RUN_INTEGRATION === "1";

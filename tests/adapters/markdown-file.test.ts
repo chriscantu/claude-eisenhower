@@ -10,7 +10,7 @@
  *   - MDA-CMP-NNN complete (line-prefix swap)
  *   - MDA-IDM-NNN idempotency / dedup
  *
- * Spec: adapters/markdown-file.md
+ * Spec: adapters/task-output/markdown-file.md
  * Issue: #27
  */
 
@@ -18,7 +18,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-import { createMarkdownFileAdapter } from "../../scripts/adapters/markdown-file";
+import { createMarkdownFileAdapter } from "../../scripts/adapters/task-output/markdown-file";
 import type { TaskOutputRecord } from "../../scripts/adapter-types";
 
 function tmpfile(): string {
