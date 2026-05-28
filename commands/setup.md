@@ -44,6 +44,47 @@ Run only the steps the user selects. Then go to Step 5 (summary).
 
 Run only the steps for the missing files. Skip steps for files that already exist.
 
+**Check for `config/.setup.partial`** (resume marker). If present, read it as
+YAML/JSON and resume from the next pending step rather than re-prompting for
+values already collected. Tell the user:
+
+> "Found a previous setup in progress — resuming from [step name]."
+
+The marker is written after every successful step (see Step 5) and deleted on
+clean completion. If a prior run crashed between calendar validation and write,
+the user does NOT have to re-type a calendar name they already confirmed.
+
+---
+
+## Step 0.5: Preview-before-write
+
+After collecting ALL answers for the steps that will run (calendar, email,
+Reminders, plugin_root, stakeholders), and BEFORE writing any config file,
+present a single preview block and ask for one confirmation:
+
+```
+Here's what I'll configure:
+
+  Plugin root:  [detected_or_supplied_path]
+  Calendar:     [echo_matched_name]
+  Email:        [account_name] / [inbox_name]
+  Reminders:    [list_name]
+  Stakeholders: [create starter / skip]
+
+Write these? (yes / no — let me change something)
+```
+
+On `yes` → proceed to write each config in the original step order, persisting
+`config/.setup.partial` between each successful write so a crash mid-write is
+recoverable.
+
+On `no` → ask which value to change, re-collect just that one, redraw the
+preview. Loop until the user confirms.
+
+This preview gate is the single user-facing point where setup commits to disk.
+Earlier per-step prompts collect intent; this step makes intent visible before
+state changes.
+
 ---
 
 ## Step 1: Calendar setup
@@ -67,7 +108,16 @@ end tell
 - If no match → show the list and say: "I didn't find a calendar with that name. Here are the calendars on your Mac: [list]. Which one should I use?"
 - Wait for a valid selection before proceeding.
 
-**Write** `config/calendar-config.md`:
+**Echo-back the matched calendar name** verbatim before treating the answer as
+final — this catches smart-quote substitution, trailing whitespace, and casing
+drift between what the user typed and what AppleScript actually returned:
+
+> "Found calendar named '[exact_matched_name]' — use this? (yes / no)"
+
+On `no`, return to the list-and-pick step. On `yes`, hold the value for the
+preview block (Step 0.5). Do NOT write the config here.
+
+**Write** `config/calendar-config.md` (only after Step 0.5 confirmation):
 - Read `config/calendar-config.md.example`
 - Replace `YOUR_CALENDAR_NAME` with the validated calendar name
 - Write to `config/calendar-config.md`
@@ -128,13 +178,25 @@ No osascript validation needed — the Reminders adapter creates the list on fir
 
 **Auto-detect the plugin install path** — do NOT ask the user to type it.
 
-Until Claude Code injects `${CLAUDE_PLUGIN_ROOT}` into prompt-context Bash env
-(it currently injects only into `command:`-type hooks), the plugin still needs
-an absolute path on disk to invoke `scripts/cal_query.swift` and friends. Discover
-it programmatically rather than asking the user to type — that prompt was the
-worst friction in v0.9.3-era setup and the most common source of typo failures.
+**Detection order (first hit wins):**
 
-Run this single discovery command via osascript:
+1. **`${CLAUDE_PLUGIN_ROOT}` env var.** Run via Bash tool:
+   ```
+   echo "${CLAUDE_PLUGIN_ROOT:-}"
+   ```
+   If non-empty AND the path contains `.claude-plugin/plugin.json`, take it
+   directly — no find scan, no user prompt. This is the cheapest, most
+   accurate path when the runtime injects it.
+
+2. **Filesystem find scan.** Used only when step 1 returns empty (older
+   runtime, hook context without env injection).
+
+Until Claude Code injects `${CLAUDE_PLUGIN_ROOT}` into all prompt-context Bash
+env reliably, the find fallback below remains required. The env-var path is
+preferred because it avoids ENOENT noise on machines without `~/repos` or
+`~/projects` and eliminates the multi-match disambiguation step.
+
+Run this find command via osascript only when step 1 returned empty:
 
 ```applescript
 do shell script "find " & ¬
@@ -199,6 +261,34 @@ Interpret the result:
 
 ---
 
+## Resume marker — `config/.setup.partial`
+
+Between every successful config write inside Step 0.5's write loop, persist a
+`config/.setup.partial` file with a minimal YAML body recording which steps are
+complete and the validated answers collected so far. Example:
+
+```yaml
+# Auto-managed by /setup — do not edit
+collected:
+  calendar_name: Work
+  email_account: Procore
+  email_inbox: INBOX
+  reminders_list: Eisenhower List
+  plugin_root: /Users/cantu/repos/claude-eisenhower
+  stakeholders_choice: skip
+written:
+  - calendar
+  - email
+```
+
+On clean completion of Step 5, delete `config/.setup.partial`. If a future
+`/setup` invocation finds the file, jump straight back to Step 0.5's preview
+using the persisted values — only re-prompt for fields not yet collected.
+
+The marker is gitignored along with the rest of `config/`.
+
+---
+
 ## Step 5: Confirm and summarize
 
 Show a completion summary of everything that was written this session:
@@ -217,6 +307,8 @@ Config files are saved to config/ (gitignored — never committed).
 
 If setup was triggered automatically by a command that was interrupted, resume it now:
 > "All set. Running /[command] now..."
+
+After the summary, delete `config/.setup.partial` if present — setup is done.
 
 ---
 
