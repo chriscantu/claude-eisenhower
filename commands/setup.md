@@ -69,10 +69,22 @@ Run only the steps for the missing files. Skip steps for files that already exis
    - `reminders_list` — no re-validation needed (adapter creates on first push).
    - `stakeholders_choice` — accept as-is.
 
+   **Re-validation is per-field.** A single failing value drops only that
+   field and falls through to that step's normal prompt path. The rest of
+   the persisted answers remain in scope. Do NOT abort the resume on one
+   stale value — that discards good user work.
+
+5. On `start over`, also clear any persisted values held in memory from
+   step 1's parse. The fresh setup MUST NOT carry forward state from the
+   discarded marker; the user opted out of resume, not for a partial
+   migration.
+
 The marker is written ONLY during the Step 0.5 commit loop — once per
-successful per-config Write — and deleted only by Step 5 on clean completion.
-No other section in this file writes the marker; this is the single
-write-timing source of truth.
+successful per-config Write, in this order: `calendar` → `email` →
+`task-output` → `stakeholders`. The `written:` array reflects only configs
+already on disk; the in-progress write is not yet listed. The marker is
+deleted only by Step 5 on clean completion. No other section in this file
+writes the marker; this is the single write-timing source of truth.
 
 ---
 
@@ -86,9 +98,16 @@ these?", etc.) treats user input case-insensitively against these sets:
 - **No**: `n`, `no`, `nope`, `cancel`, `stop`, `wait`, `let me change`,
   `change it`
 
+**Numbered menus** (e.g. Step 0's "1. Everything / 2. Calendar only / …" or
+Step 4's "1. Add stakeholders now / 2. Use placeholder template / 3. Skip")
+are NOT yes/no prompts — they accept the digit (`1`, `2`, `3`, …) by
+position OR the literal text after the digit (case-insensitive substring
+match against the menu item). The yes/no acceptance set above does NOT
+apply to numbered menus; do not re-prompt a user who replied `1`.
+
 Anything else (gibberish, an unrelated question, silence) → re-prompt:
-"I didn't catch that — yes or no?" Do NOT infer. Do NOT silently default to
-either side.
+"I didn't catch that — yes or no?" (or the numbered-menu prompt verbatim).
+Do NOT infer. Do NOT silently default to either side.
 
 ---
 
@@ -110,9 +129,20 @@ Here's what I'll configure:
 Write these? (yes / no — let me change something)
 ```
 
-On `yes` → proceed to write each config in the original step order, persisting
+On `yes` → proceed to write each config in this fixed order, persisting
 `config/.setup.partial` between each successful write so a crash mid-write is
-recoverable.
+recoverable:
+
+1. `config/calendar-config.md` (Step 1's content)
+2. `config/email-config.md` (Step 2's content)
+3. `config/task-output-config.md` (Step 3 + Step 3b's content)
+4. `config/stakeholders.yaml` (Step 4's content — bootstrap entries or
+   placeholder template; skipped entirely on Option 3)
+
+Each successful write extends the marker's `written:` array with the
+filename keyword (`calendar`, `email`, `task-output`, `stakeholders`) BEFORE
+the next write begins. A crash between writes is recoverable by Step 0's
+resume path.
 
 On `no` → ask which value to change, re-collect just that one, redraw the
 preview. Loop until the user confirms.
@@ -244,7 +274,11 @@ Hold the Reminders-list value for Step 0.5; do NOT write the config here.
    sibling plugin's tree — verification is the guard.
 
 2. **Filesystem find scan.** Used when step 1 returns empty OR fails any of
-   the three verification checks above.
+   the three verification checks above. If the env var produced a verified
+   path, skip this scan entirely. If the env var produced an UNVERIFIED
+   path (e.g., env var points at `~/old-repo` which no longer has the
+   plugin), record that path string and SKIP it from the find scan results
+   to avoid re-suggesting the same broken value.
 
 Until Claude Code injects `${CLAUDE_PLUGIN_ROOT}` into all prompt-context Bash
 env reliably, the find fallback below remains required. The env-var path is
@@ -359,7 +393,7 @@ Show a completion summary of everything that was written this session:
   Calendar:     [calendar_name]
   Email:        [account_name] / [inbox_name]
   Reminders:    [list_name]
-  Stakeholders: [created with placeholders / skipped]
+  Stakeholders: [N entries collected / placeholder template / skipped]
 
 Config files are saved to config/ (gitignored — never committed).
 ```
@@ -386,10 +420,13 @@ remediation is different:
   send Apple events` / errAEEventNotPermitted / `-1743` / `-600`) →
   > "Claude Code needs Automation permission for [Calendar | Mail]. Open
   > System Settings → Privacy & Security → Automation, expand the entry for
-  > the app running Claude (Terminal, iTerm, Cursor, etc.), and enable the
-  > checkbox next to [Calendar | Mail]. Then say 'retry'."
+  > the app running Claude (`Claude` / `Claude.app` for the desktop install,
+  > or your terminal — `Terminal`, `iTerm`, `Ghostty`, `Warp`, etc. — for
+  > the CLI install), and enable the checkbox next to [Calendar | Mail].
+  > Then say 'retry'."
   Do NOT tell the user to "open the app" — the app is irrelevant; the OS
-  blocks the AppleEvent at the IPC layer.
+  blocks the AppleEvent at the IPC layer. `Claude.app` is the default
+  desktop install and the most common entry users miss.
 
 - **Other osascript failure** (anything else) → surface the raw error and
   ask the user to share it. Do not guess.

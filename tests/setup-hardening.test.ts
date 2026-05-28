@@ -187,3 +187,45 @@ describe("Setup hardening: Step 3b plugin-path promotion (TEST-SETUP-HARD-010)",
     expect(content).toMatch(/## Step 3b: Plugin install path detection/);
   });
 });
+
+describe("Setup hardening: second-pass review fixes (TEST-SETUP-HARD-011)", () => {
+  const content = readFile("commands/setup.md");
+
+  test("TEST-SETUP-HARD-011a: resume re-validation is per-field, not abort-all", () => {
+    expect(content).toMatch(/Re-validation is per-field/);
+    expect(content).toMatch(/Do NOT abort the resume on one\s+stale value/);
+  });
+
+  test("TEST-SETUP-HARD-011b: start-over discards in-memory state from parsed marker", () => {
+    expect(content).toMatch(/start over[\s\S]{0,200}clear any persisted values held in memory/);
+  });
+
+  test("TEST-SETUP-HARD-011c: Step 0.4 covers numbered menus with digit + text accept", () => {
+    expect(content).toMatch(/Numbered menus/);
+    expect(content).toMatch(/accept the digit \(`1`/);
+    expect(content).toMatch(/case-insensitive substring/);
+  });
+
+  test("TEST-SETUP-HARD-011d: Step 0.5 write order is explicit 4-step sequence", () => {
+    expect(content).toMatch(/calendar-config\.md[\s\S]{0,30}\(Step 1's content\)/);
+    expect(content).toMatch(/email-config\.md[\s\S]{0,30}\(Step 2's content\)/);
+    expect(content).toMatch(/task-output-config\.md[\s\S]{0,80}\(Step 3 \+ Step 3b's content\)/);
+    expect(content).toMatch(/stakeholders\.yaml[\s\S]{0,80}\(Step 4's content/);
+  });
+
+  test("TEST-SETUP-HARD-011e: TCC remediation lists Claude.app first for desktop install", () => {
+    expect(content).toMatch(/`Claude`[\s\S]{0,40}`Claude\.app`[\s\S]{0,40}for the desktop install/);
+  });
+
+  test("TEST-SETUP-HARD-011f: env-var unverified path is excluded from find-scan results", () => {
+    expect(content).toMatch(/SKIP it from the find scan results/);
+  });
+
+  test("TEST-SETUP-HARD-011g: Step 5 summary template includes Option 1 entries-collected slot", () => {
+    expect(content).toMatch(/\[N entries collected \/ placeholder template \/ skipped\]/);
+  });
+
+  test("TEST-SETUP-HARD-011h: Step 0.5 write loop names marker-array keywords in order", () => {
+    expect(content).toMatch(/`calendar` → `email` →[\s\S]{0,10}`task-output` → `stakeholders`/);
+  });
+});
