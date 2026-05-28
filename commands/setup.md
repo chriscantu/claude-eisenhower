@@ -225,12 +225,52 @@ Loop one person at a time. For each, collect minimum-viable fields:
 After each person:
 > "Got [Display Alias] — [role or "no role"], [relationship]. Add another? (yes / done)"
 
-Loop until the user says `done`. Then write the collected entries to
-`config/stakeholders.yaml` using the schema in
-`config/stakeholders.yaml.example` — preserve the example file's leading
-comment block verbatim (it documents the schema), then write only the
-stakeholders the user named. Skip `notes`, `contact_hint`, and `anti_domains`
-fields on bootstrap; the user adds them as needed.
+**Loop termination + input normalization** — treat user response
+case-insensitively:
+
+- **Continue (yes)** accept: `yes`, `y`, `more`, `another`, `next`, `add`
+- **Stop (done)** accept: `done`, `no`, `n`, `stop`, `finish`, `that's it`,
+  `that's all`
+
+Anything else → re-prompt: "yes (add another) or done?" Do NOT infer.
+
+**Duplicate alias guard** — before accepting a new entry, compare its
+display alias (case-insensitively) against entries collected so far this
+session. On collision:
+> "You already added '[alias]'. Overwrite the previous entry, or use a
+> different display alias? (overwrite / [type new alias])"
+
+**Empty-name guard** — if the user says `yes` to "Add another?" but then
+provides no name or a name that is whitespace only, re-prompt once:
+"Need a name to proceed — or say `done`."
+
+### YAML write contract (CRITICAL — escape rules)
+
+Hand-constructing YAML for free-text user input is fragile. Follow these
+rules without exception when serializing collected entries — apostrophes
+(`O'Brien`), colons (`Director: Eng`), brackets, and macOS smart-quote
+substitution all break naive output.
+
+1. **Always double-quote** these scalar values: `name`, every element of
+   `alias[]`, `role`. Example: `role: "Director of Engineering"`.
+2. **Escape embedded double quotes** as `\"`. Example:
+   `name: "Ada \"Curly\" Lovelace"`.
+3. **Reject smart quotes** — if the user input contains `‘ ’ “ ”` (curly
+   quotes that macOS autocorrects from straight quotes), normalize to
+   straight `'` / `"` before quoting. Surface a one-line note: "Normalized
+   smart quotes in '[field]'."
+4. **`domains` is required by the schema** — write `domains: []` literally
+   when the user leaves it blank. Do NOT omit the key. The scoring CLI's
+   stakeholder type declares `domains: string[]` as non-optional in
+   `scripts/delegate-core.ts` — an absent key or YAML null will break
+   downstream consumers.
+5. **`capacity_signal`** writes `medium` literally when skipped (per the
+   default above), not absent.
+6. **Skip** `notes`, `contact_hint`, and `anti_domains` on bootstrap.
+
+Preserve the example file's leading comment block verbatim (it documents
+the schema), then emit `stakeholders:` followed by one entry per collected
+person using the rules above.
 
 Hold the collected list until the user confirms the full setup summary
 (Step 5) — do NOT write `config/stakeholders.yaml` mid-loop. If a downstream

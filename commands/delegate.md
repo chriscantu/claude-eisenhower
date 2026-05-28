@@ -229,18 +229,33 @@ into `config/stakeholders.yaml`.
 This implements the "learn-by-doing" loop from issue #39 without silently
 editing the stakeholders file. The plugin proposes; the user promotes.
 
-**Extraction rule:**
+**Extraction rule (heuristic, intentionally non-deterministic):**
 
 1. Tokenize task title + description, lowercase, strip punctuation.
-2. Drop English stop-words and the words already present in the alias's
-   current `domains:` list in `config/stakeholders.yaml`.
-3. Keep only multi-character tokens that look like domain-of-work nouns
+2. Drop English stop-words. Use this concrete list as the floor — the LLM
+   may extend it with judgment but must not shrink it:
+   `the, a, an, and, or, but, if, then, to, of, in, on, at, for, with,
+   from, by, as, is, are, was, were, be, been, being, have, has, had, do,
+   does, did, will, would, should, could, may, might, can, this, that,
+   these, those, it, its, i, me, my, you, your, we, our, he, she, they,
+   them, his, her, their, what, which, when, where, who, why, how, please,
+   thanks, asap, urgent`.
+3. Drop tokens already present (case-insensitively) in the alias's current
+   `domains:` list in `config/stakeholders.yaml` — no point suggesting what
+   is already there.
+4. Keep only multi-character tokens that look like domain-of-work nouns
    (skip pronouns, verbs of motion, common adjectives). When in doubt, keep
    — the user filters at promotion time.
-4. Cap the suggestion list at 5 keywords per delegation; surface the highest-
-   signal tokens (longest, lowest stop-word affinity).
+5. Cap the suggestion list at 5 keywords per delegation; surface the
+   highest-signal tokens (longest, lowest stop-word affinity).
 
-If the extracted list is empty, skip this step silently — nothing to suggest.
+**Determinism note** — extraction is heuristic. Two runs on the same task
+may produce different suggestion sets. Acceptable because the user is the
+filter via the `Promoted?` checkbox; the spec biases toward "surface noise,
+let the user prune" over "surface only certainties."
+
+If the extracted list is empty after the rules above, skip this step
+silently — nothing to suggest.
 
 **Write to `memory/domain-suggestions.md`** (create with this header on
 first write):
@@ -261,6 +276,27 @@ Append one row per confirmed delegation:
 ```
 | 2026-05-28 | Jordan V.| Review API contract spec   | api, contract, spec, review   | ☐         |
 ```
+
+### Markdown-table escape rules (MANDATORY)
+
+Pipe characters and newlines in user content silently corrupt markdown
+tables. Apply these rules to every column value before writing the row:
+
+1. Replace every `|` in `Alias` / `Task` / `Suggested domains` cells with
+   `\|` (backslash-escaped).
+2. Collapse `\n`, `\r`, and `\r\n` to a single space.
+3. Trim leading/trailing whitespace.
+4. Truncate the `Task` cell to 80 characters; if truncated, append `…`. The
+   full title still lives in TASKS.md.
+
+### Idempotency
+
+Before appending, check the existing log for a row matching
+`(Date, Alias, Task)` (case-insensitive on Alias + Task, exact on Date).
+If found, do NOT append a duplicate — same-day re-delegation of the same
+task is a no-op for the suggestion log. Cross-day re-delegation of the
+same task DOES append (the date differs) — that's signal about repeated
+work, not duplication.
 
 Set `Promoted?` to `☐` always — the user manually flips to `☑` after editing
 `stakeholders.yaml`. The plugin never modifies the `Promoted?` column.
