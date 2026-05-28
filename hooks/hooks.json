@@ -10,18 +10,5 @@
         }
       ]
     }
-  ],
-  "PostToolUse": [
-    {
-      "matcher": "Write|Edit",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "${CLAUDE_PLUGIN_ROOT}/hooks/enhance-nudge.sh",
-          "timeout": 5,
-          "async": true
-        }
-      ]
-    }
   ]
 }

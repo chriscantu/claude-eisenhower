@@ -43,7 +43,6 @@ flowchart TD
         memmgr["memory-manager\nSKILL"]
         agent["task-prioritizer\nAgent"]
         sshook["SessionStart Hook"]
-        nudgehook["enhance-nudge\nPostToolUse Hook"]
     end
 
     %% ── Scripts ────────────────────────────────────────────────
@@ -119,9 +118,6 @@ flowchart TD
     memmgr -->|"primary"| pmm
     memmgr -.->|"fallback"| mem
     reviewweek -->|"analytics"| mem
-
-    %% Support layer
-    nudgehook -->|"nudges developer"| enh
 
     %% Infrastructure
     jest -->|"tests"| delcore
@@ -223,7 +219,7 @@ flowchart TD
 | Commands | `/intake` `/prioritize` `/schedule` `/execute` `/delegate` `/scan-email` `/review-week` `/setup` |
 | Skills | `claude-eisenhower` (end-user routing) · `skill-enhancer` (developer self-improvement) |
 | Agents | `task-prioritizer` (autonomous Inbox triage) |
-| Hooks | `SessionStart` (task board briefing) · `enhance-nudge` PostToolUse (developer nudge) |
+| Hooks | `SessionStart` (task board briefing) |
 | TypeScript | `delegate-core.ts` · `match-delegate.ts` · `date-helpers.ts` · `adapter-types.ts` |
 | AppleScript | `push_reminder.applescript` · `complete_reminder.applescript` |
 | Swift | `cal_query.swift` (EventKit — O(1) calendar query) |

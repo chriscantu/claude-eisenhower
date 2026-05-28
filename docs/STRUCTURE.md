@@ -123,8 +123,7 @@ agents/
 
 ```
 hooks/
-  hooks.json          -- hook registry (SessionStart, PostToolUse)
-  enhance-nudge.sh    -- PostToolUse: nudges developer to run skill-enhancer after editing artifacts
+  hooks.json          -- hook registry (SessionStart)
 ```
 
 ---

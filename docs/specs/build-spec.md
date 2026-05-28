@@ -130,8 +130,7 @@ claude-eisenhower-{version}.plugin (zip)
 ├── agents/
 │   └── task-prioritizer.md
 ├── hooks/
-│   ├── hooks.json
-│   └── enhance-nudge.sh
+│   └── hooks.json
 ├── scripts/
 │   ├── cal_query.swift
 │   ├── complete_reminder.applescript
