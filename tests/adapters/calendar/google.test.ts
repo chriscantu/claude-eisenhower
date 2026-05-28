@@ -36,7 +36,9 @@ const calendarClientStub = {
   events: { list: eventsListMock },
 };
 
-const googleCalendarFn = jest.fn(() => calendarClientStub);
+const googleCalendarFn = jest.fn(
+  (_arg?: unknown): typeof calendarClientStub => calendarClientStub,
+);
 
 // Capture instances so we can assert setCredentials was called.
 const oauth2Instances: Array<{ setCredentials: jest.Mock }> = [];
@@ -49,14 +51,14 @@ class FakeOAuth2 {
 
 jest.mock("googleapis", () => ({
   google: {
-    calendar: (...args: unknown[]) => googleCalendarFn(...args),
+    calendar: (arg: unknown) => googleCalendarFn(arg),
     auth: { OAuth2: FakeOAuth2 },
   },
 }));
 
 const getAccessTokenMock = jest.fn();
 jest.mock("../../../scripts/google-auth", () => ({
-  getAccessToken: (...args: unknown[]) => getAccessTokenMock(...args),
+  getAccessToken: (arg: unknown) => getAccessTokenMock(arg),
 }));
 
 import { createGoogleCalendarAdapter } from "../../../scripts/adapters/calendar/google";
