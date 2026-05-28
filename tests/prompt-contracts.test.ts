@@ -118,3 +118,118 @@ describe("Prompt Contracts: no references to retired external memory skill (Q2-0
     });
   }
 });
+
+// ── Test group 3: Canonical field mentions per command (Q2-003) ──────────
+//
+// Issue #37 calls for "command-prompt contract tests — assert each
+// `commands/*.md` mentions the required canonical fields." Each command in
+// the table below MUST mention every field its spec says it writes to
+// TASKS.md. The check is a literal string-includes match against the
+// command prompt file — when a maintainer rewrites a command and drops the
+// `State: Delegated` write step, the contract surface fails CI.
+//
+// Field tokens anchor on the colon-prefixed write form (`Synced:`,
+// `Reminder-id:`, `State:`) so the contract checks the actual field-write
+// step in the prompt — not stray prose mentions like
+// "we no longer write Synced fields". The bar (per #37) is "changing the
+// four-state model breaks at least one test" — the State-line tokens below
+// pin all four section names, so a State enum rename surfaces here too.
+//
+// To add a new command:
+//   1. Append a row to `CANONICAL_FIELDS_BY_COMMAND`.
+//   2. List only the fields that command writes (not what it reads).
+//   3. Use the spec wording from `docs/specs/tasks-schema-spec.md`.
+
+/**
+ * A canonical-field contract pins a regex per command. Each regex must match
+ * at least once in the command prompt body. Regexes (rather than plain
+ * strings) tolerate the padded field formatting some prompts use
+ * (e.g., `State:       Delegated` in delegate.md's intake-style block).
+ */
+interface CommandFieldContract {
+  /** Basename of the file under `commands/`. */
+  file: string;
+  /** Regexes that MUST each match at least once. The map key is the
+   *  human-readable name used in the test title. */
+  mustMention: Readonly<Record<string, RegExp>>;
+}
+
+/**
+ * Field tokens reflect what each command writes to TASKS.md, per
+ * `docs/specs/tasks-schema-spec.md`. Adding a new command? List only the
+ * fields it WRITES, not the ones it reads.
+ */
+const CANONICAL_FIELDS_BY_COMMAND: readonly CommandFieldContract[] = [
+  {
+    file: "intake.md",
+    mustMention: {
+      Title: /\bTitle:/,
+      Description: /\bDescription:/,
+      Source: /\bSource:/,
+      "State: Inbox": /\bState:\s+Inbox\b/,
+    },
+  },
+  {
+    file: "prioritize.md",
+    mustMention: {
+      Priority: /\bPriority:/,
+      State: /\bState:/,
+      Owner: /\bOwner:/,
+    },
+  },
+  {
+    file: "schedule.md",
+    mustMention: {
+      Scheduled: /\bScheduled:/,
+      Action: /\bAction:/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
+      "State: Delegated": /\bState:\s+Delegated\b/,
+    },
+  },
+  {
+    file: "delegate.md",
+    mustMention: {
+      "Delegate to": /\bDelegate to:/,
+      "State: Delegated": /\bState:\s+Delegated\b/,
+      "Check-by": /\bCheck-by:/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
+    },
+  },
+  {
+    file: "execute.md",
+    mustMention: {
+      State: /\bState:/,
+      Done: /\bDone:/,
+      Synced: /\bSynced:/,
+      "Reminder-id": /\bReminder-id:/,
+    },
+  },
+];
+
+describe("Prompt Contracts: command files mention canonical fields (Q2-003)", () => {
+  for (const contract of CANONICAL_FIELDS_BY_COMMAND) {
+    const filePath = path.join(repoRoot, "commands", contract.file);
+    const relPath = path.relative(repoRoot, filePath);
+
+    test(`Q2-003: ${relPath} exists`, () => {
+      expect(fs.existsSync(filePath)).toBe(true);
+    });
+
+    for (const [name, pattern] of Object.entries(contract.mustMention)) {
+      test(`Q2-003: ${relPath} mentions "${name}"`, () => {
+        const content = readContent(filePath);
+        if (!pattern.test(content)) {
+          throw new Error(
+            `${relPath} is missing the canonical token "${name}" (pattern ${pattern}). ` +
+              `If you intentionally removed it, update CANONICAL_FIELDS_BY_COMMAND ` +
+              `in tests/prompt-contracts.test.ts AND docs/specs/tasks-schema-spec.md ` +
+              `in the same commit.`
+          );
+        }
+        expect(content).toMatch(pattern);
+      });
+    }
+  }
+});
