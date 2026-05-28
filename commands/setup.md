@@ -44,15 +44,51 @@ Run only the steps the user selects. Then go to Step 5 (summary).
 
 Run only the steps for the missing files. Skip steps for files that already exist.
 
-**Check for `config/.setup.partial`** (resume marker). If present, read it as
-YAML/JSON and resume from the next pending step rather than re-prompting for
-values already collected. Tell the user:
+**Check for `config/.setup.partial`** (resume marker). If present:
 
-> "Found a previous setup in progress — resuming from [step name]."
+1. Try to parse the file as YAML. If parsing fails, rename to
+   `config/.setup.partial.broken` and proceed as a fresh setup — surface the
+   rename in one line: "Resume marker was unreadable — renamed to
+   .setup.partial.broken and starting fresh."
+2. If parsing succeeded, present a fork BEFORE consuming any values:
+   > "Found a previous setup in progress (calendar=[X], email=[Y], …).
+   > Resume from where you left off, or start over? (resume / start over)"
+3. On `start over`, delete `config/.setup.partial` and proceed as a fresh
+   setup.
+4. On `resume`, run RE-VALIDATION for every persisted value before drawing
+   the Step 0.5 preview:
+   - `calendar_name` — re-run the Step 1 AppleScript calendar list; drop the
+     value and re-prompt if it no longer exists (user may have renamed or
+     deleted the calendar between sessions).
+   - `email_account` + `email_inbox` — re-run Step 2 list AppleScript; drop +
+     re-prompt on mismatch.
+   - `plugin_root` — re-check `${CLAUDE_PLUGIN_ROOT}` first, then re-verify
+     the persisted path exists on disk AND contains
+     `.claude-plugin/plugin.json` with `"name": "claude-eisenhower"`. Drop +
+     re-detect on mismatch (repo may have moved).
+   - `reminders_list` — no re-validation needed (adapter creates on first push).
+   - `stakeholders_choice` — accept as-is.
 
-The marker is written after every successful step (see Step 5) and deleted on
-clean completion. If a prior run crashed between calendar validation and write,
-the user does NOT have to re-type a calendar name they already confirmed.
+The marker is written ONLY during the Step 0.5 commit loop — once per
+successful per-config Write — and deleted only by Step 5 on clean completion.
+No other section in this file writes the marker; this is the single
+write-timing source of truth.
+
+---
+
+## Step 0.4: Confirmation parsing (apply to every yes/no prompt)
+
+Every confirmation prompt in this command (`yes / no`, "use this?", "Write
+these?", etc.) treats user input case-insensitively against these sets:
+
+- **Yes**: `y`, `yes`, `ok`, `okay`, `sure`, `lgtm`, `go`, `go ahead`,
+  `looks good`, `confirm`, `confirmed`, `proceed`
+- **No**: `n`, `no`, `nope`, `cancel`, `stop`, `wait`, `let me change`,
+  `change it`
+
+Anything else (gibberish, an unrelated question, silence) → re-prompt:
+"I didn't catch that — yes or no?" Do NOT infer. Do NOT silently default to
+either side.
 
 ---
 
@@ -144,6 +180,14 @@ end tell
 - If the user's input matches (contains) an account name → proceed.
 - If no match → show the list and ask the user to pick.
 
+**Echo-back the matched account name** verbatim (same pattern as Step 1) —
+catches typos, smart-quote substitution, and casing drift:
+
+> "Found account named '[exact_matched_name]' — use this? (yes / no)"
+
+On `no`, return to the list-and-pick step. Hold the value for Step 0.5; do
+NOT write the config here.
+
 **Auto-detect the inbox name:**
 
 ```applescript
@@ -159,7 +203,7 @@ end tell
 
 Use `INBOX` if present, otherwise `Inbox`. If neither exists, ask the user.
 
-**Write** `config/email-config.md`:
+**Write** `config/email-config.md` (only after Step 0.5 confirmation):
 - Read `config/email-config.md.example`
 - Replace `YOUR_MAIL_ACCOUNT_NAME` with the validated account name
 - Replace `INBOX` with the detected inbox name
@@ -176,6 +220,12 @@ If the user presses Enter or provides no input → use `Eisenhower List`.
 
 No osascript validation needed — the Reminders adapter creates the list on first push if it doesn't exist.
 
+Hold the Reminders-list value for Step 0.5; do NOT write the config here.
+
+---
+
+## Step 3b: Plugin install path detection
+
 **Auto-detect the plugin install path** — do NOT ask the user to type it.
 
 **Detection order (first hit wins):**
@@ -184,12 +234,17 @@ No osascript validation needed — the Reminders adapter creates the list on fir
    ```
    echo "${CLAUDE_PLUGIN_ROOT:-}"
    ```
-   If non-empty AND the path contains `.claude-plugin/plugin.json`, take it
-   directly — no find scan, no user prompt. This is the cheapest, most
-   accurate path when the runtime injects it.
+   If non-empty, verify ALL of:
+   - The path exists on disk
+   - It contains `.claude-plugin/plugin.json`
+   - That `plugin.json` has `"name": "claude-eisenhower"` (read + grep)
 
-2. **Filesystem find scan.** Used only when step 1 returns empty (older
-   runtime, hook context without env injection).
+   Only on all three checks passing do we take it directly. A stale env var
+   from another plugin's hook context could otherwise mis-detect us into a
+   sibling plugin's tree — verification is the guard.
+
+2. **Filesystem find scan.** Used when step 1 returns empty OR fails any of
+   the three verification checks above.
 
 Until Claude Code injects `${CLAUDE_PLUGIN_ROOT}` into all prompt-context Bash
 env reliably, the find fallback below remains required. The env-var path is
@@ -216,8 +271,9 @@ Interpret the result:
 
 1. **Exactly one match returned** (e.g. `/Users/alice/repos/claude-eisenhower/.claude-plugin/plugin.json`):
    - Strip the trailing `/.claude-plugin/plugin.json` to get the plugin root.
-   - Say: "Detected plugin install at `{plugin_root}`. Use this? (yes / no — let me type it)"
-   - On `yes` (or equivalent), proceed with the detected path.
+   - **Echo-back** the detected path (same pattern as calendar/email):
+     "Detected plugin install at `{plugin_root}` — use this? (yes / no — let me type it)"
+   - On `yes` (or equivalent per Step 0.4), proceed with the detected path.
    - On `no`, prompt once for the absolute path. No retry loop — if the single
      re-entry is invalid, write `plugin_root: <not detected — see setup>` and
      surface: "I couldn't verify the path. Edit `config/task-output-config.md`
@@ -234,7 +290,9 @@ Interpret the result:
      or /today (cal_query.swift will error). Cheaper to recover then than to
      gate setup behind shell ceremony.
 
-**Write** `config/task-output-config.md`:
+Hold the detected `plugin_root` for Step 0.5; do NOT write the config here.
+
+**Write** `config/task-output-config.md` (only after Step 0.5 confirmation):
 - Read `config/task-output-config.md.example`
 - Replace `YOUR_PLUGIN_INSTALL_PATH` on the `plugin_root:` line with the
   detected (or user-supplied) absolute path
@@ -254,8 +312,8 @@ Interpret the result:
 
 **If yes:**
 - Read `config/stakeholders.yaml.example`
-- Write its full contents as-is to `config/stakeholders.yaml`
-- Say: "Created config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
+- Hold its contents for the Step 0.5 commit loop; do NOT write here.
+- After the Step 0.5-gated write, say: "Created config/stakeholders.yaml with placeholder entries. Edit it with your team's real information before using /delegate."
 
 **If no:** skip silently.
 
@@ -281,9 +339,10 @@ written:
   - email
 ```
 
-On clean completion of Step 5, delete `config/.setup.partial`. If a future
-`/setup` invocation finds the file, jump straight back to Step 0.5's preview
-using the persisted values — only re-prompt for fields not yet collected.
+On clean completion of Step 5, delete `config/.setup.partial`. Re-entry
+behavior on a future `/setup` invocation is fully specified in Step 0
+(resume / start over fork + re-validation contract) — do NOT duplicate that
+logic here.
 
 The marker is gitignored along with the rest of `config/`.
 
@@ -314,6 +373,28 @@ After the summary, delete `config/.setup.partial` if present — setup is done.
 
 ## Error handling
 
-- If an osascript call fails (app not running, permission denied) → tell the user which app needs to be open and ask them to open it, then retry.
-- If a `.example` file is missing → say "I can't find the template file for [config]. The plugin may be corrupted. Try reinstalling." and stop.
-- Never write a config file with unresolved placeholder values (e.g., `YOUR_CALENDAR_NAME`).
+osascript failures split into two distinct cases — DO NOT conflate them, the
+remediation is different:
+
+- **App not running** (error contains `Application isn't running` /
+  `Connection is invalid` / Calendar/Mail not launched) →
+  > "I need [Calendar | Mail] to be open. Please open it from the Dock or
+  > Spotlight, then say 'retry'."
+  Wait for `retry`; do not assume the user has opened the app.
+
+- **TCC / Automation permission denied** (error contains `not authorized to
+  send Apple events` / errAEEventNotPermitted / `-1743` / `-600`) →
+  > "Claude Code needs Automation permission for [Calendar | Mail]. Open
+  > System Settings → Privacy & Security → Automation, expand the entry for
+  > the app running Claude (Terminal, iTerm, Cursor, etc.), and enable the
+  > checkbox next to [Calendar | Mail]. Then say 'retry'."
+  Do NOT tell the user to "open the app" — the app is irrelevant; the OS
+  blocks the AppleEvent at the IPC layer.
+
+- **Other osascript failure** (anything else) → surface the raw error and
+  ask the user to share it. Do not guess.
+
+- If a `.example` file is missing → say "I can't find the template file for
+  [config]. The plugin may be corrupted. Try reinstalling." and stop.
+- Never write a config file with unresolved placeholder values (e.g.,
+  `YOUR_CALENDAR_NAME`).
