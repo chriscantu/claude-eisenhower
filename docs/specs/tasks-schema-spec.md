@@ -262,4 +262,8 @@ And the record appears in the ## Inbox section
    required when `Awaiting:` is set — same forcing function as Delegated. Internal context
    (notes about the blocker, escalation history) still goes in `Note:`. `/status awaiting`
    rolls up by blocker so the leader can answer "what's blocked on Vendor X?" in a
-   peer-leader conversation.
+   peer-leader conversation. SCHEMA-010 and SCHEMA-011 are enforced by
+   `validateTaskRecord` in `scripts/tasks-parser.ts` (negative tests in
+   `tests/tasks-parser.test.ts` PARSE-VALIDATE-001..007). Commands writing task records
+   SHOULD invoke the validator before serialization; the parser itself is lenient by
+   design and will not catch invariant violations on read.
