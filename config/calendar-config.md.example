@@ -1,41 +1,79 @@
 # Calendar Configuration
 
-Controls which Mac Calendar is queried for availability checks during
-`/schedule` and `/scan-email`. Read-only — this plugin never creates,
-modifies, or deletes calendar events.
+Controls which calendar is queried for availability checks during
+`/schedule`, `/scan-email`, `/today`, `/plan-week`, and `/review-week`.
+Read-only — this plugin never creates, modifies, or deletes calendar events.
 
 ---
 
 ## Settings
 
+provider:      eventkit
 calendar_name: YOUR_CALENDAR_NAME
+
+# Google Calendar (when provider: google) — see #64
+# google_credentials_path: ~/.claude-eisenhower/google-client-secret.json
+# google_token_path:       ~/.claude-eisenhower/google-calendar-refresh-token.json
+
+---
+
+## Providers
+
+**eventkit** (default, Mac-only) — wraps `scripts/cal_query.swift`, which uses
+the EventKit indexed database. Fast on calendars of any size. No auth required.
+
+**google** — Google Calendar API v3 over OAuth 2.0. Cross-platform.
+Requires:
+- `google_credentials_path` — abs path to the `client_secret.json` you
+  download from Google Cloud Console (OAuth 2.0 Client ID, type
+  "Desktop app"). Gitignored.
+- `google_token_path` — abs path where the refresh token is persisted on
+  first run. Created automatically. Mode 0600. Gitignored.
+- One-time auth flow: `/schedule` (or any calendar command) prints a URL;
+  open it, grant access, the loopback callback completes the flow.
+- Scope: `https://www.googleapis.com/auth/calendar.readonly` (read-only).
+
+The two adapters return identical `CalendarQueryResult` shapes — callers
+do not need to know which provider is active.
+
+Issue tracker for the Google adapter: #64.
 
 ---
 
 ## How It's Used
 
-The `calendar_name` value is passed to `scripts/cal_query.swift` whenever
-availability is checked:
+Commands invoke the dispatcher, not the adapter directly:
 
 ```applescript
-do shell script "swift ~/repos/claude-eisenhower/scripts/cal_query.swift '" & calendar_name & "' {DAYS} {FORMAT} 2>&1"
+do shell script "node " & quoted form of (pluginRoot & "/scripts/calendar-query.ts") & " query " & quoted form of calendar_name & " {DAYS} {FORMAT} 2>&1"
 ```
+
+The dispatcher reads `provider:` from this file and routes the request to
+the configured adapter. Output is JSON: `{status, reason, events}`.
 
 Used in:
 - `/schedule` — optional availability check before locking in a Q2 focus block date
 - `/scan-email` Step 6 — escalation logic for Admin/Compliance emails with due dates
+- `/today` — 1-day full event list
+- `/plan-week`, `/review-week` — 7-day / 14-day business-day availability summary
 
 ## Performance Note
 
-If your calendar has a large number of events (thousands), the Swift EventKit
-script handles this efficiently. **Do NOT use AppleScript's `whose` clause** for
-calendar queries — it is O(n) on total event count and will time out on large
-calendars. The Swift script uses indexed CalendarStore queries and is instant
-regardless of calendar size.
+If your calendar has a large number of events (thousands), the EventKit
+adapter handles this efficiently via indexed CalendarStore queries.
+**Do NOT use AppleScript's `whose` clause** for calendar queries —
+it is O(n) on total event count and will time out on large calendars.
+Always route through the dispatcher.
 
 ## How to Set Up
 
 1. Copy this file: `cp calendar-config.md.example calendar-config.md`
-2. Set `calendar_name` to the exact name of your calendar as it appears
-   in the Mac Calendar app sidebar (case-sensitive).
+2. Pick a provider:
+   - **eventkit** (Mac default): set `calendar_name` to the exact name
+     as it appears in the Mac Calendar app sidebar (case-sensitive).
+     Leave the `google_*` lines commented out.
+   - **google**: set `provider: google`, set `calendar_name` to the
+     calendar's display name in Google Calendar, set the two
+     `google_*` paths, and run any calendar command once to trigger
+     the loopback OAuth flow.
 3. The actual `calendar-config.md` is gitignored — never committed.

@@ -1,6 +1,6 @@
 # Email Configuration
 
-Controls which Apple Mail account and inbox `/scan-email` reads from.
+Controls which email account and inbox `/scan-email` reads from.
 Strictly read-only — this plugin never marks emails as read, moves them,
 or modifies them in any way.
 
@@ -8,14 +8,43 @@ or modifies them in any way.
 
 ## Settings
 
+provider:     apple-mail
 account_name: YOUR_MAIL_ACCOUNT_NAME
 inbox_name:   INBOX
 
+# Gmail (when provider: google) — see #65
+# google_credentials_path: ~/.claude-eisenhower/google-client-secret.json
+# google_token_path:       ~/.claude-eisenhower/google-gmail-refresh-token.json
+
 ---
 
-## How It's Used
+## Providers
 
-The `account_name` value is used to locate the mail account in Apple Mail:
+**apple-mail** (default, Mac-only) — wraps Apple Mail via `osascript`.
+No auth required beyond the Mac's existing Mail account setup.
+
+**google** — Gmail API over OAuth 2.0. Cross-platform.
+Requires:
+- `google_credentials_path` — abs path to the `client_secret.json` you
+  download from Google Cloud Console. Gitignored. (May be the same
+  client_secret file used by the Calendar adapter — see calendar-config.md.)
+- `google_token_path` — abs path where the refresh token is persisted.
+  Created automatically. Mode 0600. Gitignored.
+- Scope: `https://www.googleapis.com/auth/gmail.readonly`.
+
+Issue tracker for the Gmail adapter: #65.
+
+Note: as of foundation #67, the `/scan-email` command still drives
+Apple Mail directly via embedded AppleScript. The dispatcher path
+exists but is not yet wired up at the command surface — full
+command rewire ships in a follow-up.
+
+---
+
+## How It's Used (apple-mail, today)
+
+`/scan-email` reads `account_name` and `inbox_name` and drives Apple Mail
+via inline AppleScript blocks:
 
 ```applescript
 tell application "Mail"
@@ -24,17 +53,17 @@ tell application "Mail"
 end tell
 ```
 
-Used in:
-- `/scan-email` — all steps that read email subjects, senders, dates, and body previews
-
 ## Settings Reference
 
-**account_name** — The name of the mail account in Apple Mail, or a unique
-substring of it. The scan uses `contains` matching, so "Acme" will match
-an account named "Acme (you@acme.com)".
+**provider** — `apple-mail` (default) or `google`. Routing only; both
+adapters return identical `EmailScanResult` shapes.
 
-**inbox_name** — The exact mailbox name inside that account. Common values:
-- `INBOX` (most accounts)
+**account_name** — The name of the mail account in Apple Mail, or a unique
+substring. Uses `contains` matching ("Acme" matches "Acme (you@acme.com)").
+For Gmail provider, set to the full Gmail address.
+
+**inbox_name** — Mailbox/label name. Common values:
+- `INBOX` (Gmail default and most apple-mail accounts)
 - `Inbox` (some accounts use title case)
 
 To confirm the exact inbox name: run `/scan-email` and Claude will
@@ -48,7 +77,8 @@ accounts, sent mail, or folders are accessed.
 ## How to Set Up
 
 1. Copy this file: `cp email-config.md.example email-config.md`
-2. Set `account_name` to a unique substring of your mail account name
-   as it appears in Apple Mail.
-3. Set `inbox_name` to the exact inbox label (usually `INBOX`).
-4. The actual `email-config.md` is gitignored — never committed.
+2. Pick a provider:
+   - **apple-mail** (Mac default): set `account_name` and `inbox_name`
+     to the values from Apple Mail. Leave the `google_*` lines commented out.
+   - **google**: blocked on #65 ship; foundation is in place.
+3. The actual `email-config.md` is gitignored — never committed.
