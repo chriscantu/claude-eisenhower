@@ -254,9 +254,19 @@ describe("Prompt Contracts: /trends source contract (Q2-004)", () => {
     { name: "plan-log path", pattern: /memory\/plan-log\.md/ },
     { name: "review-log path", pattern: /memory\/review-log\.md/ },
     { name: "TASKS.md", pattern: /TASKS\.md/ },
-    { name: "Throughput pattern", pattern: /Throughput/i },
-    { name: "Defer rate pattern", pattern: /Defer\s+rate/i },
-    { name: "Overdue delegations pattern", pattern: /Overdue\s+delegations/i },
+    // Pattern headers anchored to H3 form. A rename like "Throughput" →
+    // "Velocity" produces a sharp failure rather than fuzzy substring drift.
+    { name: "Pattern 1 — Throughput trend (H3)", pattern: /^###\s+Pattern\s+1\s+—\s+Throughput\s+trend/m },
+    { name: "Pattern 2 — Defer/cut rate (H3)", pattern: /^###\s+Pattern\s+2\s+—\s+Defer\/cut\s+rate/m },
+    { name: "Pattern 3 — Overdue delegation rate by alias (H3)", pattern: /^###\s+Pattern\s+3\s+—\s+Overdue\s+delegation\s+rate\s+by\s+alias/m },
+    // Pin the field tokens /trends reads from each producer log. If a
+    // producer renames a field (e.g., /today changes "completed:" →
+    // "done:"), /trends silently degrades to "insufficient data" rather
+    // than failing loudly. This contract catches the consumer-side
+    // expectation; producer specs must keep the same tokens.
+    { name: "reads committed: from plan-log", pattern: /\bcommitted:/ },
+    { name: "reads completed: from today-log", pattern: /\bcompleted:/ },
+    { name: "reads deferred: from plan-log", pattern: /\bdeferred:/ },
   ];
 
   for (const src of requiredSources) {

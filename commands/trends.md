@@ -58,17 +58,33 @@ from `TASKS.md` only, never from the logs.
 Use `plan-log` (`committed` field) and `today-log` (`completed` field), grouped
 into ISO weeks (Monday → Sunday) over the window.
 
+**ISO-week edge rules** (pinned for determinism):
+- Partial weeks at window edges (cutoff lands mid-week): INCLUDE the partial
+  week with whatever entries fall inside the window. Do NOT pro-rate.
+- Weeks with zero log entries between two populated weeks: treat as
+  `committed_total = 0` and `completed_total = 0`. They DO count as "weeks of
+  data" for the ≥2-week minimum below.
+- Future-dated log lines (clock skew or hand-edit): DROP silently. A line
+  with a date > today is discarded before grouping.
+
 For each week, report:
 - `committed_total` — sum of `committed` from `plan-log` records in that week
 - `completed_total` — sum of `completed` from `today-log` records in that week
 - `completion_ratio` — `completed_total / committed_total` (skip if `committed_total = 0`)
 
-Surface the trend in one of these shapes:
+Classify the trend using THIS priority order (first match wins — shapes are NOT
+mutually exclusive, so the priority is load-bearing). Use strict inequality on
+the lower bound and `≥` on the upper bound of every ±20% band so a single shape
+matches at exact-20% boundaries:
 
-- **Sustained throughput** — both totals stable within ±20% week over week
-- **Growing throughput** — `completed_total` rising ≥20% week over week for the last 2 weeks
-- **Falling throughput** — `completed_total` falling ≥20% week over week for the last 2 weeks
-- **Commit/complete gap** — average `completion_ratio` over the window is < 0.6 or > 1.5
+1. **Commit/complete gap** — average `completion_ratio` over the window is
+   `< 0.6` OR `> 1.5` (skip weeks where `committed_total = 0`)
+2. **Falling throughput** — `completed_total` falling by `≥20%` week over week
+   for the last 2 weeks
+3. **Growing throughput** — `completed_total` rising by `≥20%` week over week
+   for the last 2 weeks
+4. **Sustained throughput** — both totals stable strictly within the `±20%`
+   band over the last 2 weeks (catches the residual case)
 
 If there are fewer than 2 weeks of data, write: `Throughput: insufficient data
 ({N} week(s) collected; need 2+ for a trend).`
@@ -101,8 +117,11 @@ For each unique `Owner:` alias appearing on Delegated or Done records within
 the window (Done records with `Done:` date inside the window count toward the
 denominator for that alias):
 
-- `total_in_window` — count of Delegated records whose check-by date falls in
-  the window OR Done records that were Delegated with `Done:` in the window
+- `total_in_window` — the DISTINCT set of records (deduped by Title + Owner)
+  that either (a) are currently `State: Delegated` with `Check-by:` in the
+  window, or (b) are `State: Done` with `Done:` in the window AND the prior
+  state was Delegated. A record satisfying both clauses (e.g., a task that
+  moved Delegated → Done inside the window) counts ONCE.
 - `resolved_on_time` — Done records that were Delegated where `Done:` ≤
   `Check-by:`
 - `overdue_current` — Delegated records (not Done) where `Check-by` is today
@@ -159,5 +178,12 @@ TASKS.md mutation. The user drives any follow-on commands.
 - **Window argument < 1 or non-numeric** → fall back to default 4, do not warn
 - **TASKS.md missing** → Patterns 1 and 2 still render from logs; Pattern 3
   renders `Overdue rate: TASKS.md not found.`
+- **TASKS.md present but unparseable** → Patterns 1/2 continue; Pattern 3
+  renders `Overdue rate: TASKS.md parse error ({reason}).` Do not abort the
+  whole command.
 - **Log file present but no entries in window** → that pattern degrades to
   `insufficient data` line, others continue
+- **Corrupt log line** (does not match expected shape) → drop the line per
+  Step 2 rules; do not abort.
+- **Future-dated log line** (date > today) → drop silently per Pattern 1
+  rules.
