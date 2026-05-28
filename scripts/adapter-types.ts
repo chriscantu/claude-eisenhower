@@ -1,13 +1,13 @@
 /**
  * adapter-types.ts
  *
- * Machine-checkable TypeScript interfaces for the task-output adapter contract.
- * Formalizes the prose spec in adapters/README.md.
+ * Machine-checkable TypeScript interfaces for all adapter contracts:
+ * task-output, calendar-source, and email-source.
+ * Formalizes the prose specs in adapters/README.md and the per-family
+ * READMEs under scripts/adapters/.
  *
- * Every adapter (reminders, markdown-file, asana, jira, linear, …) receives a
- * TaskOutputRecord and must return a PushResult for push, and a CompleteResult
- * for completion. These types are the single source of truth for that contract
- * — adapters are validated against them at compile time.
+ * These types are the single source of truth for adapter shapes —
+ * implementations are validated against them at compile time.
  *
  * Note: Q4 is intentionally absent from the quadrant union — /schedule never
  * pushes Q4 tasks to any external system (they are eliminated, not scheduled).
@@ -118,11 +118,10 @@ export interface CalendarQueryRequest {
   /** Query window: now → now + N days (inclusive). */
   days_ahead: number;
   /**
-   * Output format hint.
-   * - "full"    → structured event list (CalendarQueryResult.events populated)
-   * - "summary" → business-day availability bullets (events may be empty;
-   *               narrative is in CalendarQueryResult.reason or a separate
-   *               summary field added by the adapter)
+   * Output shape.
+   * - "full" → CalendarQueryResult.events populated with one entry per event in the window
+   * - "summary" → business-day availability bullets returned in CalendarQueryResult.reason;
+   *               events may be empty
    */
   format: "full" | "summary";
 }
