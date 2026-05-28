@@ -90,15 +90,32 @@ confirmation), or /status {alias} to see in-flight delegations from TASKS.md.
 
 ## Step 2C: Analytics view
 
-Read all three log files. For each present file, parse line count and date
-range. Compute window summaries:
+Run the analytics aggregator script — it parses the three log files and emits
+a single-line JSON summary. The LLM does not count lines or sum columns by
+hand: that was identified as a brittle pattern in code review (PR #91), with
+drift expected across runs and models.
 
-- **today-log**: last 14 entries (≈2 weeks), report sum of `overdue`,
-  `inbox`, `on_plate`, `completed`
-- **plan-log**: last 4 entries (≈4 weeks), report sum of `committed`,
-  `carryover`, `deferred`
-- **review-log**: last 4 entries, report `inbox` trend (delta first→last)
-  and `delegated` trend
+Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.md`.
+
+Run:
+
+```bash
+npx ts-node ${plugin_root}/scripts/memory-analytics.ts .
+```
+
+Parse the JSON output. Each log key returns `{present, entry_count,
+date_range, recent_sums, recent_trend}`. Window sizes are pinned in the
+script:
+
+- **today-log**: last 14 entries (≈2 weeks), `recent_sums` over
+  `overdue`, `inbox`, `on_plate`, `completed`
+- **plan-log**: last 4 entries (≈4 weeks), `recent_sums` over
+  `committed`, `carryover`, `deferred`
+- **review-log**: last 4 entries, `recent_trend` (first → last delta) over
+  `inbox` and `delegated`
+
+If a log file is absent, the corresponding key returns `present: false` —
+render `{filename}: not present yet` for that block.
 
 Render:
 

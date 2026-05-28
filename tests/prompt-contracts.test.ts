@@ -277,11 +277,16 @@ describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
     });
   }
 
+  // Anchor every scope token on the exact `## Step 2X:` heading. The
+  // previous disjunctive `/Step\s*2A|Forget alias/i` form would pass if
+  // EITHER the heading or the prose phrase survived a refactor — so a
+  // future PR could gut the Step entirely while still passing the test.
+  // Heading-anchored regexes make a deletion produce a sharp failure.
   const forgetTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
-    { name: "forget alias scope", pattern: /Step\s*2A|Forget alias/i },
-    { name: "forget task scope", pattern: /Step\s*2B|Forget task/i },
-    { name: "forget all scope", pattern: /Step\s*2C|Forget all|forget all/i },
-    { name: "confirmation gate", pattern: /confirmation|confirm/i },
+    { name: "forget alias scope (Step 2A heading)", pattern: /^##\s+Step\s+2A:\s+Forget\s+alias/m },
+    { name: "forget task scope (Step 2B heading)", pattern: /^##\s+Step\s+2B:\s+Forget\s+task/m },
+    { name: "forget all scope (Step 2C heading)", pattern: /^##\s+Step\s+2C:\s+Forget\s+all/m },
+    { name: "confirmation gate", pattern: /confirmation/i },
     { name: "TASKS.md not modified", pattern: /TASKS\.md.*(not be touched|was not touched|never modified|is never modified)/i },
     { name: "irreversible warning", pattern: /irreversible/i },
     // Defense-in-depth: each scope uses a DIFFERENT distinctive confirmation
