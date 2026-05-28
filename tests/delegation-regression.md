@@ -274,7 +274,7 @@ Tests are organized by phase. Run in order for full chain coverage.
 
 **Setup**:
 - TASKS.md has a Q3 task with: `Suggested delegate: [alias]`
-- `productivity:memory-management` is available
+- `memory/` directory is writable (`memory-manager` skill stores entries locally as of v1.9.0)
 
 **Action**: Run `/schedule`
 

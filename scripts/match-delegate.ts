@@ -80,12 +80,8 @@ export function validateGlossaryHeader(
  * If the file is missing: returns {} silently (offline / first run).
  * If the header doesn't match GLOSSARY_COLUMNS: warns to stderr, returns {} (Option A).
  *
- * KNOWN LIMITATION — local fallback only:
- * This function reads only memory/glossary.md (the local fallback file). When the
- * primary backend (productivity:memory-management skill) is active, delegation entries
- * are NOT written to glossary.md — they go into the external skill's store instead.
- * In that mode, loadPendingCounts() will return {} and pending-count scoring will be
- * inoperative. This is a best-effort signal, not a guaranteed invariant.
+ * glossary.md is the single source of truth for pending-count scoring.
+ * See `docs/adrs/single-backend-memory.md` for the architectural decision.
  */
 export function loadPendingCounts(glossaryPath: string): Record<string, number> {
   if (!fs.existsSync(glossaryPath)) return {};

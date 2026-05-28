@@ -35,7 +35,7 @@ Every delegated task creates a stakeholder follow-up record:
 - What was agreed
 - When you expect completion or a status update
 
-Use the productivity:memory-management skill to track these. Review delegated items weekly during scheduling.
+The plugin's `memory-manager` skill records these in `memory/glossary.md` and `memory/people/{alias}.md`. Review delegated items weekly during scheduling.
 
 ## Common Delegation Mistakes
 

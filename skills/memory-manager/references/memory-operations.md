@@ -5,10 +5,12 @@ Covers local file formats, return shapes, and field semantics.
 
 ---
 
-## Local Files: Two-File Fallback System
+## Local Files: Two-File Store
 
-Two-file fallback for all delegation memory when `productivity:memory-management`
-is unavailable. Column definitions are canonical — see `docs/specs/memory-schema-spec.md`.
+Two local markdown files hold all delegation memory. There is no external
+backend — `glossary.md` is the single source of truth for pending-count
+scoring, and per-delegate logs mirror it for human readability. Column
+definitions are canonical — see `docs/specs/memory-schema-spec.md`.
 
 ### `memory/glossary.md` — Global Follow-up Table
 
@@ -35,7 +37,7 @@ Columns: `Task | Delegated on | Check-by | Status | Notes`
 
 ### In-place Update Rules
 
-For `resolve-delegation` and `update-checkin` operations on the local fallback:
+For `resolve-delegation` and `update-checkin` operations:
 
 1. Find the row in `memory/glossary.md` matching: Alias = `[alias]` AND Task = `[task_title]` AND Status = `Pending`
 2. Update the Status cell (resolve) or Check-by cell (update-checkin) in that row
@@ -48,7 +50,7 @@ Matching is case-insensitive on Alias and Task.
 
 ## Return Shape: `query-pending`
 
-Unified object returned for each entry regardless of which backend was used:
+One object per entry, parsed from `memory/glossary.md`:
 
 ```
 {
@@ -60,7 +62,7 @@ Unified object returned for each entry regardless of which backend was used:
 }
 ```
 
-Returns an empty list `[]` if both backends are unavailable or produce no results.
+Returns an empty list `[]` if `memory/glossary.md` is missing, unreadable, or has no Pending rows in range.
 
 ---
 

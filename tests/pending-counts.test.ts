@@ -369,3 +369,73 @@ describe("SCHEMA-003: loadPendingCounts — Option A on header mismatch", () => 
     expect(stderrOutput).toBe("");
   });
 });
+
+// ── PENDING-005: end-to-end — loadPendingCounts → runMatch penalty fires ─────
+//
+// Regression for #28 (single-backend memory). Before #28, loadPendingCounts
+// disclaimed itself as a "local fallback only" that was inoperative whenever
+// productivity:memory-management was active. With the dual-backend illusion
+// removed, glossary.md is the ONLY source — the penalty wiring must work
+// end-to-end through the real loader, not just synthetic pendingCounts maps.
+
+describe("PENDING-005: end-to-end glossary.md → runMatch penalty", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "eisenhower-e2e-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("overloaded delegate from glossary.md is outranked by less-loaded peer", () => {
+    // Alex has 4 pending rows in glossary.md (2 over threshold).
+    // Jordan has 0. Both match "infrastructure" equally. Penalty should flip ranking.
+    const glossaryPath = path.join(tmpDir, "glossary.md");
+    fs.writeFileSync(glossaryPath, `
+## Stakeholder Follow-ups
+
+| Alias | Task | Delegated on | Check-by | Status |
+|-------|------|-------------|----------|--------|
+| Alex E. | Task A | 2026-03-01 | 2026-03-05 | Pending |
+| Alex E. | Task B | 2026-03-01 | 2026-03-05 | Pending |
+| Alex E. | Task C | 2026-03-01 | 2026-03-05 | Pending |
+| Alex E. | Task D | 2026-03-01 | 2026-03-05 | Pending |
+`);
+
+    const pendingCounts = loadPendingCounts(glossaryPath);
+    expect(pendingCounts["Alex E."]).toBe(4);
+
+    const result = runMatch(
+      [highCapInfra, highCapFrontend],
+      "infrastructure work", "",
+      pendingCounts,
+    );
+    expect(result.status).toBe("match");
+    expect(result.candidates[0].alias).toBe("Jordan F.");
+    // Penalty axis is recorded on the breakdown — proves it fired, not just ranking shuffled
+    const alex = result.candidates.find((c) => c.alias === "Alex E.");
+    expect(alex).toBeDefined();
+    expect(alex!.breakdown.pending).toBe(PENDING_PENALTY * 2);
+    expect(alex!.capacity_warning).toBe(true);
+  });
+
+  test("missing glossary.md degrades gracefully — no throw, no penalty", () => {
+    // Markdown-only world: if the user hasn't logged any delegations yet,
+    // glossary.md may simply not exist. Loader must return {} silently.
+    const missingPath = path.join(tmpDir, "does-not-exist.md");
+    expect(() => loadPendingCounts(missingPath)).not.toThrow();
+    expect(loadPendingCounts(missingPath)).toEqual({});
+
+    const result = runMatch(
+      [highCapInfra, highCapFrontend],
+      "infrastructure work", "",
+      loadPendingCounts(missingPath),
+    );
+    expect(result.status).toBe("match");
+    // No penalty applied — tiebreak by REL_RANK (both direct_report → stable order)
+    const alex = result.candidates.find((c) => c.alias === "Alex E.");
+    expect(alex!.breakdown.pending).toBe(0);
+  });
+});

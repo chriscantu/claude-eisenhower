@@ -49,9 +49,9 @@ copy appears in more than one place, it belongs in a shared module.
 - Config values live in `config/`. Commands and skills read them; they
   do not hardcode values.
 - Scoring weights (`WEIGHTS`, `REL_RANK`) are defined once and imported wherever needed.
-- Memory backend access (read and write) is abstracted via the Memory Access Layer pattern
-  so commands never branch on which backend is active. See
-  `docs/adrs/memory-access-layer.md` for the full contract.
+- Delegation memory has a single backend (local markdown files). All reads and writes
+  go through the `memory-manager` skill. See `docs/adrs/single-backend-memory.md` for
+  the decision to retire the prior dual-backend abstraction.
 
 **Red flags:** copy-pasted functions, types defined in multiple files, the same
 constant appearing in both a script and a test.

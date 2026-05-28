@@ -1,8 +1,18 @@
 # ADR: Memory System — Single Write Target (Option B)
 
 **Date**: 2026-03-04
-**Status**: Accepted
+**Status**: Superseded — see `docs/adrs/single-backend-memory.md` (v1.9.0, #28)
 **Scope**: All commands and skills that log stakeholder delegation entries
+
+---
+
+> **Superseded in v1.9.0 (#28).** The single-write-target pattern below was
+> structurally sound but used `productivity:memory-management` as the primary
+> backend. That choice silently disabled the scoring algorithm's
+> `PENDING_PENALTY` whenever the primary was active (see "Known Limitation"
+> section below — the limitation became unacceptable). The plugin now owns
+> memory fully: local markdown files are the single backend. See
+> `docs/adrs/single-backend-memory.md`. Historical content retained below.
 
 ## Decision
 
