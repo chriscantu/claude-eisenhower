@@ -44,10 +44,23 @@ TASKS.md is the authoritative source for that entry.
 
 ## Step 3: Triage untagged tasks
 
-Triage runs on every invocation (any query mode) when untagged non-Done tasks exist.
-This ensures project/alias views always reflect correctly tagged data.
+Triage runs on every invocation (any query mode) when there are enough tagged tasks
+to make project-grouping meaningful AND untagged non-Done tasks exist. Issue #41:
+on first run with a near-empty board (3 tasks, all untagged), the 30-line triage
+flow fires for every task — a hostile empty-state experience. Gate it.
 
 Scan all non-Done tasks for a missing `Project:` field.
+
+**Triage gate — both conditions required:**
+
+1. The board has ≥5 non-Done tasks WITH a `Project:` tag (the "enough signal to
+   group" threshold)
+2. At least one non-Done task is missing a `Project:` tag
+
+**If the gate is not met:** skip triage entirely — proceed to Step 4 (Resolve
+argument). Untagged tasks still appear under "Untagged" in the default view
+(Step 5, Section 3) — they are not invisible, just not triaged. The gate
+re-opens automatically once the user tags ≥5 tasks through normal use.
 
 **If no untagged tasks exist:** skip triage entirely — proceed to Step 4 (Resolve argument).
 

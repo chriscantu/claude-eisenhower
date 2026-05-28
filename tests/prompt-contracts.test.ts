@@ -233,3 +233,44 @@ describe("Prompt Contracts: command files mention canonical fields (Q2-003)", ()
     }
   }
 });
+
+// ── Test group 5: /help first-run contract (Q2-005) — issue #41 ──────────
+//
+// /help is the first-run entry point. It MUST walk a new user through the
+// full intake → prioritize → schedule → execute loop on synthetic data so
+// they form a mental model before live use. A contract pins those four
+// commands so a future rewrite cannot silently drop a lifecycle step from
+// the walkthrough.
+
+describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
+  const helpPath = path.join(repoRoot, "commands", "help.md");
+
+  test("Q2-005: commands/help.md exists", () => {
+    expect(fs.existsSync(helpPath)).toBe(true);
+  });
+
+  const requiredTokens: ReadonlyArray<{ name: string; pattern: RegExp }> = [
+    { name: "/intake step", pattern: /\/intake\s+"/ },
+    { name: "/prioritize step", pattern: /\/prioritize\b/ },
+    { name: "/schedule step", pattern: /\/schedule\b/ },
+    { name: "/execute step", pattern: /\/execute\s+done/ },
+    { name: "first-run detection branch", pattern: /first-run|First-run/ },
+    { name: "command index section", pattern: /Command\s+index/i },
+  ];
+
+  for (const tok of requiredTokens) {
+    test(`Q2-005: commands/help.md references "${tok.name}"`, () => {
+      const content = readContent(helpPath);
+      if (!tok.pattern.test(content)) {
+        throw new Error(
+          `commands/help.md is missing the required walkthrough token ` +
+            `"${tok.name}" (pattern ${tok.pattern}). The first-run ` +
+            `walkthrough depends on showing the full lifecycle loop. If ` +
+            `you intentionally removed it, update requiredTokens in ` +
+            `tests/prompt-contracts.test.ts AND docs/empty-states.md.`
+        );
+      }
+      expect(content).toMatch(tok.pattern);
+    });
+  }
+});
