@@ -482,6 +482,10 @@ describe("concurrent writers (STORE-CON)", () => {
   });
 
   test("STORE-CON-002: parallel child-process writers do not corrupt the file", (done) => {
+    // 60s timeout: 5 child processes each cold-load ts-node/register on CI Ubuntu,
+    // which is materially slower than local macOS file I/O. Default 30s timed out
+    // under --runInBand on CI (#67). Test logic itself is fast; only the bootstrap
+    // is slow. Move to a compiled fixture if this becomes flaky again.
     const dir = tmpdir();
     const file = path.join(dir, "TASKS.md");
     // Seed the file so children just rewrite it.
@@ -542,5 +546,5 @@ writeTasks(file, tasks);
         }
       });
     }
-  }, 30_000);
+  }, 60_000);
 });
