@@ -41,7 +41,7 @@ As of #67, three adapter families share the same dispatcher pattern:
 |---|---|---|---|
 | calendar-source | `scripts/calendar-query.ts` | `eventkit` (Mac default), `google` (#64 — active) | `config/calendar-config.md` `provider:` |
 | email-source | `scripts/email-scan.ts` | `apple-mail` (Mac default), `google` (#65 — adapter ready, command rewire in #68) | `config/email-config.md` `provider:` |
-| task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — active) | `config/task-output-config.md` `active_adapter:` |
+| task-output | `scripts/task-output.ts` | `reminders` (Mac default), `markdown-file`, `google` (#66 — active) | `config/task-output-config.md` `## Active Adapter` section |
 
 Commands route through a dispatcher — no command invokes `cal_query.swift` or
 an adapter file directly. Adapters return shared contract shapes
