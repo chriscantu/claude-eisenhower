@@ -11,7 +11,8 @@ Read-only — this plugin never creates, modifies, or deletes calendar events.
 provider:      eventkit
 calendar_name: YOUR_CALENDAR_NAME
 
-# Google Calendar (when provider: google) — see #64
+# Google Calendar (when provider: google) — see docs/CONNECTORS.md "Google OAuth setup"
+# Both paths required. Tilde (~) is expanded to $HOME.
 # google_credentials_path: ~/.claude-eisenhower/google-client-secret.json
 # google_token_path:       ~/.claude-eisenhower/google-calendar-refresh-token.json
 
