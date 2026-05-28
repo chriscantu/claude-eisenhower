@@ -173,7 +173,7 @@ Call the dispatcher for each prepared record. Resolve `plugin_root` per
 `task_output_record` to a temp JSON file, then run:
 
 ```applescript
-do shell script "node " & quoted form of (pluginRoot & "/scripts/task-output.ts") & " push " & ¬
+do shell script "cd " & quoted form of (pluginRoot & "/scripts") & " && npx ts-node task-output.ts push " & ¬
     quoted form of pluginRoot & " " & ¬
     quoted form of configFile & " " & ¬
     quoted form of recordJsonPath
