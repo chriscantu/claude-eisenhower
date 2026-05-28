@@ -38,6 +38,31 @@ export interface EventkitAdapterConfig {
 
 const TIMEOUT_MS = 30_000;
 
+/**
+ * Convert a raw swift date string ("yyyy-MM-dd HH:mm") to ISO 8601 with the
+ * local timezone offset (e.g. "2026-05-28T09:00:00-07:00").
+ *
+ * Parsing as "yyyy-MM-ddTHH:mm:00" (no offset) is interpreted as local time
+ * by V8/Node — which is what we want.  If the input is malformed we pass it
+ * through unchanged so callers degrade gracefully.
+ */
+function toIsoWithLocalOffset(raw: string): string {
+  const [datePart, timePart] = raw.split(" ");
+  if (!datePart || !timePart) return raw;
+  const d = new Date(`${datePart}T${timePart}:00`);
+  if (isNaN(d.getTime())) return raw;
+  const tzMin = -d.getTimezoneOffset();
+  const sign = tzMin >= 0 ? "+" : "-";
+  const absMin = Math.abs(tzMin);
+  const hh = String(Math.floor(absMin / 60)).padStart(2, "0");
+  const mm = String(absMin % 60).padStart(2, "0");
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}:00${sign}${hh}:${mm}`
+  );
+}
+
 function defaultScriptPath(): string {
   const root = process.env["CLAUDE_PLUGIN_ROOT"];
   if (root) {
@@ -58,7 +83,12 @@ function parseLine(line: string): CalendarEvent | null {
   // Skip the TOTAL summary line emitted by swift
   if (start.startsWith("TOTAL:")) return null;
   const all_day = (allDayFlag ?? "").trim() === "ALL_DAY";
-  return { title: title.trim(), start: start.trim(), end: end.trim(), all_day };
+  return {
+    title: title.trim(),
+    start: toIsoWithLocalOffset(start.trim()),
+    end: toIsoWithLocalOffset(end.trim()),
+    all_day,
+  };
 }
 
 /**

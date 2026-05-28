@@ -12,6 +12,7 @@
  *   EVENTKIT-005  nonzero exit — error status with stderr in reason
  *   EVENTKIT-006  ENOENT on spawn — "swift binary not found" error
  *   EVENTKIT-007  30s timeout — kills child + returns error
+ *   EVENTKIT-008  malformed date line — passes raw strings through unchanged
  *
  * Issue: #67
  */
@@ -105,26 +106,30 @@ describe("EventKit calendar adapter", () => {
 
     const result = await promise;
 
+    const isoRe = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00[+-]\d{2}:\d{2}$/;
+
     expect(result.status).toBe("success");
     expect(result.events).toHaveLength(3);
-    expect(result.events[0]).toEqual({
-      title: "Team Standup",
-      start: "2026-05-28 09:00",
-      end: "2026-05-28 10:00",
-      all_day: false,
-    });
-    expect(result.events[1]).toEqual({
-      title: "1:1 with Alice",
-      start: "2026-05-28 14:00",
-      end: "2026-05-28 15:00",
-      all_day: false,
-    });
-    expect(result.events[2]).toEqual({
-      title: "All Hands Planning",
-      start: "2026-05-29 00:00",
-      end: "2026-05-29 23:59",
-      all_day: true,
-    });
+
+    expect(result.events[0].title).toBe("Team Standup");
+    expect(result.events[0].all_day).toBe(false);
+    expect(result.events[0].start).toMatch(isoRe);
+    expect(result.events[0].end).toMatch(isoRe);
+    // Preserve the date/time values after conversion
+    expect(result.events[0].start).toMatch(/^2026-05-28T09:00:00/);
+    expect(result.events[0].end).toMatch(/^2026-05-28T10:00:00/);
+
+    expect(result.events[1].title).toBe("1:1 with Alice");
+    expect(result.events[1].all_day).toBe(false);
+    expect(result.events[1].start).toMatch(isoRe);
+    expect(result.events[1].end).toMatch(isoRe);
+    expect(result.events[1].start).toMatch(/^2026-05-28T14:00:00/);
+    expect(result.events[1].end).toMatch(/^2026-05-28T15:00:00/);
+
+    expect(result.events[2].title).toBe("All Hands Planning");
+    expect(result.events[2].all_day).toBe(true);
+    expect(result.events[2].start).toMatch(isoRe);
+    expect(result.events[2].end).toMatch(isoRe);
   });
 
   test("EVENTKIT-002: full format — empty stdout returns events: [] with status success", async () => {
@@ -163,10 +168,14 @@ describe("EventKit calendar adapter", () => {
 
     const result = await promise;
 
+    const isoRe = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00[+-]\d{2}:\d{2}$/;
+
     expect(result.status).toBe("success");
     expect(result.events).toHaveLength(1);
     expect(result.events[0].all_day).toBe(true);
     expect(result.events[0].title).toBe("PTO");
+    expect(result.events[0].start).toMatch(isoRe);
+    expect(result.events[0].start).toMatch(/^2026-05-28T00:00:00/);
   });
 
   test("EVENTKIT-004: summary format — passes raw stdout through in reason, events: []", async () => {
@@ -269,5 +278,29 @@ describe("EventKit calendar adapter", () => {
     expect(child.kill).toHaveBeenCalledWith("SIGTERM");
 
     jest.useRealTimers();
+  });
+
+  test("EVENTKIT-008: malformed date line — passes raw strings through unchanged in start/end", async () => {
+    const { child, emitStdout, emitClose } = makeFakeProcess();
+    spawnMock.mockReturnValue(child);
+
+    const adapter = createEventkitAdapter({ swift_script_path: "/fake/cal_query.swift" });
+    const promise = adapter.query({
+      calendar_name: "Work",
+      days_ahead: 7,
+      format: "full",
+    });
+
+    emitStdout("not-a-date|||also-bad|||Weird|||false\nTOTAL: 1 events\n");
+    emitClose(0);
+
+    const result = await promise;
+
+    expect(result.status).toBe("success");
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0].title).toBe("Weird");
+    expect(result.events[0].start).toBe("not-a-date");
+    expect(result.events[0].end).toBe("also-bad");
+    expect(result.events[0].all_day).toBe(false);
   });
 });
