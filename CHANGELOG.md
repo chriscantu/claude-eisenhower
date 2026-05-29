@@ -7,63 +7,147 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
-## [Unreleased] — Remove sync-prep skill
+## [v1.9.0] — 2026-05-28 — Multi-Provider Adapters + Daily/Weekly Loop Completion
 
-The `sync-prep` meeting-preparation skill was originally copied into this repo
-by mistake — its remit (1:1 / supervisor sync briefs) is outside the
-Eisenhower task-prioritization scope of claude-eisenhower. A maintained
-version lives in the `claude-config` project.
+The largest release since the initial cut. Three threads land together: a
+markdown-only core that holds without platform integrations; a Google adapter
+stack (Calendar / Gmail / Tasks) sitting behind a dispatcher so Mac-only
+users are unaffected; and the daily/weekly visibility loop (`/today`,
+`/status`, `/trends`, `/help`, `/memory`, `/forget`) reaching feature
+completeness.
 
-**Removed:**
-- `skills/sync-prep/` (SKILL.md + dir)
-- `docs/specs/sync-prep-spec.md`
-- `skills/memory-manager/SKILL.md` caller list — drops the `sync-prep` entry
-- `docs/STRUCTURE.md` and `docs/PRINCIPLES.md` skill inventory — now lists 3
-  skills (core, memory-manager, skill-enhancer) instead of 4
+### User-facing commands
 
-No user-facing functionality is affected — `sync-prep` was not invoked by any
-of the 11 slash commands.
+- **`/help` first-run walkthrough + 16-command index (#41, PR #90).** New users
+  with an empty board get a 4-step synthetic-task tour (intake → prioritize
+  → schedule → execute) so they form a mental model before live use.
+  Returning users get a one-line acknowledgement + the full command index
+  grouped by lifecycle phase (Capture / Classify / Plan / Act / Reflect /
+  Memory / Setup). New `docs/empty-states.md` audits every command's
+  empty-state copy; new `tests/prompt-contracts.test.ts` Q2-005/007 pin the
+  walkthrough sequence and bijection between `commands/*.md` and the index.
+- **`/memory` + `/forget` correction loop (#42, PR #91).** `/memory` is the
+  read-only inspection surface (`/memory show <alias>` renders the
+  per-person file verbatim; `/memory show analytics` runs
+  `scripts/memory-analytics.ts`). `/forget` is the destructive correction
+  surface with three scopes (alias / task / all), each gated by a distinct
+  confirmation token (alias name / verbatim task title / literal
+  `forget all`) — `yes` is intentionally rejected to prevent
+  conversational misfire. `/today` and `/status` now surface
+  memory↔TASKS.md drift inline (`⚠️ Memory:` prefix and a dedicated
+  drift block respectively).
+- **`/trends` 4-week behavioral retro (#43, PR #89).** Reads all three
+  `memory/*-log.md` files plus `TASKS.md` and renders three patterns:
+  throughput trend, defer/cut rate, overdue delegation rate by alias.
+  Window argument clamps to `[1, 52]` weeks. Logs `/today`, `/plan-week`,
+  and `/review-week` now write the canonical fields `/trends` consumes
+  (`committed:`, `completed:`, `deferred:`).
+- **`Awaiting:` field on Active tasks + `/status awaiting` rollup (#44,
+  PR #88).** New schema fields `Awaiting:` + `Check-by:` for Active tasks
+  blocked on external parties. `SCHEMA-010` rejects Active+Awaiting
+  without `Check-by:` (YYYY-MM-DD); `SCHEMA-011` rejects `Awaiting:` on
+  any non-Active state. `/status awaiting` groups by blocker
+  (case-insensitive), sorts by overdue count, and flags overdue items with
+  ⚠️ using business-day computation aligned with the Step 5 Risks
+  surface.
+- **`/quick` one-shot capture (#35, PR #61).** Collapses
+  intake → prioritize → schedule into a single conversational pass for
+  "I know exactly what this is" tasks.
+- **`/scan-email` rewired to email-scan dispatcher (#68, PR #73).** Replaces
+  the inline AppleScript with `scripts/email-scan.ts`, which routes through
+  the same adapter dispatcher as Calendar/Tasks. Empty inbox vs. 0-matched
+  produce distinct copy with explicit count.
 
----
+### Adapter infrastructure (cross-cutting)
 
-## [Unreleased] — Plugin Root Cleanup (#23)
+- **Adapter dispatcher + markdown-file adapter (#27, PR #54).** Introduces
+  the dispatcher pattern that lets the core remain platform-agnostic; the
+  markdown-file adapter is the default fallback when no platform adapter is
+  configured.
+- **Google adapter stack (#64/#65/#66/#67/#68, PRs #69–#73).** Shared OAuth
+  helper (#67), Calendar (#64), Gmail (#65), Tasks (#66), and the
+  /scan-email rewire (#68). Mac users default to EventKit + Apple
+  Mail + Reminders unchanged; Google users opt in via config.
+- **Adapter unification (#75/#76, PR #82).** Single OAuth helper + Options
+  shape across Google adapters.
+- **Google Calendar pagination fix (#79, PR #84).** Cursor through
+  `nextPageToken`; dayKey computed in local-day parity.
+- **AppleScript hardening (#38, PR #55).** JSON stdout, 10s timeout, captures
+  reminder id rather than relying on title matching.
 
-Eliminates user-typing of the plugin install path during `/setup`. The path
-is now auto-detected via a single `find` for `.claude-plugin/plugin.json`
-across `~/.claude/plugins`, `~/repos`, `~/projects`, and `~/Documents`.
+### Foundation refactors
 
-**Validation finding:** `${CLAUDE_PLUGIN_ROOT}` is still NOT injected into the
-Bash tool / osascript MCP environment in Claude Code 2.1.144 — only into
-`command:`-type entries in `hooks/hooks.json`. The 2026-03-02 finding in
-`docs/specs/plugin-path-resolution-spec.md` holds. Until that platform gap
-closes, commands continue to resolve the install path through the
-`plugin_root` field in `config/task-output-config.md`.
+- **SessionStart hook overhaul (#22, PR #49).** Structured briefing replaces
+  generic one-liner. Tied to the v1.8.0 P5 work; finalized here.
+- **Single-backend memory store (#28, PR #50).** Removes the dual-backend
+  illusion — the plugin owns delegation memory fully, no
+  `productivity:memory-management` dependency. ADR:
+  `docs/adrs/single-backend-memory.md`.
+- **TASKS.md store layer + atomic write + lockfile (#24, PR #52).** All
+  writes go through `scripts/tasks-store.ts` with atomic tmp-file +
+  rename + per-file lock. Concurrent /today and /schedule runs no longer
+  race.
+- **TASKS.md UX scale — archive + reorder + compact Done (#25, PR #53).**
+  Long boards now archive old Done entries to `TASKS.archive.md`; Done
+  section compacts to title + done-date.
+- **Plugin Root Cleanup (#23, PR #51).** Removes the hand-typed
+  `plugin_root:` config. Auto-detected via `${CLAUDE_PLUGIN_ROOT}` where
+  available; falls back to a single `find` across known install
+  locations during `/setup`. Migration: existing valid `plugin_root:`
+  values keep working unchanged. Invalid values produce an actionable
+  "plugin_root is not configured" error pointing at `/setup`.
+- **Stakeholder cold-start (#39, PR #62).** Conversational `/setup` that
+  learns delegate aliases by doing rather than upfront form-filling.
+- **/setup hardening (#34, PR #60).** Auto-detect, preview, resumable,
+  echo-back confirmation.
+- **Test coverage tiers (#37, PR #59).** Golden-file, integration scaffold,
+  contract expansion. Adds command-prompt contract suite covering
+  canonical field tokens, `/trends` source contract, `/help` first-run +
+  bijection, `/memory`+`/forget` token contracts, `/status` triage
+  threshold.
 
-**Changes:**
-- `commands/setup.md` Step 3: replaced the "type the absolute path" prompt +
-  3-attempt retry block with auto-detection. User confirms once; falls back
-  to a single re-entry prompt only when discovery turns up zero matches.
-- `config/task-output-config.md.example`: `plugin_root:` placeholder is now
-  `YOUR_PLUGIN_INSTALL_PATH` (intentionally invalid so a missing /setup
-  fails loudly the first time a script is invoked). Header comment documents
-  the auto-populated contract.
-- `adapters/reminders.md`: removed hardcoded `~/repos/claude-eisenhower`
-  from the `osascript` call examples; references resolved `pluginRoot`.
-- `skills/core/references/plugin-root-resolution.md`: removed hardcoded
-  fallback path. Unconfigured plugin now stops with an actionable error
-  pointing at `/setup` rather than silently routing to a path that may
-  not exist on the user's machine.
-- `tests/plugin-root-cleanup.test.ts`: new contract suite (22 tests) —
-  asserts `setup.md` has no path-prompt language, runtime files contain
-  no hardcoded `~/repos/claude-eisenhower`, and the config example is
-  path-free and labeled auto-populated.
+### Smaller features + fixes
 
-**Migration for existing users:** any `config/task-output-config.md` that
-already contains a valid absolute `plugin_root:` value keeps working as-is —
-the resolution step still reads that field unchanged. No re-run of `/setup`
-is required. Users who hand-typed an invalid path will, on next /schedule
-or /today run, see the new "plugin_root is not configured" error from the
-resolution skill and can fix it by running `/setup`.
+- **Q3 reminder lookup by id, not title (#36, PR #57).** Eliminates a class
+  of false-match bugs when titles overlap.
+- **Batch 1 quick wins (#26 / #29 / #30 / #31, PR #48).** Scoring
+  transparency, intake fields, verb labels, /execute confirmation.
+- **/quick Step 2 Row 4 narrowed to require explicit elimination signal
+  (#63, PR #87).**
+- **gitignore build byproducts + build-plugin contract test (#46, PR #85).**
+- **Removed maintainer-only `enhance-nudge.sh` PostToolUse hook (#47,
+  PR #86).**
+- **active_adapter docs aligned with parser's H2 section format (#77,
+  PR #83).**
+- **Dispatcher invocations switched from bare `node` to `npx ts-node`
+  (#78, PR #80).**
+- **tsconfig typeRoots no longer includes `./node_modules` (#74, PR #81).**
+
+### Removed
+
+- **sync-prep skill** — copied into this repo by mistake; its remit (1:1 /
+  supervisor sync briefs) is outside the Eisenhower task-prioritization
+  scope. A maintained version lives in the `claude-config` project. No
+  user-facing functionality affected — `sync-prep` was not invoked by any
+  slash command. (PR #58)
+
+### Docs
+
+- New README "Planning & Visibility" section + updated examples.
+- New `docs/v1.9.0-validation.md` pre-release validation checklist.
+- New ADRs: `single-backend-memory.md`, `calendar-performance-fix.md`,
+  `mac-calendar-planner-override.md`.
+
+### Known issues carried forward
+
+- `${CLAUDE_PLUGIN_ROOT}` still not injected into Bash / osascript MCP
+  environments in Claude Code 2.1.144 (only into `command:`-type entries
+  in `hooks/hooks.json`). Commands resolve install path through
+  `plugin_root` field in `config/task-output-config.md` as documented in
+  `docs/specs/plugin-path-resolution-spec.md`.
+- `commands/forget.md` line 167 Rules section contradicts Step 2B
+  confirmation-token spec; functional path follows Step 2B body. Tracked
+  in **#92** for v1.9.1.
 
 ---
 
