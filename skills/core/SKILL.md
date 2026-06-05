@@ -28,12 +28,13 @@ High-signal failure modes. Read before touching calendar, memory, or task files.
   directly. Output is JSON `{status, reason, events[]}` — parse it, do not regex
   stdout. Applies to `/schedule`, `/scan-email`, `/today`, and any ad-hoc lookup.
 - **PII files are gitignored — never commit them, never echo their raw contents.**
-  Off-limits: `config/stakeholders.yaml` (real names, roles, contact info),
-  `config/*-config.md`, `config/.setup.partial`, `memory/`, `TASKS.md`,
-  `TASKS-archive.md`. Only the `*.example` siblings are tracked.
-- **TASKS.md sections are append-only by convention.** Add tasks under the right
-  heading (`## Inbox`, `## Active`, `## Delegated`, `## Done`); move records between
-  sections rather than rewriting the file. Each record is a `---`-delimited
+  Off-limits include `config/stakeholders.yaml` (real names, roles, contact info),
+  `config/*-config.md`, `config/.setup.partial`, `memory/`, `TASKS.md`, and
+  `TASKS-archive.md` — the PII section of `.gitignore` is the authoritative list.
+  Only `config/*.example` files are tracked.
+- **TASKS.md is additive by convention.** Append tasks under the right heading
+  (`## Inbox`, `## Active`, `## Delegated`, `## Done`) and move whole records between
+  sections as state changes — don't rewrite the file. Each record is a `---`-delimited
   colon-separated key-value block.
 - **Memory has a single writer.** CREATE/UPDATE delegation memory goes through the
   `memory-manager` skill only. DELETE is owned by `/forget`. Do not write
