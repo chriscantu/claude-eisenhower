@@ -1,15 +1,16 @@
 ---
 name: claude-eisenhower
 description: >
-  This skill should be used when the user asks to "add a task", "log a request",
-  "prioritize my tasks", "schedule my work", "mark something done", "what should I
-  work on", "triage my backlog", "Eisenhower matrix", "Q1 Q2 Q3 Q4 tasks",
-  "follow up with someone", "delegate a task", or any request related to
-  the Intake → Prioritize → Schedule → Execute workflow.
-  "scan my inbox", "scan my email", "check my email for tasks",
-  "delegate this task", "delegate this to someone", "who should own this",
-  "set up the plugin", "configure claude-eisenhower", "setup", or any request
-  related to email triage, stakeholder delegation, or first-run configuration.
+  Use when the user asks to "add a task", "log a request", "prioritize my tasks",
+  "schedule my work", "mark something done", "what should I work on", "triage my
+  backlog", "Eisenhower matrix", "Q1 Q2 Q3 Q4 tasks", "follow up with someone",
+  "delegate a task", "delegate this to someone", "who should own this", "scan my
+  inbox", "scan my email", "check my email for tasks", "set up the plugin",
+  "configure claude-eisenhower", or "setup" — any request related to the
+  Intake → Prioritize → Schedule → Execute workflow, email triage, stakeholder
+  delegation, or first-run configuration. This skill carries workflow context and
+  routing; the /intake, /prioritize, /schedule, /execute, /delegate, /scan-email,
+  and /setup slash commands are the execution entry points.
 version: 0.1.0
 ---
 
@@ -17,7 +18,48 @@ version: 0.1.0
 
 A 4-phase workflow for Directors of Engineering to manage tasks from any source with clarity and control.
 
+## Gotchas
+
+High-signal failure modes. Read before touching calendar, memory, or task files.
+
+- **Calendar queries — NEVER use AppleScript's `whose` clause.** It is O(n) on total
+  event count and times out on large calendars. Route ALL calendar lookups through
+  `scripts/calendar-query.ts` (the provider dispatcher), never `cal_query.swift`
+  directly. Output is JSON `{status, reason, events[]}` — parse it, do not regex
+  stdout. Applies to `/schedule`, `/scan-email`, `/today`, and any ad-hoc lookup.
+- **PII files are gitignored — never commit them, never echo their raw contents.**
+  Off-limits include `config/stakeholders.yaml` (real names, roles, contact info),
+  `config/*-config.md`, `config/.setup.partial`, `memory/`, `TASKS.md`, and
+  `TASKS-archive.md` — the PII section of `.gitignore` is the authoritative list.
+  Only `config/*.example` files are tracked.
+- **TASKS.md is additive by convention.** Append tasks under the right heading
+  (`## Inbox`, `## Active`, `## Delegated`, `## Done`) and move whole records between
+  sections as state changes — don't rewrite the file. Each record is a `---`-delimited
+  colon-separated key-value block.
+- **Memory has a single writer.** CREATE/UPDATE delegation memory goes through the
+  `memory-manager` skill only. DELETE is owned by `/forget`. Do not write
+  `memory/glossary.md` or `memory/people/*.md` inline from a command.
+- **Missing config = skip the data source, not an error.** No calendar/email config →
+  degrade gracefully and continue; never hard-fail a core (markdown-only) flow on a
+  missing platform integration.
+
 ## The Four Phases
+
+This skill is the **orchestrator** — it carries workflow context, Gotchas, and
+routing. Each phase has a slash command that owns the **detailed execution logic**
+(field parsing, date rules, confirmation prompts). When a phase is triggered, route
+to its command rather than executing the summary below inline — the command is the
+authority; the phase text here is the map, not the procedure.
+
+| Phase | Command(s) | Owns |
+|-------|-----------|------|
+| Intake | `/intake`, `/quick` | Field extraction, due-date parsing, alias resolution |
+| Prioritize | `/prioritize` | Eisenhower classification + confirmation |
+| Schedule | `/schedule` | Date assignment, calendar availability |
+| Execute | `/execute` | Mark done, progress notes, follow-ups |
+| Delegate | `/delegate` | Candidate scoring, check-in tracking |
+| Email triage | `/scan-email` | Inbox scan → task records |
+| Setup | `/setup` | First-run config |
 
 ### Phase 1: INTAKE
 Capture any task regardless of source (email, Slack, meeting, conversation, thought).
