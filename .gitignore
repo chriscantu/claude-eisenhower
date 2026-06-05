@@ -48,3 +48,8 @@ reports/
 google-client-secret*.json
 *-refresh-token.json
 .claude-eisenhower/
+
+# Harness/agentdb runtime artifacts — local state, not committed
+agentdb.rvf
+agentdb.rvf.lock
+.harness-mem/
