@@ -32,6 +32,32 @@ failure mode details.
 
 ---
 
+## Gotchas
+
+High-signal traps. Read before adding or changing an operation.
+
+- **Every CREATE/UPDATE is a DUAL write.** Each operation touches BOTH
+  `memory/glossary.md` (the `## Stakeholder Follow-ups` table) AND
+  `memory/people/[alias-filename].md`. Update one without the other and the two
+  stores desync — `/forget` and `query-pending` then read inconsistent state.
+- **DELETE does not live here.** This skill is CREATE/UPDATE only. Deletes are
+  owned by `/forget` (`commands/forget.md`). Routing a delete through this skill is
+  wrong; routing a CREATE/UPDATE through `/forget` is wrong.
+- **The row schema is shared with `/forget`.** It is specced in
+  `docs/specs/memory-schema-spec.md`. Any change to the row/column format MUST
+  update this skill AND `commands/forget.md`'s delete logic in the same commit, or
+  the other writer's reads break.
+- **Dedup is the CALLER's job.** `query-pending` returns raw pending rows; the
+  calling command suppresses entries already in TASKS.md Delegated (TASKS.md is
+  authoritative). This skill never cross-references TASKS.md itself.
+- **Alias filename is derived per spec — don't guess it.** `memory/people/`
+  filenames follow the derivation rule in the schema spec. An ad-hoc filename
+  orphans the per-person file from its glossary row.
+- **Pending-status match is case-insensitive.** Filter rows on `Pending`
+  case-insensitively; an exact-case compare silently drops valid entries.
+
+---
+
 ## Operations
 
 ### log-delegation
