@@ -7,6 +7,33 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [Unreleased]
+
+### Documentation
+
+- **Post-v2.0.0 command-rename reference cleanup (#97, #98, #99).** The v2.0.0
+  rename swept live command/skill/test files; these follow-ups finish the job
+  across the documentation surface:
+  - **#97** — swept `/execute` → `/complete-task` and `/status` → `/review-org`
+    (and the `.md` filename refs) across 17 living reference docs:
+    `docs/specs/*`, `docs/STRUCTURE.md`, `docs/PRINCIPLES.md`,
+    `docs/architecture.md`. `tasks-schema-spec.md` and `memory-schema-spec.md`
+    are cited by command files as the canonical schema authority, so stale
+    names there were a real accuracy gap, not cosmetics.
+  - **#98** — renamed `docs/specs/status-command-spec.md` →
+    `review-org-command-spec.md`; updated the 4 inbound path links so nothing
+    dangles.
+  - **#99** — renamed `tests/execute-confirmation.test.ts` →
+    `complete-task-confirmation.test.ts` (the test covers the `/complete-task`
+    confirmation gate, issue #31).
+- Historical records — ADRs, dated `docs/superpowers/plans/*`,
+  `docs/v1.9.0-validation.md`, and prior CHANGELOG entries — were deliberately
+  left unchanged as point-in-time documents.
+
+Docs/test-only; no behavior change, no version bump. 760 tests passing.
+
+---
+
 ## [v2.0.0] — 2026-06-05 — Command Rename for Discoverability (#45)
 
 **Breaking change.** Two commands are renamed for verb-precision. The old
