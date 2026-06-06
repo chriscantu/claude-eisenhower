@@ -31,7 +31,7 @@ Before appending, the adapter scans existing checkbox lines and skips when
 a line with the same title (case-insensitive, whitespace-trimmed) already
 exists. Returns `skipped: Already exists`.
 
-**Complete** — Called by `/done`. Finds the line containing the title
+**Complete** — Called by `/complete-task`. Finds the line containing the title
 and flips `- [ ]` → `- [x]`. Idempotent: re-completing an already-checked
 line returns `success: Already completed`. Title not found → `skipped:
 Not found`. Missing file → `skipped: File not found`.
@@ -119,6 +119,6 @@ To replace the markdown-file adapter with a different system:
 3. Register it in `scripts/task-output.ts` `bootstrapBuiltInAdapters`.
 4. In `config/task-output-config.md`, change `## Active Adapter` to the new
    name.
-5. No changes to `commands/schedule.md`, `commands/done.md`, or
+5. No changes to `commands/schedule.md`, `commands/complete-task.md`, or
    `commands/delegate.md` required — they call the dispatcher, not adapters
    directly.

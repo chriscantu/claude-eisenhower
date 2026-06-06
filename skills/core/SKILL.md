@@ -9,7 +9,7 @@ description: >
   "configure claude-eisenhower", or "setup" — any request related to the
   Intake → Prioritize → Schedule → Execute workflow, email triage, stakeholder
   delegation, or first-run configuration. This skill carries workflow context and
-  routing; the /intake, /prioritize, /schedule, /done, /delegate, /scan-email,
+  routing; the /intake, /prioritize, /schedule, /complete-task, /delegate, /scan-email,
   and /setup slash commands are the execution entry points.
 version: 0.1.0
 ---
@@ -56,7 +56,7 @@ authority; the phase text here is the map, not the procedure.
 | Intake | `/intake`, `/quick` | Field extraction, due-date parsing, alias resolution |
 | Prioritize | `/prioritize` | Eisenhower classification + confirmation |
 | Schedule | `/schedule` | Date assignment, calendar availability |
-| Close-out | `/done` | Mark done, progress notes, follow-ups |
+| Close-out | `/complete-task` | Mark done, progress notes, follow-ups |
 | Delegate | `/delegate` | Candidate scoring, check-in tracking |
 | Email triage | `/scan-email` | Inbox scan → task records |
 | Setup | `/setup` | First-run config |

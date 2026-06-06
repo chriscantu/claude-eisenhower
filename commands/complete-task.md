@@ -4,7 +4,7 @@ argument-hint: [task title or "done" / "progress" / "followup"]
 allowed-tools: Read, Write, Edit
 ---
 
-You are running the /done command (task close-out) of the Engineering Task Flow.
+You are running the /complete-task command (task close-out) of the Engineering Task Flow.
 
 ## Step 1: Load the task board
 
@@ -20,13 +20,13 @@ Parse $ARGUMENTS for intent:
 - **"progress [task]"** or **"update [task]"** → Log progress note on an in-flight task
 - **"followup [task]"** or **"follow up [task]"** → Create a new intake task linked to this one
 - **"delegate [task] to [person]"** → Move to Q3, record delegate and stakeholder
-- Just a task name with no verb → Mark the task as completed (the default action — the command is named `/done`)
+- Just a task name with no verb → Mark the task as completed (the default action — the command is named `/complete-task`)
 
 If no argument is provided, show a brief summary of all scheduled tasks and ask which one they're working on.
 
 ## Step 2b: Match the task and confirm before mutating
 
-`/done` has multiple side-effects with different recoverability:
+`/complete-task` has multiple side-effects with different recoverability:
 
 - **TASKS.md edits** — reversible by hand-editing the file afterward,
   but TASKS.md is gitignored so there is no version history to roll back to.

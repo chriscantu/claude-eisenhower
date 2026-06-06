@@ -7,7 +7,7 @@
  *  - invalid_graph status routing for stakeholder validation errors
  *  - intake.md mutually-exclusive Due-date origin markers
  *  - VALID_RELATIONSHIPS/VALID_CAPACITY_SIGNALS derive from WEIGHTS
- *  - /done warning splits side-effect recoverability
+ *  - /complete-task warning splits side-effect recoverability
  *  - delegate.md placeholder is a concrete value, not a value-set token
  *
  * Run: cd scripts && npm test
@@ -241,10 +241,10 @@ describe("intake.md — Due date markers + template anchor consistency", () => {
   });
 });
 
-// ── /done warning splits side-effect class (round-2 important N7) ────
+// ── /complete-task warning splits side-effect class (round-2 important N7) ────
 
-describe("done.md — no-undo warning split by side-effect class", () => {
-  const md = readMd("done.md");
+describe("complete-task.md — no-undo warning split by side-effect class", () => {
+  const md = readMd("complete-task.md");
 
   test("warning distinguishes TASKS.md (reversible) from Reminders (not)", () => {
     expect(md).toMatch(/Reminders.*(cannot|does NOT) undo|cannot be auto-undone/i);

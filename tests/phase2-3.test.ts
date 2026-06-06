@@ -1,7 +1,7 @@
 /**
  * phase2-3.test.ts
  *
- * Automated Jest coverage for Phase 2 (/schedule) and Phase 3 (/done)
+ * Automated Jest coverage for Phase 2 (/schedule) and Phase 3 (/complete-task)
  * command-layer logic — extracted as pure functions for testability.
  *
  * Replaces the manual/behavioral-only test coverage documented in
@@ -68,12 +68,12 @@ export function getDelegateState(taskRecord: Record<string, string>): DelegateSt
   return "none";
 }
 
-// ── Phase 3: Follow-up title format (done.md Step 3 Log Progress) ─────────
+// ── Phase 3: Follow-up title format (complete-task.md Step 3 Log Progress) ─────────
 
 /**
  * Builds the follow-up task title for a missed check-in.
  * Format: "Follow up: [original title] with [alias]"
- * Defined in done.md Step 3 (Log Progress → missed check-in branch).
+ * Defined in complete-task.md Step 3 (Log Progress → missed check-in branch).
  */
 export function buildFollowUpTitle(originalTitle: string, alias: string): string {
   return `Follow up: ${originalTitle} with ${alias}`;
@@ -95,7 +95,7 @@ export function buildFollowUpDescription(
 
 /**
  * Builds the complete follow-up intake record to append to ## Inbox.
- * Field names and values match done.md Step 3 spec exactly.
+ * Field names and values match complete-task.md Step 3 spec exactly.
  */
 export function buildFollowUpRecord(
   originalTitle: string,
@@ -114,12 +114,12 @@ export function buildFollowUpRecord(
   };
 }
 
-// ── Phase 3: Overdue detection (schedule.md Step 1b, done.md Step 3) ──────
+// ── Phase 3: Overdue detection (schedule.md Step 1b, complete-task.md Step 3) ──────
 
 /**
  * Returns true if the check-in date is today or in the past.
  * Used by /schedule Step 1b (Part A) to surface overdue delegations,
- * and by /done Step 3 to detect missed check-ins on Log Progress.
+ * and by /complete-task Step 3 to detect missed check-ins on Log Progress.
  *
  * Dates are compared as YYYY-MM-DD strings — no timezone conversion needed
  * since both values come from the same local machine.

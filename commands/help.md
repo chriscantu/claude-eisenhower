@@ -55,7 +55,7 @@ to see the full loop end-to-end. Each step takes seconds.
   For the synthetic task, accept any date.
 
 ─── 4. Close the loop ────────────────────────────────────
-  /done "Try out the task flow with a synthetic task"
+  /complete-task "Try out the task flow with a synthetic task"
 
   Marks the task complete and moves it to ## Done.
 
@@ -96,35 +96,35 @@ below — these mirror the `description:` field of each command file:
 ## Command index
 
 ─── Capture ──────────────────────────────────────────────
-  /intake        Capture a new task from natural language
-  /scan-email    Import actionable tasks from Apple Mail
-  /quick         One-shot capture + classify + schedule
+  /intake         Capture a new task from natural language
+  /scan-email     Import actionable tasks from Apple Mail
+  /quick          One-shot capture + classify + schedule
 
 ─── Classify ─────────────────────────────────────────────
-  /prioritize    Run Inbox tasks through Eisenhower 2x2
-  /delegate      Mark a task delegated with check-by date
+  /prioritize     Run Inbox tasks through Eisenhower 2x2
+  /delegate       Mark a task delegated with check-by date
 
 ─── Plan ─────────────────────────────────────────────────
-  /schedule      Pick a date + action for each Active task
-  /plan-week     Monday weekly planning rhythm
+  /schedule       Pick a date + action for each Active task
+  /plan-week      Monday weekly planning rhythm
 
 ─── Act ──────────────────────────────────────────────────
-  /today         Daily briefing — what needs attention now
-  /done          Mark a task done, delegated, or eliminated
+  /today          Daily briefing — what needs attention now
+  /complete-task  Mark a task done, delegated, or eliminated
 
 ─── Reflect ──────────────────────────────────────────────
-  /review-week   Friday weekly review
-  /org           Org-wide status — projects, delegates, risks
-  /org awaiting  External-blocker rollup
-  /trends        4-week behavioral retro
+  /review-week    Friday weekly review
+  /review-org     Org-wide status — projects, delegates, risks
+  /review-org awaiting  External-blocker rollup
+  /trends         4-week behavioral retro
 
 ─── Memory ───────────────────────────────────────────────
-  /memory        Inspect local memory (delegate logs, analytics)
-  /forget        Correct memory — clear by alias, task, or all
+  /memory         Inspect local memory (delegate logs, analytics)
+  /forget         Correct memory — clear by alias, task, or all
 
 ─── Setup ────────────────────────────────────────────────
-  /setup         First-time configuration (stakeholders, adapters)
-  /help          This page
+  /setup          First-time configuration (stakeholders, adapters)
+  /help           This page
 ```
 
 ---

@@ -33,7 +33,7 @@ If any exist, surface them first:
 
 Ask: "Do you want to mark any of these resolved, or create a follow-up? I'll handle the new items after."
 
-Process any responses (mark done → /done flow, create follow-up → append to ## Inbox), then continue.
+Process any responses (mark done → /complete-task flow, create follow-up → append to ## Inbox), then continue.
 
 ### Part B — Capacity signal review
 
@@ -214,7 +214,7 @@ Task output: [N] pushed to Reminders (Eisenhower List)
 - Skipped: `Synced: skipped (already exists)` and `Reminder-id: [result.id]` when the dedup path returned the existing reminder's id
 - Failed:  `Synced: failed — [reason]` (no `Reminder-id`)
 
-`Reminder-id` is the adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter, file:title for markdown-file). `commands/done.md` passes it back to the dispatcher at completion so re-delegation or user-driven title changes cannot orphan the external record (issue #36).
+`Reminder-id` is the adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter, file:title for markdown-file). `commands/complete-task.md` passes it back to the dispatcher at completion so re-delegation or user-driven title changes cannot orphan the external record (issue #36).
 
 ## Step 7: Log Q3 stakeholders
 
@@ -224,7 +224,7 @@ invoke the memory-manager skill:
 
 **Deduplication guard**: Only create a memory entry if the task record does NOT already have a `Synced:` field. If `Synced:` is present, the entry was already created in a prior run — skip it and note "check-in entry already exists" in the summary. This is the single source of truth for dedup — do not rely on searching memory, which may be incomplete.
 
-Confirm to the user: "Schedule saved. Run /done as you complete work — or /intake to capture anything new that comes in."
+Confirm to the user: "Schedule saved. Run /complete-task as you complete work — or /intake to capture anything new that comes in."
 
 ## Calendar integration (if mentioned)
 

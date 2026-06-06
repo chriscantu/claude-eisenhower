@@ -156,7 +156,7 @@ no delegated tasks in window.`
 
 Close with a single reflective prompt:
 
-> Run `/plan-week` to act on this, or `/org awaiting` to see external
+> Run `/plan-week` to act on this, or `/review-org awaiting` to see external
 > blockers.
 
 ---

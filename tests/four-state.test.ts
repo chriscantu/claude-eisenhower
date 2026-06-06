@@ -76,7 +76,7 @@ export function buildEliminationNote(date: string): string {
 
 /**
  * Returns a new task record with State set to "Done" and Done date recorded.
- * Used by /done for both Active and Delegated task close-out.
+ * Used by /complete-task for both Active and Delegated task close-out.
  * Does not mutate the original record.
  */
 export function buildDoneRecord(record: TaskRecord, doneDate: string): TaskRecord {
@@ -245,10 +245,10 @@ describe("FOUR-STATE-005: Q4 classification maps to Done (eliminated)", () => {
   });
 });
 
-// ── Tests: FOUR-STATE-006 — /done marks Active task as Done ─────────────────
+// ── Tests: FOUR-STATE-006 — /complete-task marks Active task as Done ─────────────────
 
-describe("FOUR-STATE-006: /done marks Active task as Done", () => {
-  test("FOUR-STATE-006-a: Active task becomes Done after /done", () => {
+describe("FOUR-STATE-006: /complete-task marks Active task as Done", () => {
+  test("FOUR-STATE-006-a: Active task becomes Done after /complete-task", () => {
     const active: TaskRecord = { "State": "Active", "Title": "Approve vendor contract" };
     const done = buildDoneRecord(active, "2026-03-02");
     expect(done["State"]).toBe("Done");

@@ -160,7 +160,7 @@ the new state.
 - TASKS.md is never modified by /forget. The task board is the authoritative
   surface for in-flight work; memory is the supplementary trace. Forgetting
   a memory row does NOT delete the corresponding Delegated task — that
-  belongs to `/done`.
+  belongs to `/complete-task`.
 - Every form requires an explicit confirmation token. No single-press
   destructive paths.
 - The confirmation token is the alias name (Step 2A), the verbatim task

@@ -15,14 +15,14 @@ scripts or snippets.
 
 ### Renames
 
-- **`/execute` → `/done`.** The command's dominant path is marking a task
+- **`/execute` → `/complete-task`.** The command's dominant path is marking a task
   done; the generic "execute" read like "run a script" and hid four modes.
-  Bare `/done <task>` now marks the task done directly (it previously asked
+  Bare `/complete-task <task>` now marks the task done directly (it previously asked
   what to do). `progress`, `followup`, and `delegate` remain explicit
-  sub-verbs (`/done progress <task>`, `/done delegate <task> to <person>`).
-- **`/status` → `/org`.** Disambiguates from `/today` (daily briefing) and
-  from the task board itself. All query modes carry over: `/org`,
-  `/org [project]`, `/org [alias]`, `/org awaiting`.
+  sub-verbs (`/complete-task progress <task>`, `/complete-task delegate <task> to <person>`).
+- **`/status` → `/review-org`.** Disambiguates from `/today` (daily briefing) and
+  from the task board itself. All query modes carry over: `/review-org`,
+  `/review-org [project]`, `/review-org [alias]`, `/review-org awaiting`.
 
 ### Discoverability (#45)
 
@@ -34,8 +34,8 @@ scripts or snippets.
 
 ### Migration
 
-`/execute` and `/status` no longer exist. Re-learn them as `/done` and
-`/org`. The lifecycle phase formerly labeled "Execute" is now "Close-out".
+`/execute` and `/status` no longer exist. Re-learn them as `/complete-task` and
+`/review-org`. The lifecycle phase formerly labeled "Execute" is now "Close-out".
 
 760 tests passing.
 
