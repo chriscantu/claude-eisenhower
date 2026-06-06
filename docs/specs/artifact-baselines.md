@@ -27,7 +27,7 @@ after routine wording changes. When in doubt, leave the floor as-is.
 - guardrails: 4
 - edge cases: 5
 
-## commands/execute.md
+## commands/complete-task.md
 - steps: 5
 - examples: 1
 - guardrails: 2

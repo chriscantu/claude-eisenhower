@@ -21,7 +21,7 @@ If plugin_root is not present, use ~/repos/claude-eisenhower and note:
 This fallback path and hardcoded default appear in:
 
 1. `commands/schedule.md` (calendar section + script invocations)
-2. `commands/execute.md` (complete_reminder invocation)
+2. `commands/complete-task.md` (complete_reminder invocation)
 3. `commands/delegate.md` (match-delegate CLI invocation)
 4. `commands/scan-email.md` (cal_query.swift invocation)
 5. `commands/review-week.md` (cal_query.swift invocation)
@@ -168,7 +168,7 @@ Resolve `plugin_root` following `skills/core/references/plugin-root-resolution.m
 |------|--------|
 | `skills/core/references/plugin-root-resolution.md` | New file — canonical resolution logic |
 | `commands/schedule.md` | Replace inline resolution with reference |
-| `commands/execute.md` | Replace inline resolution with reference |
+| `commands/complete-task.md` | Replace inline resolution with reference |
 | `commands/delegate.md` | Replace inline resolution with reference |
 | `commands/scan-email.md` | Replace inline resolution with reference |
 | `commands/review-week.md` | Replace inline resolution with reference |

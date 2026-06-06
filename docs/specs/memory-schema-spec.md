@@ -11,10 +11,10 @@
 The plugin writes structured data to two local memory files: `memory/glossary.md`
 (a global Stakeholder Follow-ups table) and `memory/people/{alias-filename}.md`
 (per-delegate delegation logs). The format of both files is described inline in
-`commands/execute.md` and `commands/schedule.md` — not in a single canonical source.
+`commands/complete-task.md` and `commands/schedule.md` — not in a single canonical source.
 
 As commands evolve, the inline descriptions can drift from each other or from the
-actual files on disk. A developer editing `execute.md` has no way to know whether
+actual files on disk. A developer editing `complete-task.md` has no way to know whether
 their change is consistent with the format `schedule.md` produces. There is also no
 spec to validate against, no definition of what a well-formed memory file looks like,
 and no guidance on how to derive a people file path from an alias.
@@ -69,9 +69,9 @@ place to see all open delegate commitments at a glance.
 - **`/schedule` writes** a new `Pending` row when a Q3 task is confirmed and
   `Synced:` is not already present on the task record (dedup guard).
 - **`/delegate` writes** a new `Pending` row when a direct delegation is confirmed.
-- **`/execute` updates** the row to `Resolved — {date}` when a delegated task is
+- **`/complete-task` updates** the row to `Resolved — {date}` when a delegated task is
   marked done. It does NOT delete the row — history is preserved.
-- **`/execute` updates** the `Check-by` date when a delegation is extended after a
+- **`/complete-task` updates** the `Check-by` date when a delegation is extended after a
   missed check-in (the "still in progress" flow).
 
 ---
@@ -133,9 +133,9 @@ Examples:
 - **`/schedule` creates** the file if it does not exist (using the header + empty
   Delegations table) and appends a new `Pending` row.
 - **`/delegate` creates or appends** identically to `/schedule`.
-- **`/execute` appends** a progress note to the `Notes` column for the matching row
+- **`/complete-task` appends** a progress note to the `Notes` column for the matching row
   on a "still in progress" log.
-- **`/execute` updates** `Status` to `Resolved — {date}` when the task is marked done.
+- **`/complete-task` updates** `Status` to `Resolved — {date}` when the task is marked done.
 - The file is **never deleted** — it accumulates the full history of work delegated
   to this person.
 
@@ -167,7 +167,7 @@ And the Check-by column contains the confirmed check-in date
 
 ```gherkin
 Given a delegation to "Jordan V." for task "Review API contract" has Status: Pending
-When the user runs /execute and marks the task done
+When the user runs /complete-task and marks the task done
 Then the matching row in glossary.md is updated
 And the Status column is "Resolved — {today's date}"
 And the row is not deleted
@@ -195,7 +195,7 @@ And it contains a ## Delegations section with the required table columns
 
 ```gherkin
 Given a delegation to "Jordan V." is open and overdue
-When the user logs "still in progress" via /execute
+When the user logs "still in progress" via /complete-task
 Then the Check-by date in the glossary.md row is updated to {today + 2 business days}
 And the Check-by date in the people file row is updated to match
 And a note is appended to the Notes column in the people file

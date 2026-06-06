@@ -182,7 +182,7 @@ Task Board: 1 Inbox, 3 Active, 2 Delegated, 15 Done
 | 💤 | Board staleness | Nothing completed recently — board may have drifted |
 | 💡 | Suggested action | Highest-priority next step |
 
-Consistent with 🔴🟡🟢 health signals used in `/status`. Color is never the
+Consistent with 🔴🟡🟢 health signals used in `/review-org`. Color is never the
 sole differentiator — each section has a distinct text label (WCAG 1.4.1).
 
 ### Section visibility rules

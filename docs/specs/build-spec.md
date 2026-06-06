@@ -103,7 +103,7 @@ claude-eisenhower-{version}.plugin (zip)
 │   └── plugin.json
 ├── commands/
 │   ├── delegate.md
-│   ├── execute.md
+│   ├── complete-task.md
 │   ├── intake.md
 │   ├── prioritize.md
 │   ├── scan-email.md

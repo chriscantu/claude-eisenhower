@@ -185,9 +185,9 @@ Feature: Surface and close out delegated task follow-ups
     And list each with: delegate alias, task title, and original check-in date
     And ask: "Do you want to mark any of these resolved, or create a follow-up?"
 
-  Scenario: Delegated task marked complete via /execute
+  Scenario: Delegated task marked complete via /complete-task
     Given a Q3 task delegated to "Jordan M." with check-in date today
-    When I run /execute
+    When I run /complete-task
     And I mark the task as done
     Then the task should move to the Completed section in TASKS.md with completion date
     And the memory entry for Jordan M. should be updated: "Resolved — [date]"
@@ -195,7 +195,7 @@ Feature: Surface and close out delegated task follow-ups
 
   Scenario: Delegated task still in progress past check-in date
     Given a Q3 task delegated to "Alex R." is past its check-in date
-    When I run /execute
+    When I run /complete-task
     And I log: "still in progress"
     Then a new follow-up task should be appended to Unprocessed in TASKS.md
     And the title should be: "Follow up: [original title] with Alex R."
