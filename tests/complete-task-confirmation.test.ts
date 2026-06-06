@@ -1,5 +1,5 @@
 /**
- * execute-confirmation.test.ts
+ * complete-task-confirmation.test.ts
  *
  * Issue #31 — /complete-task must show the matched record and require explicit
  * confirmation before mutating TASKS.md. On 2+ matches, must force a
