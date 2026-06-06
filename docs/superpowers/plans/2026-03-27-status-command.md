@@ -81,7 +81,7 @@ This is the main deliverable — the full command prompt file. It follows the pa
 **Reference files to read before starting:**
 - `commands/today.md` — closest pattern (config check, TASKS.md load, memory query, sectioned output)
 - `commands/review-week.md` — memory-manager invocation pattern, deduplication
-- `docs/specs/status-command-spec.md` — the full spec
+- `docs/specs/review-org-command-spec.md` — the full spec
 - `docs/specs/tasks-schema-spec.md` — TASKS.md field definitions
 - `skills/memory-manager/SKILL.md` — `query-pending` interface
 
@@ -463,11 +463,11 @@ Run through the spec's verification checklist to confirm the command works corre
 
 **Files:**
 - Read: `commands/status.md`
-- Read: `docs/specs/status-command-spec.md`
+- Read: `docs/specs/review-org-command-spec.md`
 
 - [ ] **Step 1: Verify spec coverage**
 
-Read `docs/specs/status-command-spec.md` and cross-reference each requirement against `commands/status.md`:
+Read `docs/specs/review-org-command-spec.md` and cross-reference each requirement against `commands/status.md`:
 
 | Spec requirement | Covered in command? |
 |-----------------|---------------------|

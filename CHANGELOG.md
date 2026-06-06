@@ -272,7 +272,7 @@ Spec: `docs/specs/today-command-spec.md`
 - Progressive `Project:` tagging via confidence-split triage
 - Risk summary leads the default view
 
-Spec: `docs/specs/status-command-spec.md`
+Spec: `docs/specs/review-org-command-spec.md`
 
 **Platform Architecture principle:**
 - New principle in `docs/PRINCIPLES.md`: core is platform-agnostic (flat markdown),
