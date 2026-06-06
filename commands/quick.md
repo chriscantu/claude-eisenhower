@@ -1,5 +1,5 @@
 ---
-description: One-shot capture — parse, prioritize, and schedule a single task with one confirmation
+description: [Capture] One-shot capture — parse, prioritize, and schedule a single task with one confirmation
 argument-hint: [describe the task in natural language]
 allowed-tools: Read, Write, Edit
 ---
@@ -140,7 +140,7 @@ Respond:
 > [title]` to reclassify, `/schedule [title]` to move the date, or
 > hand-edit the entry in TASKS.md. To remove it entirely, delete the entry
 > from TASKS.md; if it was pushed to your adapter, mark it complete via
-> `/execute [title]` (uses the adapter's `completeTask` path) and then
+> `/done [title]` (uses the adapter's `completeTask` path) and then
 > delete the Reminder / output by hand. The adapter contract does not
 > currently expose a `deleteTask` operation."
 

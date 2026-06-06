@@ -1,5 +1,5 @@
 ---
-description: Weekly planning — propose commitments based on priorities, capacity, and carryover
+description: [Plan] Weekly planning — propose commitments based on priorities, capacity, and carryover
 argument-hint: (no arguments)
 allowed-tools: Read, Write, Edit
 ---

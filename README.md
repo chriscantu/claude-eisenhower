@@ -41,10 +41,10 @@ Everything stays local. Your task board, stakeholder graph, and calendar data ne
             │          └─────────┬──────────┘
             │                    │
             │           ┌────────▼────────┐
-            └───────────│     EXECUTE     │
-                        │    /execute     │
-                        │  done · progress│
-                        │  delegate · follow-up
+            └───────────│    CLOSE OUT    │
+                        │      /done      │
+                        │  done·progress  │
+                        │ delegate·f/up   │
                         └─────────────────┘
 ```
 
@@ -53,7 +53,7 @@ Everything stays local. Your task board, stakeholder graph, and calendar data ne
 | **Capture** | `/intake` | Describe any task in natural language — Claude extracts the title, source, requester, and urgency automatically |
 | **Classify** | `/prioritize` | Each task gets sorted into Q1–Q4 with reasoning shown before anything is saved |
 | **Schedule** | `/schedule` | Dates and actions assigned by quadrant: Q1 lands today, Q2 gets a focus block, Q3 goes to your best delegate, Q4 gets cut |
-| **Close out** | `/execute` | Mark done, log progress, delegate, or spin up a follow-up — delegation history tracked automatically |
+| **Close out** | `/done` | Mark done, log progress, delegate, or spin up a follow-up — delegation history tracked automatically |
 | **Delegate** | `/delegate` | Ad-hoc: score and confirm a delegate for any task on demand — writes a full Q3 entry, pushes a Reminder, and logs memory in one step |
 | **Email feed** | `/scan-email` | Scans Apple Mail and surfaces actionable emails as intake candidates — read-only |
 
@@ -69,7 +69,7 @@ Once the workflow is running, these commands help you stay on top of it.
 │/plan-week│───▶│  /today  │───▶│ /review-week │
 │ commit   │    │ briefing │    │  retrospect  │
 └──────────┘    └──────────┘    └──────────────┘
-                 /status (any time)
+                 /org (any time)
 ```
 
 | Command | What it does |
@@ -77,7 +77,7 @@ Once the workflow is running, these commands help you stay on top of it.
 | `/plan-week` | Propose commitments for the week based on carryover, priorities, and calendar capacity |
 | `/today` | Daily briefing — what's on your plate, what's overdue, delegation check-ins due |
 | `/review-week` | Friday retrospective — what shipped, what slipped, throughput trends |
-| `/status` | Org-wide status by project — health signals, risks, delegation state |
+| `/org` | Org-wide status by project — health signals, risks, delegation state |
 
 The plugin also works in the background: every session starts with a structured briefing that surfaces overdue tasks and delegation check-ins automatically — no command needed.
 
@@ -147,10 +147,10 @@ Your task board (`TASKS.md`) is created automatically on first use. From there, 
 /schedule Q2
 
 # Mark something done
-/execute done Feature timeline sent to product
+/done Feature timeline sent to product
 
 # Hand off a task and log it
-/execute delegate Incident post-mortem to Jordan (Eng Lead)
+/done delegate Incident post-mortem to Jordan (Eng Lead)
 
 # Find the best person for a specific task
 /delegate Review API contract for new vendor integration
@@ -175,7 +175,7 @@ Your task board (`TASKS.md`) is created automatically on first use. From there, 
 /review-week
 
 # Org status for your supervisor
-/status
+/org
 ```
 
 ---
@@ -199,8 +199,8 @@ writes to these locations:
 
 | Path | Written by | Purpose |
 |------|-----------|---------|
-| `TASKS.md` | `/intake`, `/prioritize`, `/schedule`, `/delegate`, `/execute`, `/scan-email`, `/quick` | The task board itself. |
-| `memory/glossary.md` | `memory-manager` skill (called from `/delegate`, `/execute`, `/schedule`) | `## Stakeholder Follow-ups` table — one row per delegation. |
+| `TASKS.md` | `/intake`, `/prioritize`, `/schedule`, `/delegate`, `/done`, `/scan-email`, `/quick` | The task board itself. |
+| `memory/glossary.md` | `memory-manager` skill (called from `/delegate`, `/done`, `/schedule`) | `## Stakeholder Follow-ups` table — one row per delegation. |
 | `memory/people/<alias>.md` | `memory-manager` skill | Per-delegate delegation log. Created on first delegation to that alias. |
 | `memory/today-log.md` | `/today` | One line per `/today` run with counts: overdue, inbox, on-plate, completed. PII-free (no aliases, titles, or emails). |
 | `memory/plan-log.md` | `/plan-week` | One line per `/plan-week` run with counts: committed, carryover, checkins, inbox, deferred. PII-free. |

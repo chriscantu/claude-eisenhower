@@ -6,9 +6,9 @@
  * Bug shape (pre-fix):
  *   1. /schedule pushes Q3 task as "Check in: alex re: API contract review"
  *      → Reminder created in macOS Reminders with that exact title.
- *   2. /execute re-delegates the task; TASKS.md Owner becomes 'jordan' and the
+ *   2. /done re-delegates the task; TASKS.md Owner becomes 'jordan' and the
  *      title becomes "Check in: jordan re: API contract review".
- *   3. /execute done later → lookup uses the NEW title → AppleScript returns
+ *   3. /done done later → lookup uses the NEW title → AppleScript returns
  *      "skipped: not found" → the original "Check in: alex re: ..." reminder
  *      is orphaned forever, and TASKS.md silently writes a misleading
  *      `Synced: skipped` line.
@@ -18,7 +18,7 @@
  *   - schedule.md / delegate.md persist it as `Reminder-id:` on the task record.
  *   - complete_reminder.applescript accepts the id as a 3rd argv and looks the
  *     reminder up by id first, falling back to title.
- *   - execute.md forwards `Reminder-id` to the dispatcher, so the original
+ *   - done.md forwards `Reminder-id` to the dispatcher, so the original
  *     Reminder is closed even though the title changed mid-flight.
  *
  * This test exercises the adapter contract end-to-end via mocked osascript:
@@ -75,7 +75,7 @@ describe("Q3 re-delegation regression (issue #36)", () => {
     expect(pushResult.status).toBe("success");
     expect(pushResult.id).toBe(ORIGINAL_ID);
 
-    // ── 2. Simulate /execute re-delegation: the task's Check-in title in
+    // ── 2. Simulate /done re-delegation: the task's Check-in title in
     //       TASKS.md changes from alex → jordan. The Reminder in macOS still
     //       has the old title (Reminders.app does NOT auto-rename — the
     //       silent-orphan bug). The stored Reminder-id is what binds the

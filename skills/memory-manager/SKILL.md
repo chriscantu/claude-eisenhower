@@ -3,7 +3,7 @@ name: memory-manager
 description: >
   Internal plugin skill. Use this skill when a plugin command directs you to
   perform a memory operation: log-delegation, resolve-delegation, update-checkin,
-  or query-pending. Called by /schedule, /execute, /delegate, /review-week, /today, and /status.
+  or query-pending. Called by /schedule, /done, /delegate, /review-week, /today, and /org.
   Do NOT invoke this skill based on user phrases — it is a plugin-internal service.
 version: 2.0.0
 ---

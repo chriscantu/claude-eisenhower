@@ -198,7 +198,7 @@ const CANONICAL_FIELDS_BY_COMMAND: readonly CommandFieldContract[] = [
     },
   },
   {
-    file: "execute.md",
+    file: "done.md",
     mustMention: {
       State: /\bState:/,
       Done: /\bDone:/,
@@ -305,7 +305,7 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
     { name: "/intake step", pattern: /\/intake\s+"/ },
     { name: "/prioritize step", pattern: /\/prioritize\b/ },
     { name: "/schedule step", pattern: /\/schedule\b/ },
-    { name: "/execute step", pattern: /\/execute\s+done/ },
+    { name: "/done step", pattern: /\/done\b/ },
     { name: "first-run detection branch", pattern: /first-run|First-run/ },
     { name: "command index section", pattern: /Command\s+index/i },
     // Lifecycle phase headers — user's mental model. A rename silently
@@ -343,7 +343,7 @@ describe("Prompt Contracts: /help first-run contract (Q2-005)", () => {
     const idxIntake = content.search(/\/intake\s+"/);
     const idxPrioritize = content.indexOf("/prioritize");
     const idxSchedule = content.indexOf("/schedule");
-    const idxExecute = content.search(/\/execute\s+done/);
+    const idxExecute = content.search(/\/done\b/);
     expect(idxIntake).toBeGreaterThanOrEqual(0);
     expect(idxPrioritize).toBeGreaterThan(idxIntake);
     expect(idxSchedule).toBeGreaterThan(idxPrioritize);
@@ -452,12 +452,12 @@ describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
 // doesn't exist on disk, first-run users hit "command not found." This contract
 // enforces a bidirectional match between commands/*.md and /help's index.
 //
-// Allowlist captures arg-form variants (e.g., "/status awaiting" is the
-// `awaiting` keyword arg on /status, not a separate command file) so the
+// Allowlist captures arg-form variants (e.g., "/org awaiting" is the
+// `awaiting` keyword arg on /org, not a separate command file) so the
 // bidirection check doesn't flag legitimate sub-commands.
 
 const HELP_INDEX_ARG_FORM_ALLOWLIST: ReadonlyArray<string> = [
-  "status awaiting",
+  "org awaiting",
 ];
 
 describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () => {
@@ -502,7 +502,7 @@ describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () =>
     const dangling = Array.from(indexedSlashes).filter((slash) => {
       // Direct command file?
       if (commandBasenames.includes(slash) || slash === "help") return false;
-      // Allowlisted arg-form (e.g., "status awaiting" is /status with arg)
+      // Allowlisted arg-form (e.g., "org awaiting" is /org with arg)
       if (HELP_INDEX_ARG_FORM_ALLOWLIST.includes(slash)) return false;
       return true;
     });
@@ -540,7 +540,7 @@ describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () =>
   });
 });
 
-// ── Test group 8: /status triage gate threshold (Q2-008) — issue #41 ─────
+// ── Test group 8: /org triage gate threshold (Q2-008) — issue #41 ─────
 //
 // The triage gate threshold (≥5 tagged tasks) is a load-bearing magic
 // number. Without a pin, a future edit silently changes the threshold and
@@ -548,10 +548,10 @@ describe("Prompt Contracts: /help index ↔ commands/ bijection (Q2-007)", () =>
 // the spec documents the threshold + a rationale, so any tweak is
 // intentional and accompanied by reasoning.
 
-describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
-  const statusPath = path.join(repoRoot, "commands", "status.md");
+describe("Prompt Contracts: /org triage gate (Q2-008)", () => {
+  const statusPath = path.join(repoRoot, "commands", "org.md");
 
-  test("Q2-008: /status spec pins the ≥5 tagged threshold", () => {
+  test("Q2-008: /org spec pins the ≥5 tagged threshold", () => {
     const content = readContent(statusPath);
     // Threshold must appear in Step 3 (triage) context. Match any phrasing
     // that names "5" alongside "tagged" within a ~120-char window so a
@@ -561,7 +561,7 @@ describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
     );
     if (!hasThreshold) {
       throw new Error(
-        `commands/status.md Step 3 triage gate does not document the ≥5 ` +
+        `commands/org.md Step 3 triage gate does not document the ≥5 ` +
           `tagged-tasks threshold in the expected form. A magic number ` +
           `without a documented rationale produces silent behavior flips.`
       );
@@ -569,7 +569,7 @@ describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
     expect(hasThreshold).toBe(true);
   });
 
-  test("Q2-008: /status spec includes triage gate rationale", () => {
+  test("Q2-008: /org spec includes triage gate rationale", () => {
     const content = readContent(statusPath);
     // Rationale must explain WHY the gate exists — first-run hostility.
     const hasRationale = /first run.*untagged|hostile empty-state|enough signal to\s+group|enough tagged tasks/i.test(
@@ -577,7 +577,7 @@ describe("Prompt Contracts: /status triage gate (Q2-008)", () => {
     );
     if (!hasRationale) {
       throw new Error(
-        `commands/status.md Step 3 triage gate is missing a rationale for ` +
+        `commands/org.md Step 3 triage gate is missing a rationale for ` +
           `the threshold. Without a "why" comment, a future tweak to 3 or 10 ` +
           `looks arbitrary.`
       );

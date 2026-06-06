@@ -11,8 +11,8 @@
 | 4 | /schedule -- delegate confirmed, check-in date set, Reminder pushed, Synced written | PASS |
 | 5 | Simulate check-in date passing (backdated to 2026-02-19) | PASS |
 | 6 | /schedule Step 1b -- overdue delegation surfaced before main schedule | PASS |
-| 7 | /execute Log Progress -- follow-up task auto-created in Unprocessed (correct title/source) | PASS |
-| 8 | /execute on follow-up -- marked done, moved to Completed | PASS |
+| 7 | /done Log Progress -- follow-up task auto-created in Unprocessed (correct title/source) | PASS |
+| 8 | /done on follow-up -- marked done, moved to Completed | PASS |
 | 9a | Original task in Completed with Done field | PASS |
 | 9b | glossary.md resolved: Resolved - 2026-02-20 | PASS |
 | 9c | alex-rivera.md resolved: Resolved - 2026-02-20 | PASS |
@@ -69,8 +69,8 @@ TEST-DEL-020 through TEST-DEL-032 validated against real TASKS.md, memory files,
 
 **Gaps found and fixed during this test run:**
 - `schedule.md` Step 3b dedup guard was ambiguous ('check memory') � tightened to anchor on `Synced:` field as single source of truth
-- `execute.md` Mark Done had no instruction to resolve memory entries for delegated tasks � added Step 4 delegation close-out
-- `execute.md` Log Progress had no delegation-aware follow-up path � added Step 3 overdue check-in handler with correct title/source format
+- `done.md` Mark Done had no instruction to resolve memory entries for delegated tasks � added Step 4 delegation close-out
+- `done.md` Log Progress had no delegation-aware follow-up path � added Step 3 overdue check-in handler with correct title/source format
 
 
 ---
@@ -375,13 +375,13 @@ Tests are organized by phase. Run in order for full chain coverage.
 
 ---
 
-### TEST-DEL-031: Mark delegated task complete via /execute
+### TEST-DEL-031: Mark delegated task complete via /done
 
 **Setup**:
 - TASKS.md has Q3 task: `Delegate to: Jordan M.`, check-in date today
 - Memory entry exists for Jordan M.
 
-**Action**: Run `/execute`, mark the task done
+**Action**: Run `/done`, mark the task done
 
 **Expected**:
 - Task moves to `## Completed` with completion date
@@ -398,7 +398,7 @@ Tests are organized by phase. Run in order for full chain coverage.
 - TASKS.md has Q3 task past its check-in date, `Delegate to: Alex R.`
 - Memory entry exists for Alex R.
 
-**Action**: Run `/execute`, log "still in progress"
+**Action**: Run `/done`, log "still in progress"
 
 **Expected**:
 - Original task receives a progress note in its record
@@ -428,9 +428,9 @@ Tests are organized by phase. Run in order for full chain coverage.
 3. Run `/schedule` — confirm delegate, verify memory entry created, verify Reminders push
 4. Simulate check-in date passing (manually update task date)
 5. Run `/schedule` — verify overdue delegation is surfaced
-6. Run `/execute` — log "still in progress"
+6. Run `/done` — log "still in progress"
 7. Verify follow-up task created in Unprocessed
-8. Run `/execute` on the follow-up — mark done
+8. Run `/done` on the follow-up — mark done
 9. Verify original and follow-up both in Completed. Memory resolved.
 
 **Pass criteria**: All 9 steps complete without error or manual workaround. No PII in TASKS.md beyond alias.

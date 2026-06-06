@@ -1,5 +1,5 @@
 ---
-description: Scan a configured email inbox for actionable emails and add them to your task board
+description: [Capture] Scan a configured email inbox for actionable emails and add them to your task board
 argument-hint: [optional: category to scan — admin, escalations, surveys, or all]
 allowed-tools: Read, Write, Edit
 ---

@@ -1,5 +1,5 @@
 ---
-description: Daily briefing — what needs your attention right now
+description: [Act] Daily briefing — what needs your attention right now
 argument-hint: (no arguments)
 allowed-tools: Read, Write
 ---
@@ -74,7 +74,7 @@ explicitly — do NOT silently prefer one source. A disagreement is any of:
 1. **Memory says Pending, TASKS.md says Done.** Same alias + task title, but
    TASKS.md `State: Done` and memory `Status: Pending`. → "TASKS.md says
    {title} for {alias} is Done ({date}); memory still shows it Pending. Run
-   `/forget task {title}` to clean up memory, or `/execute done {title}` was
+   `/forget task {title}` to clean up memory, or `/done done {title}` was
    never run."
 2. **Memory says Resolved, TASKS.md says Delegated (still in flight).** Same
    alias + title, memory `Status: Resolved — {date}` but TASKS.md still in

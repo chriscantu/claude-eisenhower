@@ -7,6 +7,40 @@ Format: newest version first. Each entry covers what shipped, what changed, and 
 
 ---
 
+## [v2.0.0] — 2026-06-05 — Command Rename for Discoverability (#45)
+
+**Breaking change.** Two commands are renamed for verb-precision. The old
+names are removed — there are no aliases. Update muscle memory and any saved
+scripts or snippets.
+
+### Renames
+
+- **`/execute` → `/done`.** The command's dominant path is marking a task
+  done; the generic "execute" read like "run a script" and hid four modes.
+  Bare `/done <task>` now marks the task done directly (it previously asked
+  what to do). `progress`, `followup`, and `delegate` remain explicit
+  sub-verbs (`/done progress <task>`, `/done delegate <task> to <person>`).
+- **`/status` → `/org`.** Disambiguates from `/today` (daily briefing) and
+  from the task board itself. All query modes carry over: `/org`,
+  `/org [project]`, `/org [alias]`, `/org awaiting`.
+
+### Discoverability (#45)
+
+- Command descriptions now carry lifecycle-phase prefixes —
+  `[Capture] [Classify] [Plan] [Act] [Reflect] [Memory] [Setup]` — so the
+  `/`-autocomplete menu discloses each command's phase at a glance.
+- README workflow diagram, verb table, and the `/help` index updated to the
+  new names.
+
+### Migration
+
+`/execute` and `/status` no longer exist. Re-learn them as `/done` and
+`/org`. The lifecycle phase formerly labeled "Execute" is now "Close-out".
+
+760 tests passing.
+
+---
+
 ## [v1.9.0] — 2026-05-28 — Multi-Provider Adapters + Daily/Weekly Loop Completion
 
 The largest release since the initial cut. Three threads land together: a

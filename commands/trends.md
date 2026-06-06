@@ -1,5 +1,5 @@
 ---
-description: 4-week behavioral retro — throughput, defer rate, overdue delegation patterns
+description: [Reflect] 4-week behavioral retro — throughput, defer rate, overdue delegation patterns
 argument-hint: [weeks] (optional, default 4)
 allowed-tools: Read
 ---
@@ -156,7 +156,7 @@ no delegated tasks in window.`
 
 Close with a single reflective prompt:
 
-> Run `/plan-week` to act on this, or `/status awaiting` to see external
+> Run `/plan-week` to act on this, or `/org awaiting` to see external
 > blockers.
 
 ---

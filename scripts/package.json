@@ -1,6 +1,6 @@
 {
   "name": "claude-eisenhower-scripts",
-  "version": "1.9.0",
+  "version": "2.0.0",
   "description": "Scripts for the claude-eisenhower plugin",
   "private": true,
   "scripts": {

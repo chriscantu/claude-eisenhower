@@ -1,5 +1,5 @@
 ---
-description: Friday weekly review — overdue delegations, upcoming check-ins, active commitments, inbox backlog, and next week's calendar load
+description: [Reflect] Friday weekly review — overdue delegations, upcoming check-ins, active commitments, inbox backlog, and next week's calendar load
 argument-hint: (no arguments)
 allowed-tools: Read, Write, Edit
 ---

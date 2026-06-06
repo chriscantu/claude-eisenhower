@@ -1,5 +1,5 @@
 ---
-description: First-run walkthrough and command index
+description: [Setup] First-run walkthrough and command index
 argument-hint: (no arguments)
 allowed-tools: Read
 ---
@@ -55,7 +55,7 @@ to see the full loop end-to-end. Each step takes seconds.
   For the synthetic task, accept any date.
 
 ─── 4. Close the loop ────────────────────────────────────
-  /execute done "Try out the task flow with a synthetic task"
+  /done "Try out the task flow with a synthetic task"
 
   Marks the task complete and moves it to ## Done.
 
@@ -110,12 +110,12 @@ below — these mirror the `description:` field of each command file:
 
 ─── Act ──────────────────────────────────────────────────
   /today         Daily briefing — what needs attention now
-  /execute       Mark a task done, delegated, or eliminated
+  /done          Mark a task done, delegated, or eliminated
 
 ─── Reflect ──────────────────────────────────────────────
   /review-week   Friday weekly review
-  /status        Org-wide status — projects, delegates, risks
-  /status awaiting  External-blocker rollup
+  /org           Org-wide status — projects, delegates, risks
+  /org awaiting  External-blocker rollup
   /trends        4-week behavioral retro
 
 ─── Memory ───────────────────────────────────────────────
