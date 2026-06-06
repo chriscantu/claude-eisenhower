@@ -59,6 +59,25 @@ scripts or snippets.
 - README workflow diagram, verb table, and the `/help` index updated to the
   new names.
 
+### Also in this release (shipped alongside the rename)
+
+- **forget.md confirmation-token bug fix (#92, PR #95).** The `/forget` Rules
+  summary bound the Step 2B (`/forget task`) confirmation token to the literal
+  string `yes`, contradicting Step 2B's authoritative body, which requires the
+  verbatim task title. An LLM weighing the summary equally with the body could
+  accept a bare `yes` and delete a memory row unintentionally — the exact
+  destructive misfire the body warns against. Fixed; added a negative
+  regression test (the prior positive token passed despite the contradiction).
+- **Skill best-practice alignment (PR #93).** Added `## Gotchas` sections to
+  the `core` and `skill-enhancer` skills (calendar `whose`-clause perf trap,
+  gitignored PII files, append-only TASKS.md, single-writer memory, graceful
+  config degradation); flattened the `core` description; added a
+  phase→command map so the skill orchestrates while the slash commands remain
+  the execution authority; trimmed `skill-enhancer` under its own 300-line cap.
+- **memory-manager Gotchas (PR #94).** Added the dual-write desync,
+  DELETE-routing, shared-schema-coupling, caller-owned-dedup, and
+  alias-filename traps as high-signal guidance.
+
 ### Migration
 
 `/execute` and `/status` no longer exist. Re-learn them as `/complete-task` and
