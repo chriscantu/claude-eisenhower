@@ -23,7 +23,7 @@ The hardcoded path currently appears in:
 | `commands/prioritize.md` | Stakeholder graph note | reference text `~/repos/claude-eisenhower/` |
 | `commands/delegate.md` | Step 2 stakeholder read | reference text `~/repos/claude-eisenhower/` |
 | `commands/delegate.md` | Step 5 match-delegate | `cd ~/repos/claude-eisenhower/scripts && npx ts-node ...` |
-| `commands/execute.md` | Reminders adapter | `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript` |
+| `commands/complete-task.md` | Reminders adapter | `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript` |
 
 ---
 
@@ -96,7 +96,7 @@ All 4 files must be updated in a single commit:
 2. **`commands/scan-email.md`** — replace `swift ~/repos/claude-eisenhower/scripts/cal_query.swift`
 3. **`commands/prioritize.md`** — replace reference text
 4. **`commands/delegate.md`** — replace both the stakeholder read reference and the `npx ts-node` call
-5. **`commands/execute.md`** — replace `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript`
+5. **`commands/complete-task.md`** — replace `osascript ~/repos/claude-eisenhower/scripts/complete_reminder.applescript`
 
 If Strategy B: also update **`/setup` command** to prompt for `plugin_root` during first-run setup.
 
@@ -145,7 +145,7 @@ And the script executes without a "No such file or directory" error
 
 ```
 Given plugin_root is resolved to /Users/alice/work/claude-eisenhower
-When Claude runs /execute and marks a task done
+When Claude runs /complete-task and marks a task done
 Then the osascript call uses /Users/alice/work/claude-eisenhower/scripts/complete_reminder.applescript
 ```
 
@@ -153,7 +153,7 @@ Then the osascript call uses /Users/alice/work/claude-eisenhower/scripts/complet
 
 ```
 Given plugin_root resolves to ~/repos/claude-eisenhower (default)
-When Claude runs /schedule, /scan-email, /delegate, or /execute
+When Claude runs /schedule, /scan-email, /delegate, or /complete-task
 Then all script calls succeed as they did before this change
 And no new config prompts or setup steps are shown to the user
 ```

@@ -286,9 +286,9 @@ These daily metrics enable trend analysis in `/review-week` and future features:
 | Not this | Why |
 |----------|-----|
 | `/review-week` | `/today` shows today. `/review-week` shows the coming week. Different time range, different calendar format (`full` vs `summary`), different purpose (daily action vs weekly retrospective). |
-| `/status` | No per-delegate portfolio, no team rollup, no historical reporting. Recently completed is capped — it's a conversation aid, not a report. |
+| `/review-org` | No per-delegate portfolio, no team rollup, no historical reporting. Recently completed is capped — it's a conversation aid, not a report. |
 | A triage tool | Read-only. No writes, no state changes, no inline action flows. Suggests what to do, never does it. |
-| A full analytics suite | Writes daily KPIs only. Trend analysis and reporting belong in `/review-week` and `/status`. |
+| A full analytics suite | Writes daily KPIs only. Trend analysis and reporting belong in `/review-week` and `/review-org`. |
 
 ---
 

@@ -117,7 +117,7 @@ labels.
 
 Check-ins due this week are surfaced for awareness and included in the capacity math, but
 `/plan-week` does not modify `Check-by:` dates or write to delegation memory. The user
-acts on check-ins via `/execute` or direct follow-up.
+acts on check-ins via `/complete-task` or direct follow-up.
 
 ### D6: Neutral carryover language
 

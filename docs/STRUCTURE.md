@@ -60,12 +60,12 @@ commands/
   plan-week.md
   prioritize.md
   schedule.md
-  execute.md
+  complete-task.md
   delegate.md
   scan-email.md
   review-week.md
   setup.md
-  status.md
+  review-org.md
   today.md
 ```
 
@@ -241,7 +241,7 @@ Executable scripts only. No documentation files.
 ```
 scripts/
   cal_query.swift              -- EventKit calendar query (used by /schedule, /scan-email)
-  complete_reminder.applescript -- Reminders complete adapter (used by /execute)
+  complete_reminder.applescript -- Reminders complete adapter (used by /complete-task)
                                   Manual test protocol: docs/applescript-test-protocol.md
   push_reminder.applescript    -- Reminders write adapter (used by /schedule)
                                   Manual test protocol: docs/applescript-test-protocol.md
@@ -283,7 +283,7 @@ tests/
   delegation.test.ts           -- 35-test suite for delegation matching + alias resolution
   delegate-entry.test.ts       -- 31-test suite for /delegate entry point (DEL-5xx)
   schedule-capacity.test.ts    -- 15-test suite for capacity signal review prompt (CAP-6xx)
-  phase2-3.test.ts             -- 32-test suite for /schedule + /execute pure logic (DEL-7xx)
+  phase2-3.test.ts             -- 32-test suite for /schedule + /complete-task pure logic (DEL-7xx)
   agent-contracts.test.ts      -- structural checks: plugin schema, hook registration, file presence
   prompt-contracts.test.ts     -- vocabulary contract tests: prohibited headers, memory guard lines
   adapter-types.test.ts        -- adapter type interface checks

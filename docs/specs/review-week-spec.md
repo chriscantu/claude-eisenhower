@@ -318,7 +318,7 @@ overdue count has been rising for 3 weeks, escalate the recommendation language.
 **13. Memory Access Layer retrofit**
 
 The Memory Access Layer defined in Requirement 6 (try skill → fall back to local file,
-same return shape) should be retrofitted to the write paths in `schedule.md`, `execute.md`,
+same return shape) should be retrofitted to the write paths in `schedule.md`, `complete-task.md`,
 and `delegate.md`, which currently duplicate the try/fallback pattern verbatim. This is a
 DRY fix, not a behavior change. Tracked as a separate task; unblocks Requirement 6 reuse.
 
@@ -329,7 +329,7 @@ DRY fix, not a behavior change. Tracked as a separate task; unblocks Requirement
 This is the first command that needs to **read** from the memory backend. Existing commands
 only write to it. Writing the read path as a branch (`if skill available → query skill,
 else → parse local file`) would create a third duplication of the try/fallback logic already
-in `schedule.md`, `execute.md`, and `delegate.md`.
+in `schedule.md`, `complete-task.md`, and `delegate.md`.
 
 **Proposed abstraction**: document a "Memory Access Layer" pattern in `docs/PRINCIPLES.md` or
 a new `docs/adrs/memory-access-layer.md`:

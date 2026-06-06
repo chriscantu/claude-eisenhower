@@ -10,7 +10,7 @@
 
 ## Problem Statement
 
-Delegation in the current plugin is embedded inside two existing commands: `/prioritize` (Q3 classification) and `/execute delegate`. There is no way to ask "who should own this?" outside the full Eisenhower loop. When a task arrives mid-session — a Slack ping, a quick hallway ask, a redirect from a meeting — the user must either run the entire intake-prioritize cycle to get a delegate suggestion, or resolve the delegation mentally on their own. This friction causes Q3 work to either pile up in Unprocessed or get delegated without the scoring engine.
+Delegation in the current plugin is embedded inside two existing commands: `/prioritize` (Q3 classification) and `/complete-task delegate`. There is no way to ask "who should own this?" outside the full Eisenhower loop. When a task arrives mid-session — a Slack ping, a quick hallway ask, a redirect from a meeting — the user must either run the entire intake-prioritize cycle to get a delegate suggestion, or resolve the delegation mentally on their own. This friction causes Q3 work to either pile up in Unprocessed or get delegated without the scoring engine.
 
 This is Open Question #2 from `delegation-spec.md`: *Should there be a dedicated `/delegate` command as a direct entry point?*
 
@@ -34,7 +34,7 @@ The answer is yes. The scoring engine (`match-delegate.ts`) and stakeholder grap
 2. **No automatic message sending** — `/delegate` will never send a Slack message, email, or calendar invite on the user's behalf. It surfaces the suggestion and writes to TASKS.md. The human conversation is the user's responsibility. (Explicit cut in ROADMAP.md "Won't Do" table.)
 3. **No multi-delegate splitting** — A single task gets one delegate. If the task needs to be split, that happens at `/intake`. (Explicit cut in ROADMAP.md "Won't Do" table.)
 4. **No capacity auto-refresh** — `capacity_signal` is read as-is from the YAML. Stale capacity detection is addressed separately in Roadmap item #3 (Capacity Signal Review Prompt). Out of scope here.
-5. **No `/prioritize --delegate` flag** — The ROADMAP open question raised this as an alternative. The decision here is a dedicated command: it is simpler to document, simpler to invoke, and consistent with the existing command-per-phase pattern (`/intake`, `/prioritize`, `/schedule`, `/execute`).
+5. **No `/prioritize --delegate` flag** — The ROADMAP open question raised this as an alternative. The decision here is a dedicated command: it is simpler to document, simpler to invoke, and consistent with the existing command-per-phase pattern (`/intake`, `/prioritize`, `/schedule`, `/complete-task`).
 
 ---
 
@@ -46,7 +46,7 @@ The answer is yes. The scoring engine (`match-delegate.ts`) and stakeholder grap
 
 **As a Director**, I want to be able to override the suggested delegate and name someone manually so that I retain control even when the algorithm scores no clear match.
 
-**As a Director**, I want the confirmed delegation written to TASKS.md as a properly-formed Q3 entry so that `/schedule` and `/execute` can pick it up without special-casing.
+**As a Director**, I want the confirmed delegation written to TASKS.md as a properly-formed Q3 entry so that `/schedule` and `/complete-task` can pick it up without special-casing.
 
 **As a Director**, I want the command to catch authority-sensitive tasks (those that require my sign-off or personnel decisions) and warn me before recording a delegate so that I do not accidentally hand off something I need to own.
 

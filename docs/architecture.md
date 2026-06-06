@@ -28,7 +28,7 @@ flowchart TD
         intake["/intake"]
         prioritize["/prioritize"]
         schedule["/schedule"]
-        execute["/execute"]
+        execute["/complete-task"]
         delegate["/delegate"]
         scanemail["/scan-email"]
         reviewweek["/review-week"]
@@ -142,11 +142,11 @@ stateDiagram-v2
 
     Inbox --> Done : /prioritize\n(Q4 — eliminate)
 
-    Active --> Delegated : /execute\n(reassign mid-flight)
+    Active --> Delegated : /complete-task\n(reassign mid-flight)
 
-    Active --> Done : /execute\n(mark complete)
+    Active --> Done : /complete-task\n(mark complete)
 
-    Delegated --> Done : /execute\n(close out · resolve check-in)
+    Delegated --> Done : /complete-task\n(close out · resolve check-in)
 
     Delegated --> Delegated : /schedule · /review-week\n(overdue check-in surfaced)
 
@@ -158,7 +158,7 @@ stateDiagram-v2
 
     note right of Done
         Terminal. Reminders adapter
-        synced on /execute completion.
+        synced on /complete-task completion.
     end note
 ```
 
@@ -216,7 +216,7 @@ flowchart TD
 
 | Layer | Components |
 |-------|-----------|
-| Commands | `/intake` `/prioritize` `/schedule` `/execute` `/delegate` `/scan-email` `/review-week` `/setup` |
+| Commands | `/intake` `/prioritize` `/schedule` `/complete-task` `/delegate` `/scan-email` `/review-week` `/setup` |
 | Skills | `claude-eisenhower` (end-user routing) · `skill-enhancer` (developer self-improvement) |
 | Agents | `task-prioritizer` (autonomous Inbox triage) |
 | Hooks | `SessionStart` (task board briefing) |

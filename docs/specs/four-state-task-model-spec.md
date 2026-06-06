@@ -124,7 +124,7 @@ And the task is moved to the ## Done section
 
 ```gherkin
 Given a task in State: Active
-When the user runs /execute and marks it complete
+When the user runs /complete-task and marks it complete
 Then the task State is updated to "Done"
 And a Done date is recorded
 And the task is moved to the ## Done section
@@ -134,7 +134,7 @@ And the task is moved to the ## Done section
 
 ```gherkin
 Given a task in State: Delegated
-When the user runs /execute and confirms the delegate completed the work
+When the user runs /complete-task and confirms the delegate completed the work
 Then the task State is updated to "Done"
 And a Done date is recorded
 And the task is moved to the ## Done section
@@ -199,7 +199,7 @@ Existing tasks in Q1/Q2/Q3/Q4 sections map as follows:
 | `commands/intake.md` | Update TASKS.md section structure; Status field → State: Inbox |
 | `commands/prioritize.md` | Replace Q1–Q4 sections with Active/Delegated/Done; add Check-by enforcement |
 | `commands/schedule.md` | Update overdue scan to target State: Delegated + Check-by |
-| `commands/execute.md` | Update Done close-out to write State: Done |
+| `commands/complete-task.md` | Update Done close-out to write State: Done |
 | `commands/delegate.md` | Update to write State: Delegated with mandatory Check-by |
 | `skills/core/references/eisenhower.md` | Clarify Eisenhower as Priority field, not state |
 | `TASKS.md` | Migrate existing tasks to new sections (runtime file — not committed) |

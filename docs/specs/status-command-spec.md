@@ -1,4 +1,4 @@
-# /status — Org Status Command
+# /review-org — Org Status Command
 
 **Plugin**: claude-eisenhower
 **Version target**: v1.5.0 (ships with /today v1.4.0 in same release)
@@ -36,18 +36,18 @@ Plugin is local-first, file-based. Should be queryable with arguments.
 | Project tagging | `Project:` field on tasks, inferred + confirmed | Zero upfront cost. Inference reduces burden, user confirmation ensures accuracy, tags written back for future runs. |
 | Triage UX | Confidence-split (auto-tag high, prompt ambiguous) | Reduces decision surface. User only engages with genuinely ambiguous items. |
 | Risk section | Embedded in default view, not a separate query | Risks are context for the full picture, not a standalone report. |
-| Done items in default view | Omitted | Default view is about what's in motion and what's at risk. Done items surface in `/status [project]` detail only. |
+| Done items in default view | Omitted | Default view is about what's in motion and what's at risk. Done items surface in `/review-org [project]` detail only. |
 | Health signals | 🔴🟡🟢 per project | Scannable at a glance. Supervisor can immediately see which projects need attention. |
-| Analytics log | None | `/status` is on-demand, not a daily ritual. `/today` already captures the daily snapshot. |
-| Query modes | `/status`, `/status [project]`, `/status [alias]` | Covers the three angles: full org, single initiative, single person. No special keywords. |
+| Analytics log | None | `/review-org` is on-demand, not a daily ritual. `/today` already captures the daily snapshot. |
+| Query modes | `/review-org`, `/review-org [project]`, `/review-org [alias]` | Covers the three angles: full org, single initiative, single person. No special keywords. |
 | Argument resolution | Project names first, then aliases | Projects are the primary grouping. Ambiguous matches prompt for clarification. |
-| Closing prompt | Reporting-oriented, not action-oriented | `/status` is a reporting tool. Point to `/status [project]`, `/status [alias]`, `/today` — not action commands. |
+| Closing prompt | Reporting-oriented, not action-oriented | `/review-org` is a reporting tool. Point to `/review-org [project]`, `/review-org [alias]`, `/today` — not action commands. |
 
 ---
 
 ## Command Identity
 
-**File**: `commands/status.md`
+**File**: `commands/review-org.md`
 
 ```yaml
 ---
@@ -66,9 +66,9 @@ during the triage phase — never modifies task state, dates, or delegation fiel
 
 | Invocation | What it shows |
 |------------|---------------|
-| `/status` | Triage (if needed) → Risk summary → All projects with health signals → Closing prompt |
-| `/status [project]` | Single project deep dive — active, delegated, recently completed |
-| `/status [alias]` | Everything delegated to that person, grouped by project |
+| `/review-org` | Triage (if needed) → Risk summary → All projects with health signals → Closing prompt |
+| `/review-org [project]` | Single project deep dive — active, delegated, recently completed |
+| `/review-org [alias]` | Everything delegated to that person, grouped by project |
 
 **Argument resolution order:**
 1. Check against known project names (from `Project:` tags in TASKS.md)
@@ -103,7 +103,7 @@ task title appears in both, suppress the memory-only entry. TASKS.md is authorit
 |---------|----------|
 | TASKS.md | Show "No task board found" message and stop |
 
-No calendar or adapter config needed — `/status` reads only TASKS.md and delegation memory.
+No calendar or adapter config needed — `/review-org` reads only TASKS.md and delegation memory.
 
 ---
 
@@ -128,7 +128,7 @@ Added to task records in TASKS.md. Optional — absence triggers triage.
 
 ### Triage Phase
 
-Runs at the start of `/status` (any query mode) when untagged non-Done tasks exist.
+Runs at the start of `/review-org` (any query mode) when untagged non-Done tasks exist.
 
 1. Scan all non-Done tasks for missing `Project:` field
 2. Infer groupings using task titles, delegate context, and existing project names
@@ -167,7 +167,7 @@ Runs at the start of `/status` (any query mode) when untagged non-Done tasks exi
 | 🟡 | No overdue, but a Check-by date is within 2 business days |
 | 🟢 | All on track |
 
-### Default View (`/status`)
+### Default View (`/review-org`)
 
 ```
 ## Status — Thursday, March 27
@@ -190,7 +190,7 @@ Runs at the start of `/status` (any query mode) when untagged non-Done tasks exi
   • [Active] "Update onboarding docs" — Due: Mar 29
   • [Inbox] "Review team survey results"
 
-Run /status [project] for detail, or /status [alias] for a person view.
+Run /review-org [project] for detail, or /review-org [alias] for a person view.
 ```
 
 **Default view rules:**
@@ -203,7 +203,7 @@ Run /status [project] for detail, or /status [alias] for a person view.
 - Section header includes task count summary (overdue, active, delegated)
 - Omit empty sections — no "nothing here" placeholders
 
-### Project Detail View (`/status [project]`)
+### Project Detail View (`/review-org [project]`)
 
 ```
 ## Status — Auth Migration
@@ -223,7 +223,7 @@ Run /status [project] for detail, or /status [alias] for a person view.
   • "Deprecate v1 token endpoint" — Done: Mar 26
   • "Audit session storage" — Done: Mar 24
 
-Run /status for full org view, or /status alex for delegate view.
+Run /review-org for full org view, or /review-org alex for delegate view.
 ```
 
 **Project detail rules:**
@@ -232,7 +232,7 @@ Run /status for full org view, or /status alex for delegate view.
 - Recently completed: last 2 weeks, max 5 items. If more: "... and {N} more"
 - Omit empty state sections
 
-### Alias View (`/status [alias]`)
+### Alias View (`/review-org [alias]`)
 
 ```
 ## Status — Alex
@@ -246,7 +246,7 @@ Run /status for full org view, or /status alex for delegate view.
   Infra Reliability:
   • "Staging deploy runbook" — Check-by: Apr 3
 
-Run /status for full org view, or /status auth-migration for project view.
+Run /review-org for full org view, or /review-org auth-migration for project view.
 ```
 
 **Alias view rules:**
@@ -257,15 +257,15 @@ Run /status for full org view, or /status auth-migration for project view.
 
 ---
 
-## Boundaries — What /status Is Not
+## Boundaries — What /review-org Is Not
 
 | Not this | Why |
 |----------|-----|
-| `/today` | `/today` is daily pulse — what needs attention right now. `/status` is on-demand portfolio reporting — what's the state of the org. |
-| `/review-week` | Weekly retrospective with calendar and throughput analysis. `/status` is current state, not historical. |
+| `/today` | `/today` is daily pulse — what needs attention right now. `/review-org` is on-demand portfolio reporting — what's the state of the org. |
+| `/review-week` | Weekly retrospective with calendar and throughput analysis. `/review-org` is current state, not historical. |
 | A triage tool | Tagging is the only write. No state changes, no rescheduling, no delegation actions. |
 | A project management tool | No project creation, no milestones, no dependencies. Projects emerge from task tags. |
-| An action tool | Suggests view commands (`/status [x]`), not action commands (`/delegate`, `/execute`). |
+| An action tool | Suggests view commands (`/review-org [x]`), not action commands (`/delegate`, `/complete-task`). |
 
 ---
 
@@ -273,8 +273,8 @@ Run /status for full org view, or /status auth-migration for project view.
 
 | File | Change |
 |------|--------|
-| Create: `commands/status.md` | New command file |
-| Modify: `docs/STRUCTURE.md` | Add status.md to commands listing |
+| Create: `commands/review-org.md` | New command file |
+| Modify: `docs/STRUCTURE.md` | Add review-org.md to commands listing |
 | Modify: TASKS.md (runtime) | Writes `Project:` tags during triage — no other field changes |
 
 No new scripts, no new config files, no new tests (command is pure prompt — no
@@ -284,7 +284,7 @@ TypeScript logic to test).
 
 `Project:` is a new optional field on task records. Existing tasks without it
 continue to work — they appear as "Untagged" until triaged. Other commands
-(`/intake`, `/prioritize`, `/schedule`, `/execute`, `/delegate`) are unaffected —
+(`/intake`, `/prioritize`, `/schedule`, `/complete-task`, `/delegate`) are unaffected —
 they don't read or write `Project:`.
 
 Future opportunity: `/intake` could prompt for `Project:` at intake time (out of scope).
@@ -293,18 +293,18 @@ Future opportunity: `/intake` could prompt for `Project:` at intake time (out of
 
 ## Verification
 
-1. **Default view test** — Run `/status` on a board with tasks across multiple
+1. **Default view test** — Run `/review-org` on a board with tasks across multiple
    projects, some overdue delegations, and some untagged tasks. Confirm triage
    prompts for ambiguous items only, health signals are correct, and Done items
    are omitted.
-2. **Project detail test** — Run `/status [project]` and confirm it shows active,
+2. **Project detail test** — Run `/review-org [project]` and confirm it shows active,
    delegated, and recently completed for that project only.
-3. **Alias view test** — Run `/status [alias]` and confirm it shows all delegations
+3. **Alias view test** — Run `/review-org [alias]` and confirm it shows all delegations
    for that person grouped by project.
-4. **Empty board test** — Run `/status` with no tasks. Confirm "No task board found."
-5. **All tagged test** — Run `/status` with all tasks tagged. Confirm triage phase
+4. **Empty board test** — Run `/review-org` with no tasks. Confirm "No task board found."
+5. **All tagged test** — Run `/review-org` with all tasks tagged. Confirm triage phase
    is skipped entirely.
-6. **Ambiguous argument test** — Run `/status` with an argument that matches both
+6. **Ambiguous argument test** — Run `/review-org` with an argument that matches both
    a project and an alias. Confirm it asks for clarification.
 7. **Existing tests** — `cd scripts && npm test` (all tests passing). No new tests
    needed — no TypeScript logic added.

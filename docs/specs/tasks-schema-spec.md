@@ -64,8 +64,8 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `Note` | string | Optional | Blocker context, escalation notes, or elimination record. Format: `Eliminated — Q4 cut {YYYY-MM-DD}` for dropped tasks. |
 | `Done` | date (YYYY-MM-DD) | Required if `State: Done` | The date the task was completed or eliminated |
 | `Synced` | string | After adapter push | Result of the adapter push. See values below. |
-| `Reminder-id` | string | Optional, after adapter push | Adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter; `file:title` for markdown-file). Written when `PushResult.id` is non-empty. Read by `/execute` and passed to the dispatcher so completion looks up the record by id, surviving title changes and Q3 re-delegation (issue #36). |
-| `Project` | string | Optional | Human-readable initiative name, title case (e.g., "Auth Migration"). Introduced by `/status` triage. Not written by other commands unless they opt in. |
+| `Reminder-id` | string | Optional, after adapter push | Adapter's stable identifier for the external record (Reminders x-coredata URI for the Reminders adapter; `file:title` for markdown-file). Written when `PushResult.id` is non-empty. Read by `/complete-task` and passed to the dispatcher so completion looks up the record by id, surviving title changes and Q3 re-delegation (issue #36). |
+| `Project` | string | Optional | Human-readable initiative name, title case (e.g., "Auth Migration"). Introduced by `/review-org` triage. Not written by other commands unless they opt in. |
 
 ### Synced field values
 
@@ -74,7 +74,7 @@ it may include a source qualifier: `[ INTAKE — {YYYY-MM-DD} | Email scan ]`.
 | `Reminders ({list}) — {YYYY-MM-DD}` | Successfully pushed to the named Reminders list |
 | `skipped (already exists)` | Title already existed in the adapter — no duplicate created |
 | `failed — {reason}` | Push attempted but failed; reason included |
-| `Reminders completed — {YYYY-MM-DD}` | Completion synced to adapter via `/execute` |
+| `Reminders completed — {YYYY-MM-DD}` | Completion synced to adapter via `/complete-task` |
 | `Reminders already complete — {YYYY-MM-DD}` | Completion sync called but reminder was already complete |
 | `skipped — not found in Reminders` | Task not found in adapter at completion time |
 
@@ -118,10 +118,10 @@ TASKS.md must contain exactly these sections in this order:
 Inbox → Active      (/prioritize confirms Q1 or Q2)
 Inbox → Delegated   (/prioritize confirms Q3 with delegate + check-by date)
 Inbox → Done        (/prioritize confirms Q4 elimination)
-Active → Done       (/execute marks complete)
-Active → Delegated  (/execute delegates mid-stream)
-Delegated → Done    (/execute confirms delegate completed)
-Delegated → Active  (/execute re-claims ownership after failed delegation)
+Active → Done       (/complete-task marks complete)
+Active → Delegated  (/complete-task delegates mid-stream)
+Delegated → Done    (/complete-task confirms delegate completed)
+Delegated → Active  (/complete-task re-claims ownership after failed delegation)
 ```
 
 ---
@@ -251,7 +251,7 @@ And the record appears in the ## Inbox section
 
 5. **`Project:` is optional and never required** — Unlike `Check-by` on Delegated tasks,
    `Project:` has no enforcement gate. Tasks without it are valid and appear as "Untagged"
-   in `/status`. The field is populated progressively through `/status` triage, not at
+   in `/review-org`. The field is populated progressively through `/review-org` triage, not at
    intake time.
 
 6. **`Awaiting:` is the external-blocker field on Active tasks** — Issue #44 (ROADMAP
@@ -260,7 +260,7 @@ And the record appears in the ## Inbox section
    parties (vendor, security review, legal sign-off, peer's deliverable) where the action
    IS to wait and check back. `Awaiting:` makes that wait queryable. `Check-by:` becomes
    required when `Awaiting:` is set — same forcing function as Delegated. Internal context
-   (notes about the blocker, escalation history) still goes in `Note:`. `/status awaiting`
+   (notes about the blocker, escalation history) still goes in `Note:`. `/review-org awaiting`
    rolls up by blocker so the leader can answer "what's blocked on Vendor X?" in a
    peer-leader conversation. SCHEMA-010 and SCHEMA-011 are enforced by
    `validateTaskRecord` in `scripts/tasks-parser.ts` (negative tests in
