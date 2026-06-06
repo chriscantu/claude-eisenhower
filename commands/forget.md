@@ -163,8 +163,8 @@ the new state.
   belongs to `/execute`.
 - Every form requires an explicit confirmation token. No single-press
   destructive paths.
-- The confirmation token is the alias name (Step 2A), the literal string
-  `yes` (Step 2B), or the literal string `forget all` (Step 2C). Anything
+- The confirmation token is the alias name (Step 2A), the verbatim task
+  title (Step 2B), or the literal string `forget all` (Step 2C). Anything
   else cancels.
 - Writes are silent on success — render the "cleared" line, nothing more.
 - On any file-system error (permission denied, file in use), surface the
