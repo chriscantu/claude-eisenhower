@@ -1,5 +1,5 @@
 ---
-description: Delegate a task directly — score candidates, confirm, and write a Delegated entry to TASKS.md
+description: [Classify] Delegate a task directly — score candidates, confirm, and write a Delegated entry to TASKS.md
 argument-hint: [task title or description]
 allowed-tools: Read, Write, Edit
 ---
@@ -410,7 +410,7 @@ On `result.status: error` or `ok:false`:
 Synced: failed — {reason or error}
 ```
 
-`Reminder-id` carries the adapter's stable identifier (Reminders x-coredata URI for the Reminders adapter). `commands/execute.md` reads it back at completion time so re-delegation cannot orphan the external record (issue #36).
+`Reminder-id` carries the adapter's stable identifier (Reminders x-coredata URI for the Reminders adapter). `commands/complete-task.md` reads it back at completion time so re-delegation cannot orphan the external record (issue #36).
 
 Show a one-line result: `✓ Check-in pushed to {adapter}` or `⚠ {adapter} push failed — [reason]. TASKS.md entry is saved.`
 
@@ -434,7 +434,7 @@ Delegated ✓
   Reminders:  {push result}
   Memory:     Follow-up logged for {alias}
 
-Run /execute when {alias} reports back, or /schedule to review all open delegations.
+Run /complete-task when {alias} reports back, or /schedule to review all open delegations.
 ```
 
 ---

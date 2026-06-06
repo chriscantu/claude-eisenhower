@@ -1,10 +1,10 @@
 ---
-description: Org status — project health, delegation portfolio, risk view
+description: [Reflect] Org status — project health, delegation portfolio, risk view
 argument-hint: [project-name] or [alias] (optional)
 allowed-tools: Read, Write, Edit
 ---
 
-You are running the STATUS command of the Engineering Task Flow.
+You are running the /review-org command of the Engineering Task Flow.
 
 This command provides an on-demand org-wide status view grouped by project/initiative.
 It surfaces project health, delegation portfolios, and risk signals. The only write
@@ -15,7 +15,7 @@ dates, or delegation fields.
 
 ## Step 1: Load the task board
 
-No config check needed — /status reads TASKS.md and delegation memory only.
+No config check needed — /review-org reads TASKS.md and delegation memory only.
 No scripts, adapters, or calendar integration involved.
 
 Read TASKS.md from the root of the workspace.
@@ -52,7 +52,7 @@ in a dedicated `─── ⚠️ Memory ↔ TASKS.md drift ───` block in t
    "{title}": memory resolved {date}; still in TASKS.md ## Delegated.
    Confirm whether the delegate actually finished.`
 3. **Check-by dates disagree.** → `{alias} / "{title}": TASKS.md Check-by
-   {date_a}, memory Check-by {date_b}. TASKS.md wins for /status purposes.`
+   {date_a}, memory Check-by {date_b}. TASKS.md wins for /review-org purposes.`
 4. **Orphan memory row.** Memory references alias+title not present in
    TASKS.md. → `Orphan: {alias} / "{title}" — memory row with no TASKS.md
    record. Likely a /forget partial failure. Run /forget task "{title}".`
@@ -129,11 +129,11 @@ Confirm, adjust, or skip for now?
 
 ## Step 4: Resolve argument (if provided)
 
-If the user provided an argument (e.g., `/status auth-migration`, `/status alex`, or `/status awaiting`):
+If the user provided an argument (e.g., `/review-org auth-migration`, `/review-org alex`, or `/review-org awaiting`):
 
 If the argument (after trimming) is the literal `awaiting` (case-insensitive
 exact match), proceed to Step 6.5 (Awaiting View) and skip the project/alias
-resolution below. Trailing tokens after `awaiting` (e.g., `/status awaiting foo`)
+resolution below. Trailing tokens after `awaiting` (e.g., `/review-org awaiting foo`)
 are ignored.
 
 Otherwise:
@@ -214,7 +214,7 @@ Within each project:
 **Closing prompt:**
 
 ```
-Run /status [project] for detail, or /status [alias] for a person view.
+Run /review-org [project] for detail, or /review-org [alias] for a person view.
 ```
 
 Proceed to Step 8 (Done).
@@ -269,7 +269,7 @@ Maximum 5 items, sorted by Done date descending. If more than 5: show "... and {
 **Closing prompt:**
 
 ```
-Run /status for full org view, or /status {alias} for delegate view.
+Run /review-org for full org view, or /review-org {alias} for delegate view.
 ```
 
 Use an actual alias from the project's delegated tasks in the closing prompt example.
@@ -321,7 +321,7 @@ If a task has a `Project:` tag, append it inline: `(Project: {name})`.
 **Closing prompt:**
 
 ```
-Run /status for full org view, or /status {project} for project view.
+Run /review-org for full org view, or /review-org {project} for project view.
 ```
 
 Proceed to Step 8 (Done).
@@ -362,7 +362,7 @@ Tasks without a `Project:` tag appear under "Untagged".
 **Closing prompt:**
 
 ```
-Run /status for full org view, or /status {project} for project view.
+Run /review-org for full org view, or /review-org {project} for project view.
 ```
 
 Use an actual project name from the alias's delegated tasks in the closing prompt example.

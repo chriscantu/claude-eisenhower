@@ -31,22 +31,22 @@ the rules below. When you add or modify a command, update this audit in the same
 | `/prioritize` | "No task board found. Run /intake to add tasks first." | "No inbox tasks found. Use /intake to add new tasks." | "No stakeholder graph found. Copy `config/stakeholders.yaml.example`…" + saves placeholder | All three paths covered. |
 | `/delegate` | Same as `/prioritize` | n/a (delegates a specific task by arg) | "No stakeholder graph found." + prompt; "Stakeholder graph is empty" | Hard-required config; cannot degrade silently. |
 | `/schedule` | "No prioritized tasks found. Run /prioritize first." | Same as TASKS.md missing | Uses adapter config; missing config = markdown-only mode (graceful) | Adapter degradation per `config/task-output-config.md`. |
-| `/execute` | "No task board found. Nothing to execute yet." | "No task matches" — surfaces the miss explicitly | n/a | |
+| `/complete-task` | "No task board found. Nothing to execute yet." | "No task matches" — surfaces the miss explicitly | n/a | |
 | `/today` | "No task board found. Run /intake to get started." | Section-level: omit empty sections (no placeholders) | Calendar config optional — skips calendar pane if absent | Reads logs but does not require them. |
 | `/plan-week` | "No task board found. Run /intake to get started." | "no personal commitments exist" handled | Calendar config optional | Writes plan-log silently. |
 | `/review-week` | "No task board found. Run /intake to get started." | Section-level: omit empty sections | Calendar config optional | Writes review-log silently. |
-| `/status` | "No task board found. Run /intake to get started." | Section-level: omit empty sections; "No project or delegate found matching '{arg}'." for bad arg | n/a | **Triage gate**: triage runs only when ≥5 tagged tasks exist AND untagged tasks present. Issue #41. |
-| `/status awaiting` | Same as `/status` | "No tasks awaiting external blockers." | n/a | Issue #44. |
+| `/review-org` | "No task board found. Run /intake to get started." | Section-level: omit empty sections; "No project or delegate found matching '{arg}'." for bad arg | n/a | **Triage gate**: triage runs only when ≥5 tagged tasks exist AND untagged tasks present. Issue #41. |
+| `/review-org awaiting` | Same as `/review-org` | "No tasks awaiting external blockers." | n/a | Issue #44. |
 | `/scan-email` | Creates TASKS.md if absent | **Distinguish two shapes (issue #41)**: 0 emails in window → "Your inbox is empty"; N emails, 0 matched → "Scanned N email(s); 0 matched the actionable patterns" — explicit count confirms scan ran | Apple Mail config required (no degradation) | The 0-match wording was the original failure: user concluded plugin broken. |
 | `/quick` | Creates TASKS.md if absent | n/a (single-task pipeline) | Same as `/prioritize` for stakeholders; same as `/schedule` for adapter | One-shot capture+classify+schedule. |
 | `/setup` | n/a (setup writes initial config) | n/a | n/a — this IS the config bootstrap | First-run config command. |
 | `/trends` | "TASKS.md not found." renders for Pattern 3; other patterns continue from logs | "No analytics data yet." when all three log files missing; per-pattern "insufficient data" when partial | n/a | Issue #43. Read-only, degrades gracefully. |
-| `/memory` | "No memory entries yet. Delegations recorded by /delegate, /schedule, and /execute will appear here." | Per view: alias arg missing memory file → "No memory entries for '{arg}'"; analytics view marks each missing log as "not present yet" | n/a | Issue #42. Read-only inspection surface; writes nothing. |
+| `/memory` | "No memory entries yet. Delegations recorded by /delegate, /schedule, and /complete-task will appear here." | Per view: alias arg missing memory file → "No memory entries for '{arg}'"; analytics view marks each missing log as "not present yet" | n/a | Issue #42. Read-only inspection surface; writes nothing. |
 | `/forget` | "No memory entries for '{arg}'." for alias/task scope when no match | Confirmation gates fire even on empty matches; bad confirmation token → "Cancelled." | n/a | Issue #42. Destructive correction loop; TASKS.md never touched. |
 
 ## Triage-gate rule (issue #41 specific)
 
-`/status` Step 3 triage gates on:
+`/review-org` Step 3 triage gates on:
 
 1. ≥5 non-Done tasks WITH a `Project:` tag, AND
 2. ≥1 non-Done task missing a `Project:` tag
@@ -82,12 +82,12 @@ When you add a command:
 3. Reference the relevant `commands/*.md` step where the empty-state branch
    is implemented.
 4. If the command introduces a new triage-shaped prompt, add a gate rationale
-   following the `/status` pattern.
+   following the `/review-org` pattern.
 
 ## Related
 
 - Issue #41 — Empty states + first-run pathway across 11 commands
 - `commands/help.md` — first-run walkthrough
-- `commands/status.md` Step 3 — triage gate implementation
+- `commands/review-org.md` Step 3 — triage gate implementation
 - `commands/scan-email.md` Step 8 — count distinction implementation
 - `docs/PRINCIPLES.md` "Platform Architecture" — degradation requirement

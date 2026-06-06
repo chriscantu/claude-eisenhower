@@ -1,5 +1,5 @@
 ---
-description: Surface local memory state — delegate logs and analytics
+description: [Memory] Surface local memory state — delegate logs and analytics
 argument-hint: show [alias|analytics] (default: show)
 allowed-tools: Read
 ---
@@ -33,7 +33,7 @@ missing or the table is empty, render:
 
 ```
 No memory entries yet. Delegations recorded by /delegate, /schedule, and
-/execute will appear here.
+/complete-task will appear here.
 ```
 
 Otherwise, group entries by alias and render:
@@ -83,7 +83,7 @@ Close with:
 
 ```
 Run /forget {alias} to clear all entries for this delegate (requires
-confirmation), or /status {alias} to see in-flight delegations from TASKS.md.
+confirmation), or /review-org {alias} to see in-flight delegations from TASKS.md.
 ```
 
 ---

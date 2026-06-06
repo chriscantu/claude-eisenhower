@@ -47,8 +47,8 @@ describe("Agent Contracts: section names (TEST-CONT-001)", () => {
 
 // ── Field name contracts ──────────────────────────────────────────────────
 
-describe("Agent Contracts: execute.md field names (TEST-CONT-002)", () => {
-  const content = readFile("commands/execute.md");
+describe("Agent Contracts: complete-task.md field names (TEST-CONT-002)", () => {
+  const content = readFile("commands/complete-task.md");
 
   test("TEST-CONT-002a: uses State: Inbox (not Status: Unprocessed)", () => {
     expect(content).not.toMatch(/Status:\s+Unprocessed/);
@@ -70,8 +70,8 @@ describe("Agent Contracts: no hardcoded plugin_root defaults (TEST-CONT-003)", (
     expect(content).not.toMatch(hardcodedDefault);
   });
 
-  test("TEST-CONT-003b: execute.md has no hardcoded plugin_root default", () => {
-    const content = readFile("commands/execute.md");
+  test("TEST-CONT-003b: complete-task.md has no hardcoded plugin_root default", () => {
+    const content = readFile("commands/complete-task.md");
     expect(content).not.toMatch(hardcodedDefault);
   });
 

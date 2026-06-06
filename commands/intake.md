@@ -1,5 +1,5 @@
 ---
-description: Capture a new task from any source
+description: [Capture] Capture a new task from any source
 argument-hint: [describe the task in natural language]
 allowed-tools: Read, Write, Edit
 ---

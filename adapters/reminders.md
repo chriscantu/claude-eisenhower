@@ -17,7 +17,7 @@ reminder in the configured list for each Q1, Q2, and Q3 task. Checks for an
 existing reminder with the same title (case-insensitive) before writing to prevent
 duplicates. Calls `scripts/push_reminder.applescript`.
 
-**Complete** — Called by `/execute` when a task is marked done. Finds the reminder
+**Complete** — Called by `/complete-task` when a task is marked done. Finds the reminder
 by title (case-insensitive) and sets `completed = true`. The reminder stays in
 Reminders history — it is not deleted. Calls `scripts/complete_reminder.applescript`.
 
@@ -84,7 +84,7 @@ do shell script "osascript " & quoted form of (pluginRoot & "/scripts/push_remin
     quoted form of list_name
 ```
 
-**Complete** — called by `/execute` when marking a task done:
+**Complete** — called by `/complete-task` when marking a task done:
 
 ```applescript
 do shell script "osascript " & quoted form of (pluginRoot & "/scripts/complete_reminder.applescript") & " " & ¬

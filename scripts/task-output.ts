@@ -1,7 +1,7 @@
 /**
  * task-output.ts
  *
- * Single dispatcher for task-output adapters. Commands (schedule, execute,
+ * Single dispatcher for task-output adapters. Commands (schedule, complete-task,
  * delegate) call into this module — they never reach into adapter internals.
  *
  * Responsibilities:
@@ -89,7 +89,7 @@ export async function completeTask(
  *   - the value is the placeholder `~~task_output`
  *
  * Null means "no adapter configured" — callers should treat this as a
- * silent skip per the existing schedule/execute semantics.
+ * silent skip per the existing schedule/complete-task semantics.
  */
 export function readActiveAdapter(configFile: string): string | null {
   if (!fs.existsSync(configFile)) return null;

@@ -1,5 +1,5 @@
 ---
-description: Prioritize unprocessed tasks using Eisenhower matrix
+description: [Classify] Prioritize unprocessed tasks using Eisenhower matrix
 argument-hint: [optional: task title or number to prioritize one task]
 allowed-tools: Read, Write, Edit
 ---
@@ -116,6 +116,6 @@ Confirm: "Prioritization complete. Run /schedule to assign dates and block time.
 - If the user says "just do them all as Q1" — gently push back: "Happy to mark all as Active, but that may defeat the purpose. Want to talk through a couple of them first?"
 - If a Q3 task description signals it requires the user's personal authority, flag it for reclassification to Q1 / Active before proceeding (see Step 3 Authority flag).
 - If a user reports a task is blocked: do NOT create a Blocked state. Instead:
-  - **External blocker on an Active task** (vendor, security review, legal sign-off, peer's deliverable): set `Awaiting: <blocker name>` and a required `Check-by:` date. Use `Note:` for context. The task stays in `## Active`. `/status awaiting` rolls these up by blocker. See `docs/specs/tasks-schema-spec.md` Decision 6.
+  - **External blocker on an Active task** (vendor, security review, legal sign-off, peer's deliverable): set `Awaiting: <blocker name>` and a required `Check-by:` date. Use `Note:` for context. The task stays in `## Active`. `/review-org awaiting` rolls these up by blocker. See `docs/specs/tasks-schema-spec.md` Decision 6.
   - **Internal context** (waiting on info from team, escalation history): update the task's `Note:` field with the blocker context, ensure a `Check-by:` date is set, and keep the task in its current state (Active or Delegated).
   - The forcing function is always the check-by date — not a label.

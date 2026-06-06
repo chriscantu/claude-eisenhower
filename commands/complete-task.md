@@ -1,16 +1,16 @@
 ---
-description: Mark tasks done, log progress, or create follow-ups
+description: [Act] Mark tasks done, log progress, or create follow-ups
 argument-hint: [task title or "done" / "progress" / "followup"]
 allowed-tools: Read, Write, Edit
 ---
 
-You are running the EXECUTE phase of the Engineering Task Flow.
+You are running the /complete-task command (task close-out) of the Engineering Task Flow.
 
 ## Step 1: Load the task board
 
 Read TASKS.md from the root of the user's mounted workspace folder.
 
-If the file does not exist, inform the user: "No task board found. Nothing to execute yet."
+If the file does not exist, inform the user: "No task board found. Nothing to mark done yet."
 
 ## Step 2: Determine what the user wants to do
 
@@ -20,13 +20,13 @@ Parse $ARGUMENTS for intent:
 - **"progress [task]"** or **"update [task]"** → Log progress note on an in-flight task
 - **"followup [task]"** or **"follow up [task]"** → Create a new intake task linked to this one
 - **"delegate [task] to [person]"** → Move to Q3, record delegate and stakeholder
-- Just a task name with no verb → Ask what they want to do with it
+- Just a task name with no verb → Mark the task as completed (the default action — the command is named `/complete-task`)
 
 If no argument is provided, show a brief summary of all scheduled tasks and ask which one they're working on.
 
 ## Step 2b: Match the task and confirm before mutating
 
-`/execute` has multiple side-effects with different recoverability:
+`/complete-task` has multiple side-effects with different recoverability:
 
 - **TASKS.md edits** — reversible by hand-editing the file afterward,
   but TASKS.md is gitignored so there is no version history to roll back to.

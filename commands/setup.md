@@ -1,5 +1,5 @@
 ---
-description: Configure or reconfigure claude-eisenhower — calendar, email, Reminders, and stakeholders
+description: [Setup] Configure or reconfigure claude-eisenhower — calendar, email, Reminders, and stakeholders
 argument-hint: [optional: calendar | email | reminders | stakeholders | all]
 allowed-tools: Read, Write, Edit, mcp__Control_your_Mac__osascript
 ---
