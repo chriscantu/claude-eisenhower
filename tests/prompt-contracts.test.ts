@@ -429,6 +429,19 @@ describe("Prompt Contracts: /memory + /forget contracts (Q2-006)", () => {
       expect(content).toMatch(tok.pattern);
     });
   }
+
+  // Regression for issue #92: the Rules-section summary must NOT bind a bare
+  // "yes" to Step 2B (forget task). Step 2B's authoritative body requires the
+  // verbatim task title — a contradictory Rules line ("the literal string
+  // `yes` (Step 2B)") re-opens the destructive misfire path the body warns
+  // against. This is a NEGATIVE assertion: the positive "task title exactly"
+  // token above still passes even while the contradiction is present, so it
+  // can't catch this class of regression.
+  test("Q2-006: Rules section does not bind bare 'yes' to Step 2B (issue #92)", () => {
+    const content = readContent(forgetPath);
+    const misfire = /`?yes`?\s*\(\s*Step\s*2B\s*\)/i;
+    expect(content).not.toMatch(misfire);
+  });
 });
 
 // ── Test group 7: /help index ↔ commands/ bijection (Q2-007) — issue #41 ─
