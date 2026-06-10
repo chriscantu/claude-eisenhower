@@ -461,7 +461,12 @@ describe("runBriefing end-to-end (SB-RUN)", () => {
 describe("SessionStart hook contract (SB-HOOK)", () => {
   const ROOT = path.resolve(__dirname, "..");
   const hooks = JSON.parse(fs.readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8"));
-  const entry = hooks.SessionStart[0].hooks[0];
+  const entry = hooks.hooks.SessionStart[0].hooks[0];
+
+  test("SB-HOOK-000: events are nested under a top-level 'hooks' record", () => {
+    expect(hooks.hooks).toBeDefined();
+    expect(Array.isArray(hooks.hooks.SessionStart)).toBe(true);
+  });
 
   test("SB-HOOK-001: SessionStart hook is type 'command'", () => {
     expect(entry.type).toBe("command");
