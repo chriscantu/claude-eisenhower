@@ -1,5 +1,15 @@
 # claude-eisenhower
 
+> **⚠️ This plugin is frozen as of 2026-08-09.**
+>
+> It receives bug fixes and dependency updates only — **no new features.** Development
+> has moved to a successor application that replaces it. This repository will be
+> archived once that reaches feature parity.
+>
+> The plugin still works and is safe to keep using. Bug reports are welcome; feature
+> requests are closed. See [ROADMAP.md](ROADMAP.md) for what this means for previously
+> planned work.
+
 **Stop losing track of what matters.** claude-eisenhower is a task management plugin for engineering leaders that captures work from anywhere, cuts through the noise using the Eisenhower matrix, and helps you delegate intelligently — without leaving your flow.
 
 ---
