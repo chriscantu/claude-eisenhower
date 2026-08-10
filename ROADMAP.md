@@ -1,7 +1,17 @@
 # claude-eisenhower — Product Roadmap
 
+> **This plugin is frozen as of 2026-08-09.** It receives bug fixes and dependency
+> updates only — no new features. Development has moved to a native Mac app that
+> replaces it; this repository is archived once that app reaches feature parity.
+>
+> Items below marked **superseded** were overtaken by decisions in that migration.
+> Items still marked as planned are unscheduled: they describe direction the app may
+> inherit, not work committed to this plugin.
+>
+> Bug reports are still welcome. Feature requests are closed.
+
 **Format**: Near-Term / Long-Term / Won't Do / Open Questions / TODO (Deferred)
-**Last updated**: 2026-03-06
+**Last updated**: 2026-08-09
 **Owner**: Cantu
 
 For a full history of what has shipped, see [CHANGELOG.md](CHANGELOG.md).
@@ -20,13 +30,14 @@ the same confirmation table pattern as `/scan-email`.
 
 **Dependency**: Slack MCP connector availability in Cowork (blocking).
 
-### 2. YAML Front Matter for TASKS.md
+### 2. ~~YAML Front Matter for TASKS.md~~ — SUPERSEDED
 
 Add YAML front matter to task records. Non-breaking — Markdown remains human-readable.
 Enables programmatic filtering by owner, state, and date without regex parsing.
 
-**Timing**: After TASKS.md schema spec is stable and validated by the four-state
-test suite. Schema first; structured encoding second.
+**Superseded (2026-08-09)**: front matter existed only as the non-breaking bridge to a
+structured store. The successor app goes straight to SQLite, so the bridge has no
+destination left to reach.
 
 ---
 
@@ -35,16 +46,16 @@ test suite. Schema first; structured encoding second.
 Strategic bets for when the plugin scales beyond its current single-user, local-first
 design. Timing is flexible; direction is set.
 
-### Structured Task Store (YAML → SQLite)
+### ~~Structured Task Store (YAML → SQLite)~~ — SUPERSEDED
 
 **When**: When TASKS.md filtering becomes the bottleneck — 50+ tasks, cross-owner
 queries, date range searches, multi-delegate reporting.
 
-**Design**: YAML front matter (v1.1) is the non-breaking bridge. When the pain
-materializes, write a migration script that reads YAML front matter and writes SQLite
-rows. TASKS.md becomes a view over the store, not the store itself.
-
-**Triggers**: User reports pain finding tasks by owner/date/state.
+**Superseded (2026-08-09)**: the successor app implements this, arriving earlier than
+planned and for a different reason. The trigger was never filtering pain — it is that
+a GUI app with background jobs makes concurrent read-modify-write on a markdown file a
+data-loss defect. Any migration also has to import live plugin data, which this entry
+did not account for.
 
 ### Task Output Adapter Expansion
 
@@ -72,12 +83,13 @@ Allow `/schedule` to push to multiple adapters simultaneously (e.g., Reminders +
 **Triggers**: User manages tasks in two systems simultaneously and is manually
 reconciling between them.
 
-### Memory System as a Queryable Layer
+### ~~Memory System as a Queryable Layer~~ — SHIPPED
 
 A `/memory` command (or agent) that surfaces: all pending delegations for a given
 alias, all follow-ups due this week, overdue check-ins not yet resolved.
 
-**Dependency**: YAML front matter in memory files (or a structured store).
+**Shipped**: `/memory` exists (`commands/memory.md`) with `show`, `show <alias>`, and
+`show analytics`. This entry outlived its own delivery.
 
 ---
 
